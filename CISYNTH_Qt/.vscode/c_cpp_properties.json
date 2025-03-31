@@ -5,34 +5,13 @@
             "includePath": [
                 "${workspaceFolder}/**",
                 "${workspaceFolder}/include",
-                "/usr/local/include",
-                "/usr/local/opt/qt@5/include",
-                "/usr/local/opt/qt@5/include/QtCore",
-                "/usr/local/opt/qt@5/include/QtGui",
-                "/usr/local/opt/qt@5/include/QtQml",
-                "/usr/local/opt/qt@5/include/QtQuick",
-                "/usr/local/opt/qt@5/include/QtConcurrent",
-                "/usr/local/opt/qt5/include",
-                "/usr/local/opt/qt5/include/QtCore",
-                "/usr/local/opt/qt5/include/QtGui",
-                "/usr/local/opt/qt5/include/QtQml",
-                "/usr/local/opt/qt5/include/QtQuick",
-                "/usr/local/opt/qt5/include/QtConcurrent",
+                "/opt/homebrew/include",
                 "/opt/homebrew/opt/qt@5/include",
                 "/opt/homebrew/opt/qt@5/include/QtCore",
                 "/opt/homebrew/opt/qt@5/include/QtGui",
                 "/opt/homebrew/opt/qt@5/include/QtQml",
                 "/opt/homebrew/opt/qt@5/include/QtQuick",
-                "/opt/homebrew/opt/qt@5/include/QtConcurrent",
-                "/opt/homebrew/opt/qt5/include",
-                "/opt/homebrew/opt/qt5/include/QtCore",
-                "/opt/homebrew/opt/qt5/include/QtGui",
-                "/opt/homebrew/opt/qt5/include/QtQml",
-                "/opt/homebrew/opt/qt5/include/QtQuick",
-                "/opt/homebrew/opt/qt5/include/QtConcurrent",
-                "/usr/local/opt/fftw/include",
-                "/usr/local/opt/cairo/include/cairo",
-                "/usr/local/opt/libsndfile/include"
+                "/opt/homebrew/opt/qt@5/include/QtConcurrent"
             ],
             "defines": [],
             "macFrameworkPath": [
@@ -41,8 +20,7 @@
             "compilerPath": "/usr/bin/clang++",
             "cStandard": "c11",
             "cppStandard": "c++17",
-            "intelliSenseMode": "macos-clang-x64",
-            "compileCommands": "${workspaceFolder}/compile_commands.json"
+            "intelliSenseMode": "macos-clang-arm64"
         }
     ],
     "version": 4

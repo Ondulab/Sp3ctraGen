@@ -4,7 +4,7 @@
         {
             "label": "qmake",
             "type": "shell",
-            "command": "which qmake > /dev/null && qmake || ([ -f /usr/local/opt/qt@5/bin/qmake ] && /usr/local/opt/qt@5/bin/qmake || ([ -f /usr/local/opt/qt5/bin/qmake ] && /usr/local/opt/qt5/bin/qmake || ([ -f /opt/homebrew/opt/qt@5/bin/qmake ] && /opt/homebrew/opt/qt@5/bin/qmake || /opt/homebrew/opt/qt5/bin/qmake)))",
+            "command": "/opt/homebrew/opt/qt@5/bin/qmake",
             "args": [
                 "-spec",
                 "macx-clang",

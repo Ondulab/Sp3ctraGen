@@ -6,13 +6,13 @@
             "type": "cppdbg",
             "request": "launch",
             "program": "${workspaceFolder}/CISYNTH_Qt.app/Contents/MacOS/CISYNTH_Qt",
-            "args": [],
-            "stopAtEntry": false,
+            "args": ["--verbose"],
+            "stopAtEntry": true,
             "cwd": "${workspaceFolder}",
             "environment": [
                 {
                     "name": "DYLD_LIBRARY_PATH",
-                    "value": "/usr/local/opt/qt@5/lib:/usr/local/opt/qt5/lib:/opt/homebrew/opt/qt@5/lib:/opt/homebrew/opt/qt5/lib:/usr/local/opt/fftw/lib:/usr/local/opt/cairo/lib:/usr/local/opt/libsndfile/lib:/opt/homebrew/opt/fftw/lib:/opt/homebrew/opt/cairo/lib:/opt/homebrew/opt/libsndfile/lib"
+                    "value": "/opt/homebrew/opt/qt@5/lib:/opt/homebrew/opt/fftw/lib:/opt/homebrew/opt/cairo/lib:/opt/homebrew/opt/libsndfile/lib"
                 },
                 {
                     "name": "QT_QPA_PLATFORM",
@@ -21,7 +21,63 @@
             ],
             "externalConsole": false,
             "MIMode": "lldb",
-            "preLaunchTask": "build"
+            "preLaunchTask": "build",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for lldb",
+                    "text": "settings set target.process.thread.step-avoid-regexp \"\"",
+                    "ignoreFailures": true
+                },
+                {
+                    "description": "Enable breakpoints",
+                    "text": "settings set target.inline-breakpoint-strategy always",
+                    "ignoreFailures": true
+                },
+                {
+                    "description": "Set architecture to ARM64",
+                    "text": "settings set target.process.target-architecture arm64",
+                    "ignoreFailures": true
+                },
+                {
+                    "description": "Break on program entry",
+                    "text": "break set -n main",
+                    "ignoreFailures": true
+                },
+                {
+                    "description": "Enable all breakpoints",
+                    "text": "break enable",
+                    "ignoreFailures": true
+                }
+            ]
+        },
+        {
+            "name": "Run CISYNTH_Qt (No Debug)",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/CISYNTH_Qt.app/Contents/MacOS/CISYNTH_Qt",
+            "args": ["--verbose"],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [
+                {
+                    "name": "DYLD_LIBRARY_PATH",
+                    "value": "/opt/homebrew/opt/qt@5/lib:/opt/homebrew/opt/fftw/lib:/opt/homebrew/opt/cairo/lib:/opt/homebrew/opt/libsndfile/lib"
+                },
+                {
+                    "name": "QT_QPA_PLATFORM",
+                    "value": "cocoa"
+                }
+            ],
+            "externalConsole": false,
+            "MIMode": "lldb",
+            "preLaunchTask": "build",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for lldb",
+                    "text": "settings set target.process.thread.step-avoid-regexp \"\"",
+                    "ignoreFailures": true
+                }
+            ]
         }
     ]
 }
