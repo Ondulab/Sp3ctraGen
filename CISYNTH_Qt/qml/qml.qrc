@@ -1,9 +1,6 @@
 <RCC>
     <qresource prefix="/">
         <file>main.qml</file>
-        <file>Theme.qml</file>
-        <file>qmldir</file>
-        <file>ExempleTheme.qml</file>
     </qresource>
     <qresource prefix="/fonts">
         <file alias="Orbitron-Regular.ttf">../fonts/Orbitron-Regular.ttf</file>
