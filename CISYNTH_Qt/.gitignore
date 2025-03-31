@@ -1,0 +1,58 @@
+# Fichiers générés par Qt
+*.o
+*.obj
+*.pro.user
+*.pro.user.*
+*.qbs.user
+*.qbs.user.*
+*.moc
+moc_*.cpp
+qrc_*.cpp
+ui_*.h
+Makefile*
+*build-*
+*.qm
+*.prl
+
+# Fichiers générés par QtCreator
+CMakeLists.txt.user*
+
+# Fichiers de compilation
+*.dll
+*.exe
+*.out
+*.app
+*.dylib
+*.so
+*.so.*
+*.a
+*.la
+*.lai
+*.lib
+
+# Fichiers spécifiques à macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+.Spotlight-V100
+.Trashes
+
+# Dossiers de build
+debug/
+release/
+.qmake.stash
+
+# Fichiers de sauvegarde
+*.bak
+*.swp
+*~
+*.autosave
+
+# Fichiers spécifiques à ce projet
+CISYNTH_Qt-backups/
+*.o
+moc_*.cpp
+moc_*.o
+qrc_*.cpp
+qrc_*.o

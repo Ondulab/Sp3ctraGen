@@ -1,0 +1,27 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Debug CISYNTH_Qt (LLDB)",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/CISYNTH_Qt.app/Contents/MacOS/CISYNTH_Qt",
+            "args": [],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [
+                {
+                    "name": "DYLD_LIBRARY_PATH",
+                    "value": "/usr/local/opt/qt@5/lib:/usr/local/opt/qt5/lib:/opt/homebrew/opt/qt@5/lib:/opt/homebrew/opt/qt5/lib:/usr/local/opt/fftw/lib:/usr/local/opt/cairo/lib:/usr/local/opt/libsndfile/lib:/opt/homebrew/opt/fftw/lib:/opt/homebrew/opt/cairo/lib:/opt/homebrew/opt/libsndfile/lib"
+                },
+                {
+                    "name": "QT_QPA_PLATFORM",
+                    "value": "cocoa"
+                }
+            ],
+            "externalConsole": false,
+            "MIMode": "lldb",
+            "preLaunchTask": "build"
+        }
+    ]
+}
