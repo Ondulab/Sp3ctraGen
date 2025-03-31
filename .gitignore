@@ -1,0 +1,62 @@
+# === macOS system files ===
+.DS_Store
+.AppleDouble
+.LSOverride
+.Spotlight-V100
+.Trashes
+.fseventsd
+._*
+
+# === Xcode ===
+build/
+DerivedData/
+*.xcodeproj
+*.xcworkspace
+*.xcuserdata/
+xcuserdata/
+.idea/
+xcshareddata/WorkspaceSettings.xcsettings
+*.xcscmblueprint
+*.xccheckout
+*.moved-aside
+*.xcuserstate
+
+# Xcode archives
+*.xcarchive
+
+# === Swift Package Manager (SPM) ===
+.build/
+Package.resolved
+
+# === CocoaPods ===
+Pods/
+Podfile.lock
+
+# === Carthage ===
+Carthage/Build/
+
+# === Fastlane ===
+fastlane/report.xml
+fastlane/Preview.html
+fastlane/screenshots/
+fastlane/test_output/
+fastlane/.env
+
+# === Editor / IDE ===
+*.swp
+.idea/
+.vscode/
+
+# === Signing & Credentials ===
+*.mobileprovision
+*.cer
+*.p12
+*.keychain
+*.pem
+
+# === Logs & Temporary Files ===
+*.log
+*.tmp
+*.swp
+*.swo
+*.swn
