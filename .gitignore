@@ -56,6 +56,11 @@ moc_*.cpp
 moc_*.o
 qrc_*.cpp
 qrc_*.o
+moc_*.cpp.json
+moc_predefs.h
+*_metatypes.json
+*_qmltyperegistrations.cpp
+*.qmltypes
 
 # Fichiers spécifiques à Xcode
 *.xcodeproj/
