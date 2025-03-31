@@ -1,0 +1,126 @@
+[
+    {
+        "classes": [
+            {
+                "classInfos": [
+                    {
+                        "name": "QML.Element",
+                        "value": "auto"
+                    }
+                ],
+                "className": "SpectrogramGenerator",
+                "methods": [
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "fftSize",
+                                "type": "int"
+                            },
+                            {
+                                "name": "overlap",
+                                "type": "double"
+                            },
+                            {
+                                "name": "minFreq",
+                                "type": "double"
+                            },
+                            {
+                                "name": "maxFreq",
+                                "type": "double"
+                            },
+                            {
+                                "name": "duration",
+                                "type": "double"
+                            },
+                            {
+                                "name": "sampleRate",
+                                "type": "int"
+                            },
+                            {
+                                "name": "dynamicRangeDB",
+                                "type": "double"
+                            },
+                            {
+                                "name": "gammaCorrection",
+                                "type": "double"
+                            },
+                            {
+                                "name": "enableDithering",
+                                "type": "bool"
+                            },
+                            {
+                                "name": "contrastFactor",
+                                "type": "double"
+                            },
+                            {
+                                "name": "enableHighBoost",
+                                "type": "bool"
+                            },
+                            {
+                                "name": "highBoostAlpha",
+                                "type": "double"
+                            },
+                            {
+                                "name": "inputFile",
+                                "type": "QString"
+                            },
+                            {
+                                "name": "outputFolder",
+                                "type": "QString"
+                            }
+                        ],
+                        "name": "generateSpectrogram",
+                        "returnType": "void"
+                    }
+                ],
+                "object": true,
+                "qualifiedClassName": "SpectrogramGenerator",
+                "signals": [
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "success",
+                                "type": "bool"
+                            },
+                            {
+                                "name": "outputPath",
+                                "type": "QString"
+                            },
+                            {
+                                "name": "errorMessage",
+                                "type": "QString"
+                            }
+                        ],
+                        "name": "spectrogramGenerated",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "success",
+                                "type": "bool"
+                            },
+                            {
+                                "name": "outputPath",
+                                "type": "QString"
+                            }
+                        ],
+                        "name": "spectrogramGenerated",
+                        "returnType": "void"
+                    }
+                ],
+                "superClasses": [
+                    {
+                        "access": "public",
+                        "name": "QObject"
+                    }
+                ]
+            }
+        ],
+        "inputFile": "spectrogramgenerator.h",
+        "outputRevision": 67
+    }
+]

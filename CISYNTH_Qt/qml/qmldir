@@ -1,0 +1,2 @@
+module com.cisynth.ui
+singleton Theme 1.0 Theme.qml

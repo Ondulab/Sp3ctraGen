@@ -1,0 +1,110 @@
+# CISYNTH_Qt
+
+Application de génération de spectrogrammes basée sur Qt Quick. Cette application est un portage de l'application CISYNTH_App originale développée en SwiftUI.
+
+## Prérequis
+
+Pour compiler et exécuter cette application sur macOS, vous aurez besoin des éléments suivants:
+
+1. **Qt 5.15 ou supérieur**
+   ```bash
+   brew install qt@5
+   ```
+
+2. **Bibliothèques de traitement du signal et d'image**
+   ```bash
+   brew install fftw cairo libsndfile
+   ```
+
+3. **Outils de développement**
+   ```bash
+   brew install bear # Optionnel, pour générer compile_commands.json
+   ```
+
+## Configuration de VSCode
+
+Le projet inclut une configuration VSCode complète pour macOS:
+
+- `.vscode/c_cpp_properties.json`: Configuration de l'IntelliSense
+- `.vscode/tasks.json`: Tâches de compilation
+- `.vscode/launch.json`: Configuration de débogage
+
+## Compilation
+
+Vous pouvez compiler l'application de plusieurs façons:
+
+### Avec VSCode
+
+1. Ouvrez le dossier `CISYNTH_Qt` dans VSCode
+2. Appuyez sur `Ctrl+Shift+B` ou sélectionnez `Terminal > Run Build Task...` pour lancer la compilation
+3. La tâche par défaut exécutera `qmake` puis `make`
+
+### En ligne de commande
+
+```bash
+cd CISYNTH_Qt
+/usr/local/opt/qt5/bin/qmake -spec macx-clang CONFIG+=debug CONFIG+=qml_debug
+make -j8
+```
+
+## Débogage
+
+Pour déboguer l'application dans VSCode:
+
+1. Placez des points d'arrêt dans votre code
+2. Appuyez sur F5 ou sélectionnez `Run > Start Debugging`
+3. VSCode compilera l'application et lancera le débogueur
+
+## Structure du projet
+
+- `CISYNTH_Qt.pro`: Fichier de projet Qt
+- `qml/`: Fichiers QML pour l'interface utilisateur
+- `include/`: Fichiers d'en-tête C/C++
+- `src/`: Fichiers source C/C++
+
+## Fonctionnalités
+
+- Configuration des paramètres du spectrogramme
+- Sélection des fichiers d'entrée/sortie
+- Génération de spectrogrammes haute qualité
+- Traitement multithreadé
+
+## Remarques sur le portage
+
+Cette application est un portage de l'application CISYNTH_App originale développée en SwiftUI. Le portage a été réalisé en:
+
+1. Recréant l'interface utilisateur en QML
+2. Créant une classe C++ pour faire le pont entre QML et le code C existant
+3. Intégrant le code C existant sans modification
+4. Ajoutant un système de threading pour éviter de bloquer l'interface
+
+## Dépannage
+
+### Problèmes de compilation
+
+Si vous rencontrez des problèmes de compilation, vérifiez:
+
+1. Que Qt 5 est correctement installé et accessible
+   ```bash
+   ls -la /usr/local/opt/qt5/bin/qmake
+   ```
+
+2. Que les bibliothèques FFTW, Cairo et libsndfile sont installées
+   ```bash
+   brew list fftw cairo libsndfile
+   ```
+
+3. Essayez de nettoyer et recompiler
+   ```bash
+   make clean
+   /usr/local/opt/qt5/bin/qmake -spec macx-clang CONFIG+=debug CONFIG+=qml_debug
+   make -j8
+   ```
+
+### Problèmes de débogage
+
+Si le débogueur ne se lance pas correctement:
+
+1. Vérifiez que l'application a été compilée avec succès
+2. Vérifiez que le chemin dans `launch.json` correspond à l'emplacement de l'exécutable
+3. Assurez-vous que LLDB est installé (il est généralement inclus avec les outils de ligne de commande Xcode)
