@@ -1,4 +1,4 @@
-# CISYNTH_Qt
+# SpectroGen
 
 Application de génération de spectrogrammes basée sur Qt Quick. Cette application est un portage de l'application CISYNTH_App originale développée en SwiftUI.
 
@@ -35,14 +35,14 @@ Vous pouvez compiler l'application de plusieurs façons:
 
 ### Avec VSCode
 
-1. Ouvrez le dossier `CISYNTH_Qt` dans VSCode
+1. Ouvrez le dossier `SpectroGen` dans VSCode
 2. Appuyez sur `Ctrl+Shift+B` ou sélectionnez `Terminal > Run Build Task...` pour lancer la compilation
 3. La tâche par défaut exécutera `qmake` puis `make`
 
 ### En ligne de commande
 
 ```bash
-cd CISYNTH_Qt
+cd SpectroGen
 /opt/homebrew/opt/qt@5/bin/qmake -spec macx-clang CONFIG+=debug CONFIG+=qml_debug
 make -j8
 ```
@@ -78,7 +78,7 @@ Pour des instructions détaillées sur le débogage, consultez le fichier [DEBUG
 
 ## Structure du projet
 
-- `CISYNTH_Qt.pro`: Fichier de projet Qt
+- `SpectroGen.pro`: Fichier de projet Qt
 - `qml/`: Fichiers QML pour l'interface utilisateur
 - `include/`: Fichiers d'en-tête C/C++
 - `src/`: Fichiers source C/C++

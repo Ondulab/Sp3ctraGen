@@ -3,7 +3,7 @@
 # Script pour générer une configuration LLDB qui aide à localiser les fichiers source
 
 # Vérifier si l'exécutable existe
-if [ ! -f "CISYNTH_Qt.app/Contents/MacOS/CISYNTH_Qt" ]; then
+if [ ! -f "SpectroGen.app/Contents/MacOS/SpectroGen" ]; then
     echo "Erreur: L'exécutable n'existe pas."
     echo "Veuillez d'abord compiler le projet avec ./build.sh"
     exit 1
@@ -11,7 +11,7 @@ fi
 
 # Créer un fichier de configuration LLDB
 cat > .lldbinit << EOF
-# Configuration LLDB pour CISYNTH_Qt
+# Configuration LLDB pour SpectroGen
 
 # Définir l'architecture cible
 settings set target.process.target-architecture arm64
@@ -53,10 +53,10 @@ echo ""
 cat > debug_enhanced.sh << EOF
 #!/bin/bash
 
-# Script pour déboguer l'application CISYNTH_Qt avec LLDB et configuration améliorée
+# Script pour déboguer l'application SpectroGen avec LLDB et configuration améliorée
 
 # Vérifier si l'exécutable existe
-if [ ! -f "CISYNTH_Qt.app/Contents/MacOS/CISYNTH_Qt" ]; then
+if [ ! -f "SpectroGen.app/Contents/MacOS/SpectroGen" ]; then
     echo "Erreur: L'exécutable n'existe pas."
     echo "Veuillez d'abord compiler le projet avec ./build.sh"
     exit 1
@@ -101,7 +101,7 @@ echo "Pour plus d'informations, consultez DEBUGGING.md"
 echo ""
 
 # Lancer LLDB avec le fichier de commandes
-lldb -s /tmp/lldb_commands.txt CISYNTH_Qt.app/Contents/MacOS/CISYNTH_Qt
+lldb -s /tmp/lldb_commands.txt SpectroGen.app/Contents/MacOS/SpectroGen
 
 # Nettoyer le fichier temporaire
 rm /tmp/lldb_commands.txt

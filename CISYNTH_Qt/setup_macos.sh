@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Script de configuration pour CISYNTH_Qt sur macOS
+# Script de configuration pour SpectroGen sur macOS
 # Ce script installe les dépendances nécessaires et configure l'environnement
 
 # Couleurs pour les messages
@@ -9,7 +9,7 @@ GREEN='\033[0;32m'
 YELLOW='\033[0;33m'
 NC='\033[0m' # No Color
 
-echo -e "${GREEN}=== Configuration de l'environnement pour CISYNTH_Qt ===${NC}"
+echo -e "${GREEN}=== Configuration de l'environnement pour SpectroGen ===${NC}"
 
 # Vérifier si Homebrew est installé
 if ! command -v brew &> /dev/null; then

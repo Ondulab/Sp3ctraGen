@@ -2,6 +2,39 @@
     "version": "2.0.0",
     "tasks": [
         {
+            "label": "full_rebuild",
+            "type": "shell",
+            "command": "rm -f .qmake.stash Makefile *.o moc_*.cpp qrc_*.cpp && /opt/homebrew/opt/qt@5/bin/qmake -spec macx-clang CONFIG+=debug CONFIG+=qml_debug && make -j8",
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "problemMatcher": [
+                "$gcc"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
+        },
+        {
+            "label": "rebuild",
+            "type": "shell",
+            "command": "rm -f .qmake.stash && make clean && make -j8",
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "problemMatcher": [
+                "$gcc"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "dependsOn": [
+                "qmake"
+            ]
+        },
+        {
             "label": "qmake",
             "type": "shell",
             "command": "/opt/homebrew/opt/qt@5/bin/qmake",

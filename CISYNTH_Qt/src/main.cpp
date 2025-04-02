@@ -11,7 +11,7 @@ int main(int argc, char *argv[])
     QGuiApplication app(argc, argv);
 
     // Enregistrer notre type C++ pour QML
-    qmlRegisterType<SpectrogramGenerator>("com.cisynth.backend", 1, 0, "SpectrogramGenerator");
+    qmlRegisterType<SpectrogramGenerator>("com.spectrogen.backend", 1, 0, "SpectrogramGenerator");
 
     QQmlApplicationEngine engine;
     
