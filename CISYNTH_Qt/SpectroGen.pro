@@ -4,6 +4,9 @@ CONFIG += c++17
 CONFIG += qmltypes
 CONFIG += sdk_no_version_check
 
+# Icône de l'application pour macOS
+ICON = SpectroGen.icns
+
 QML_IMPORT_NAME = com.cisynth.backend
 QML_IMPORT_MAJOR_VERSION = 1
 

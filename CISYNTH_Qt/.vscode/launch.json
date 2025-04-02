@@ -2,10 +2,10 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Debug CISYNTH_Qt (LLDB)",
+            "name": "Debug SpectroGen (LLDB)",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/CISYNTH_Qt.app/Contents/MacOS/CISYNTH_Qt",
+            "program": "${workspaceFolder}/SpectroGen.app/Contents/MacOS/SpectroGen",
             "args": ["--verbose"],
             "stopAtEntry": true,
             "cwd": "${workspaceFolder}",
@@ -21,7 +21,7 @@
             ],
             "externalConsole": false,
             "MIMode": "lldb",
-            "preLaunchTask": "build",
+            "preLaunchTask": "full_rebuild",
             "setupCommands": [
                 {
                     "description": "Enable pretty-printing for lldb",
@@ -51,10 +51,10 @@
             ]
         },
         {
-            "name": "Run CISYNTH_Qt (No Debug)",
+            "name": "Run SpectroGen (No Debug)",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/CISYNTH_Qt.app/Contents/MacOS/CISYNTH_Qt",
+            "program": "${workspaceFolder}/SpectroGen.app/Contents/MacOS/SpectroGen",
             "args": ["--verbose"],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
@@ -70,7 +70,7 @@
             ],
             "externalConsole": false,
             "MIMode": "lldb",
-            "preLaunchTask": "build",
+            "preLaunchTask": "full_rebuild",
             "setupCommands": [
                 {
                     "description": "Enable pretty-printing for lldb",

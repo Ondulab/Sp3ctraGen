@@ -1,6 +1,6 @@
-# Guide de débogage pour CISYNTH_Qt
+# Guide de débogage pour SpectroGen
 
-Ce document fournit des instructions détaillées pour déboguer efficacement l'application CISYNTH_Qt avec Visual Studio Code.
+Ce document fournit des instructions détaillées pour déboguer efficacement l'application SpectroGen avec Visual Studio Code.
 
 ## Configuration du débogage
 
@@ -26,7 +26,7 @@ int main(int argc, char *argv[])
     QGuiApplication app(argc, argv);
 
     // Point d'arrêt ici pour l'enregistrement du type C++ pour QML
-    qmlRegisterType<SpectrogramGenerator>("com.cisynth.backend", 1, 0, "SpectrogramGenerator");
+    qmlRegisterType<SpectrogramGenerator>("com.spectrogen.backend", 1, 0, "SpectrogramGenerator");
 
     // ...
 
@@ -52,7 +52,7 @@ Placez des points d'arrêt dans les méthodes importantes de la classe `Spectrog
 
 #### Méthode 1: Utiliser VSCode
 
-1. Ouvrez VSCode et chargez le projet CISYNTH_Qt
+1. Ouvrez VSCode et chargez le projet SpectroGen
 2. Placez des points d'arrêt dans votre code en cliquant dans la marge à gauche du numéro de ligne
 3. Appuyez sur F5 ou sélectionnez `Run > Start Debugging`
 4. Le débogueur s'arrêtera automatiquement au début de la fonction `main()`

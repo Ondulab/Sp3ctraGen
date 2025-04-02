@@ -1,9 +1,9 @@
 #!/bin/bash
 
-# Script pour déboguer l'application CISYNTH_Qt avec LLDB et configuration améliorée
+# Script pour déboguer l'application SpectroGen avec LLDB et configuration améliorée
 
 # Vérifier si l'exécutable existe
-if [ ! -f "CISYNTH_Qt.app/Contents/MacOS/CISYNTH_Qt" ]; then
+if [ ! -f "SpectroGen.app/Contents/MacOS/SpectroGen" ]; then
     echo "Erreur: L'exécutable n'existe pas."
     echo "Veuillez d'abord compiler le projet avec ./build.sh"
     exit 1
@@ -48,7 +48,7 @@ echo "Pour plus d'informations, consultez DEBUGGING.md"
 echo ""
 
 # Lancer LLDB avec le fichier de commandes
-lldb -s /tmp/lldb_commands.txt CISYNTH_Qt.app/Contents/MacOS/CISYNTH_Qt
+lldb -s /tmp/lldb_commands.txt SpectroGen.app/Contents/MacOS/SpectroGen
 
 # Nettoyer le fichier temporaire
 rm /tmp/lldb_commands.txt
