@@ -2,6 +2,10 @@
 
 # Script de configuration pour SpectroGen sur macOS
 # Ce script installe les dépendances nécessaires et configure l'environnement
+# Mis à jour pour la nouvelle structure de dossiers
+
+# Aller au répertoire racine du projet
+cd "$(dirname "$0")/.." || exit 1
 
 # Couleurs pour les messages
 RED='\033[0;31m'
@@ -124,6 +128,10 @@ else
     echo -e "${GREEN}Qt est déjà dans le PATH.${NC}"
 fi
 
+# Créer les dossiers nécessaires s'ils n'existent pas
+echo -e "${YELLOW}Création des dossiers pour la nouvelle structure...${NC}"
+mkdir -p build/obj build/moc build/rcc build/ui doc/user doc/dev doc/assets assets config
+
 # Générer le projet
 echo -e "${YELLOW}Génération du projet avec qmake: $QMAKE_PATH${NC}"
 $QMAKE_PATH -spec macx-clang CONFIG+=debug CONFIG+=qml_debug
@@ -136,5 +144,5 @@ else
 fi
 
 echo -e "${GREEN}=== Configuration terminée ===${NC}"
-echo -e "${YELLOW}Vous pouvez maintenant compiler le projet avec 'make' ou en utilisant VSCode.${NC}"
+echo -e "${YELLOW}Vous pouvez maintenant compiler le projet avec 'scripts/build.sh' ou en utilisant VSCode.${NC}"
 echo -e "${YELLOW}Pour ouvrir le projet dans VSCode, exécutez 'code .' dans ce répertoire.${NC}"

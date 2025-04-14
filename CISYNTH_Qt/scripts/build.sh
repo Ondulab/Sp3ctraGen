@@ -1,6 +1,10 @@
 #!/bin/bash
 
 # Script pour compiler le projet SpectroGen
+# Mis à jour pour la nouvelle structure de dossiers
+
+# Aller au répertoire racine du projet
+cd "$(dirname "$0")/.." || exit 1
 
 # Trouver qmake
 QMAKE_PATH=""
@@ -21,6 +25,12 @@ else
 fi
 
 echo "Utilisation de qmake: $QMAKE_PATH"
+
+# Nettoyer les anciens fichiers de build
+echo "Nettoyage des anciens fichiers de build..."
+if [ -d "build" ]; then
+    rm -rf build/obj/* build/moc/* build/rcc/* build/ui/* 2>/dev/null
+fi
 
 # Exécuter qmake
 $QMAKE_PATH -spec macx-clang CONFIG+=debug CONFIG+=qml_debug

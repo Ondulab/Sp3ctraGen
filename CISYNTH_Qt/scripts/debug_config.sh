@@ -1,11 +1,15 @@
 #!/bin/bash
 
 # Script pour générer une configuration LLDB qui aide à localiser les fichiers source
+# Mis à jour pour la nouvelle structure de dossiers
+
+# Aller au répertoire racine du projet
+cd "$(dirname "$0")/.." || exit 1
 
 # Vérifier si l'exécutable existe
 if [ ! -f "SpectroGen.app/Contents/MacOS/SpectroGen" ]; then
     echo "Erreur: L'exécutable n'existe pas."
-    echo "Veuillez d'abord compiler le projet avec ./build.sh"
+    echo "Veuillez d'abord compiler le projet avec scripts/build.sh"
     exit 1
 fi
 
@@ -46,19 +50,23 @@ echo "1. Exécutez VSCode depuis le terminal dans ce répertoire:"
 echo "   open -a 'Visual Studio Code' ."
 echo ""
 echo "2. Ou utilisez le script de débogage amélioré:"
-echo "   ./debug_enhanced.sh"
+echo "   scripts/debug_enhanced.sh"
 echo ""
 
-# Créer un script de débogage amélioré
-cat > debug_enhanced.sh << EOF
+# Créer un script de débogage amélioré dans le dossier scripts/
+cat > scripts/debug_enhanced.sh << EOF
 #!/bin/bash
 
 # Script pour déboguer l'application SpectroGen avec LLDB et configuration améliorée
+# Mis à jour pour la nouvelle structure de dossiers
+
+# Aller au répertoire racine du projet
+cd "\$(dirname "\$0")/.." || exit 1
 
 # Vérifier si l'exécutable existe
 if [ ! -f "SpectroGen.app/Contents/MacOS/SpectroGen" ]; then
     echo "Erreur: L'exécutable n'existe pas."
-    echo "Veuillez d'abord compiler le projet avec ./build.sh"
+    echo "Veuillez d'abord compiler le projet avec scripts/build.sh"
     exit 1
 fi
 
@@ -97,7 +105,7 @@ echo "  bt              - Afficher la pile d'appels"
 echo "  frame variable  - Afficher les variables locales"
 echo "  q ou quit       - Quitter le débogueur"
 echo ""
-echo "Pour plus d'informations, consultez DEBUGGING.md"
+echo "Pour plus d'informations, consultez doc/dev/DEBUGGING.md"
 echo ""
 
 # Lancer LLDB avec le fichier de commandes
@@ -108,6 +116,6 @@ rm /tmp/lldb_commands.txt
 EOF
 
 # Rendre le script exécutable
-chmod +x debug_enhanced.sh
+chmod +x scripts/debug_enhanced.sh
 
-echo "Script de débogage amélioré généré: debug_enhanced.sh"
+echo "Script de débogage amélioré généré: scripts/debug_enhanced.sh"
