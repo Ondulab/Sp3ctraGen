@@ -64,7 +64,7 @@ Si vous rencontrez des problèmes avec le débogage dans VSCode, utilisez le scr
 1. Ouvrez un terminal dans le dossier du projet
 2. Exécutez le script de débogage:
    ```bash
-   ./debug.sh
+   scripts/debug.sh
    ```
 3. Le débogueur LLDB s'ouvrira et s'arrêtera automatiquement au début de la fonction `main()`
 4. Utilisez les commandes LLDB pour naviguer dans le code:
@@ -121,7 +121,7 @@ Pour déboguer efficacement une application Qt:
 1. Assurez-vous que les points d'arrêt sont placés dans des fichiers qui sont effectivement compilés
 2. Vérifiez que le code est compilé en mode debug (`CONFIG+=debug` dans qmake)
 3. Essayez de placer un point d'arrêt au tout début de la fonction `main()`
-4. Utilisez le script `debug.sh` qui configure correctement LLDB pour l'architecture ARM64
+4. Utilisez le script `scripts/debug.sh` qui configure correctement LLDB pour l'architecture ARM64
 
 ### Le débogueur s'arrête mais les contrôles pas à pas ne fonctionnent pas
 
@@ -134,19 +134,19 @@ Pour déboguer efficacement une application Qt:
 Si vous utilisez un Mac avec puce Apple Silicon (M1, M2, etc.), vous pourriez rencontrer des problèmes avec le débogueur:
 
 1. **Mauvaise détection d'architecture**: VSCode peut incorrectement détecter l'architecture comme x86_64 au lieu d'ARM64
-   - Solution: Utilisez le script `debug_enhanced.sh` qui définit explicitement l'architecture ARM64
+   - Solution: Utilisez le script `scripts/debug_enhanced.sh` qui définit explicitement l'architecture ARM64
 
 2. **Points d'arrêt non activés**: Les points d'arrêt peuvent être ajoutés mais ne pas s'activer
-   - Solution: Utilisez les commandes LLDB directement dans le terminal avec `./debug_enhanced.sh`
+   - Solution: Utilisez les commandes LLDB directement dans le terminal avec `scripts/debug_enhanced.sh`
    - Vérifiez que les points d'arrêt sont bien définis avec `breakpoint list` dans LLDB
 
 3. **Problèmes de chargement des symboles**: Les symboles de débogage peuvent ne pas être correctement chargés
-   - Solution: Recompilez le projet avec `./build.sh` puis utilisez `./debug_enhanced.sh`
+   - Solution: Recompilez le projet avec `scripts/build.sh` puis utilisez `scripts/debug_enhanced.sh`
 
 4. **Pas de surbrillance dans les fichiers source**: Le débogueur s'arrête mais ne met pas en surbrillance la ligne courante
-   - Solution: Utilisez le script `debug_config.sh` pour générer une configuration LLDB qui aide à localiser les fichiers source
+   - Solution: Utilisez le script `scripts/debug_config.sh` pour générer une configuration LLDB qui aide à localiser les fichiers source
    - Exécutez VSCode depuis le terminal dans le répertoire du projet: `open -a 'Visual Studio Code' .`
-   - Utilisez le script `debug_enhanced.sh` qui utilise cette configuration
+   - Utilisez le script `scripts/debug_enhanced.sh` qui utilise cette configuration
 
 ### Configuration avancée du débogage
 
@@ -154,15 +154,15 @@ Pour résoudre les problèmes de localisation des fichiers source et de surbrill
 
 1. **Générer une configuration LLDB**:
    ```bash
-   ./debug_config.sh
+   scripts/debug_config.sh
    ```
    Ce script crée:
    - Un fichier `.lldbinit` avec des paramètres pour aider LLDB à localiser les fichiers source
-   - Un script `debug_enhanced.sh` qui utilise cette configuration
+   - Un script `scripts/debug_enhanced.sh` qui utilise cette configuration
 
 2. **Utiliser le script de débogage amélioré**:
    ```bash
-   ./debug_enhanced.sh
+   scripts/debug_enhanced.sh
    ```
    Ce script:
    - Charge la configuration LLDB

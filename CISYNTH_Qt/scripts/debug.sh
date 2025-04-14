@@ -1,11 +1,15 @@
 #!/bin/bash
 
 # Script pour déboguer l'application SpectroGen avec LLDB
+# Mis à jour pour la nouvelle structure de dossiers
+
+# Aller au répertoire racine du projet
+cd "$(dirname "$0")/.." || exit 1
 
 # Vérifier si l'exécutable existe
 if [ ! -f "SpectroGen.app/Contents/MacOS/SpectroGen" ]; then
     echo "Erreur: L'exécutable n'existe pas."
-    echo "Veuillez d'abord compiler le projet avec ./build.sh"
+    echo "Veuillez d'abord compiler le projet avec scripts/build.sh"
     exit 1
 fi
 
@@ -47,7 +51,7 @@ echo "  bt              - Afficher la pile d'appels"
 echo "  frame variable  - Afficher les variables locales"
 echo "  q ou quit       - Quitter le débogueur"
 echo ""
-echo "Pour plus d'informations consultez DEBUGGING.md"
+echo "Pour plus d'informations consultez doc/dev/DEBUGGING.md"
 echo ""
 
 # Lancer LLDB avec le fichier de commandes
