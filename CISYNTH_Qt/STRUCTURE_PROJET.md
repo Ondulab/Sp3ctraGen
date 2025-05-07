@@ -1,1 +1,0 @@
-doc/STRUCTURE_PROJET.md

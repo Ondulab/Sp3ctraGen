@@ -1,1 +1,0 @@
-doc/dev/Charte_Graphique_SpectroGen.md
