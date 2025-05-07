@@ -1,1 +1,0 @@
-doc/dev/README_CHARTE_GRAPHIQUE.md

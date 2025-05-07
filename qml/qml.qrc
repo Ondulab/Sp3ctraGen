@@ -1,0 +1,11 @@
+<RCC>
+    <qresource prefix="/">
+        <file>main.qml</file>
+        <file>minimal_main.qml</file>
+        <file>main_with_preview.qml</file>
+        <file>simple_preview.qml</file>
+    </qresource>
+    <qresource prefix="/fonts">
+        <file alias="Orbitron-Regular.ttf">../fonts/Orbitron-Regular.ttf</file>
+    </qresource>
+</RCC>
