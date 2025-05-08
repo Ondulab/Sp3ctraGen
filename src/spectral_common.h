@@ -10,6 +10,7 @@
 #include <sndfile.h>
 #include <time.h>
 #include "../include/spectral_generator.h"
+#include "../include/SharedConstants.h"
 
 /* ---------------------------------------------------------------------
    Fallback macros: if a configuration value is zero (or not valid),
@@ -19,56 +20,22 @@
 #define DEFAULT_DBL(cfgVal, defaultVal)    (((cfgVal) > 0.0) ? (cfgVal) : (defaultVal))
 #define DEFAULT_BOOL(cfgVal, defaultVal)   (((cfgVal) == 0 || (cfgVal) == 1) ? (cfgVal) : (defaultVal))
 #define DEFAULT_STR(cfgVal, defaultVal)    (((cfgVal) != NULL && (cfgVal)[0] != '\0') ? (cfgVal) : (defaultVal))
-#define PIXELS_TO_CM                       0.00317   // Conversion cm en pixels à 800 DPI: 1 cm = 315 pixels, donc 1 pixel = 0.00317 cm
-
-/* -------------------------- */
-/* Default parameters         */
-/* -------------------------- */
-#define DEFAULT_DURATION        4.0
-#define DEFAULT_SAMPLE_RATE     192000
-#define DEFAULT_FFT_SIZE        8192
-#define DEFAULT_OVERLAP         0.85
-#define DEFAULT_MIN_FREQ        65
-#define DEFAULT_MAX_FREQ        16640.0
-
-/* Default file paths for debugging */
-#define DEFAULT_INPUT_FILE      "/Users/zhonx/Documents/Workspaces/Workspace_Xcode/CISYNTH_App/sample.wav"
-#define DEFAULT_OUTPUT_FOLDER   "/Users/zhonx/Downloads"
-#define DEFAULT_OUTPUT_FILE     "/Users/zhonx/Downloads/spectrogram.png"
-#define DEFAULT_PDF_OUTPUT      "/Users/zhonx/Downloads/spectrogram.pdf"
 
 /* Page dimensions in pixels at 800 DPI */
-#define A4_WIDTH               6613.0
-#define A4_HEIGHT              9354.0
-#define A3_WIDTH               13228.0
-#define A3_HEIGHT              9354.0
+#define A4_WIDTH               (A4_WIDTH_MM * MM_TO_PIXELS)
+#define A4_HEIGHT              (A4_HEIGHT_MM * MM_TO_PIXELS)
+#define A3_WIDTH               (A3_WIDTH_MM * MM_TO_PIXELS)
+#define A3_HEIGHT              (A3_HEIGHT_MM * MM_TO_PIXELS)
 #define TOP_MARGIN             1600.0
-#define DEFAULT_BOTTOM_MARGIN  1600.0
-#define DEFAULT_SPECTRO_HEIGHT 5334.0
-
-/* Page dimensions in millimeters */
-#define A4_WIDTH_MM            210.0
-#define A4_HEIGHT_MM           297.0
-#define A3_WIDTH_MM            420.0
-#define A3_HEIGHT_MM           297.0
-
-/* Conversion factors */
-#define MM_TO_PIXELS           31.5    // Conversion mm en pixels à 800 DPI (800/25.4)
-#define MM_TO_POINTS           2.83    // Conversion mm en points (72/25.4)
-#define POINTS_PER_INCH        72.0    // PDF utilise 72 points par pouce
+#define DEFAULT_BOTTOM_MARGIN  (DEFAULT_BOTTOM_MARGIN_MM * MM_TO_PIXELS)
+#define DEFAULT_SPECTRO_HEIGHT (DEFAULT_SPECTRO_HEIGHT_MM * MM_TO_PIXELS)
 
 /* Image processing parameters */
 #define USE_LOG_AMPLITUDE      1
 #define USE_LOG_FREQUENCY      1
-#define DYNAMIC_RANGE_DB       60.0
-#define GAMMA_CORRECTION       0.8
-#define ENABLE_DITHERING       0
-#define CONTRAST_FACTOR        1.9
 #define SCALE_FACTOR           1.0
 #define ENABLE_BLUR            0
 #define BLUR_RADIUS            5
-#define ENABLE_HIGH_BOOST      1
-#define HIGH_BOOST_ALPHA       0.99
 
 /* FFT-related options */
 #define USE_ZERO_PADDING         1    /* Use zero-padding solution */

@@ -7,6 +7,8 @@
 #include "../include/VisualizationFactory.h"
 #include "../include/TaskManager.h"
 #include "../include/Constants.h"
+#include "../include/QmlConstants.h"
+#include "../include/PathManager.h"
 #include <QDebug>
 
 int main(int argc, char *argv[])
@@ -27,6 +29,14 @@ int main(int argc, char *argv[])
     // Enregistrer nos types C++ pour QML
     qmlRegisterType<SpectrogramGenerator>("com.spectrogen.backend", 1, 0, "SpectrogramGenerator");
     qmlRegisterType<WaveformProvider>("com.spectrogen.backend", 1, 0, "WaveformProvider");
+    
+    // Enregistrer la classe QmlConstants comme singleton
+    qmlRegisterSingletonType<QmlConstants>("com.spectrogen.constants", 1, 0, "Constants",
+        [](QQmlEngine *engine, QJSEngine *scriptEngine) -> QObject * {
+            Q_UNUSED(engine)
+            Q_UNUSED(scriptEngine)
+            return new QmlConstants();
+        });
 
     QQmlApplicationEngine engine;
     

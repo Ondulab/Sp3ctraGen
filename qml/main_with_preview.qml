@@ -543,7 +543,8 @@ ApplicationWindow {
                                     spectroHeightField.getValue(),
                                     writingSpeedField.getValue(),
                                     inputFileField.text,
-                                    outputFolderField.text
+                                    outputFolderField.text,
+                                    normalizationToggle.checked
                                 )
                             }
                         }
@@ -992,6 +993,12 @@ ApplicationWindow {
                                 id: ditheringToggle
                                 visible: false
                                 property bool checked: false
+                            }
+                            
+                            Item {
+                                id: normalizationToggle
+                                visible: false
+                                property bool checked: true
                             }
                             
                             Item {

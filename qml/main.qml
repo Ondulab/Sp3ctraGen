@@ -432,8 +432,61 @@ ApplicationWindow {
                                 horizontalAlignment: Text.AlignHCenter
                             }
 
-                            Label { 
-                                text: "Enable Dithering:" 
+                            Label {
+                                text: "Enable Normalization:"
+                                font.family: orbitronFont.name
+                                color: primaryTextColor
+                            }
+                            Item {
+                                id: normalizationToggle
+                                Layout.preferredWidth: window.isSmall ? 120 : 80
+                                Layout.preferredHeight: 30
+                                Layout.fillWidth: window.isSmall
+                                
+                                property bool checked: true
+                                
+                                Rectangle {
+                                    id: normalizationBackground
+                                    anchors.fill: parent
+                                    radius: height / 2
+                                    color: "transparent"
+                                    border.width: 1
+                                    border.color: toggleBorderColor
+                                    
+                                    Rectangle {
+                                        id: normalizationIndicator
+                                        width: parent.width / 2
+                                        height: parent.height - 4
+                                        radius: height / 2
+                                        x: normalizationToggle.checked ? parent.width - width - 2 : 2
+                                        y: 2
+                                        color: normalizationToggle.checked ? toggleActiveColor : toggleInactiveColor
+                                        
+                                        Behavior on x {
+                                            NumberAnimation {
+                                                duration: animationDuration
+                                                easing.type: Easing.InOutQuad
+                                            }
+                                        }
+                                        
+                                        Behavior on color {
+                                            ColorAnimation {
+                                                duration: animationDuration
+                                            }
+                                        }
+                                    }
+                                }
+                                
+                                MouseArea {
+                                    anchors.fill: parent
+                                    onClicked: {
+                                        normalizationToggle.checked = !normalizationToggle.checked
+                                    }
+                                }
+                            }
+                            
+                            Label {
+                                text: "Enable Dithering:"
                                 font.family: orbitronFont.name
                                 color: primaryTextColor
                             }
@@ -1060,7 +1113,7 @@ ApplicationWindow {
                             
                             Button {
                                 id: generateFromSegmentButton
-                                text: "Preview Segment"
+                                text: "Generate Spectrogram"
                                 font.family: orbitronFont.name
                                 
                                 onClicked: {
@@ -1258,7 +1311,7 @@ ApplicationWindow {
                         // Afficher un message si aucune prévisualisation n'est disponible
                         Text {
                             anchors.centerIn: parent
-                            text: "Use 'Preview Segment' to generate a preview"
+                            text: "Use 'Generate Spectrogram' to generate a preview"
                             color: fieldText
                             font.family: orbitronFont.name
                             visible: !previewImageLoader.active || generator.previewCounter === 0

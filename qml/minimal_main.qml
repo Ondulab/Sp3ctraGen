@@ -3,6 +3,8 @@ import QtQuick.Controls 2.15
 import QtQuick.Layouts 1.15
 import QtQuick.Dialogs 1.3
 import com.spectrogen.backend 1.0
+import com.spectrogen.constants 1.0
+import "./components"
 
 ApplicationWindow {
     id: window
@@ -24,29 +26,29 @@ ApplicationWindow {
     property bool showPreview: width >= 800
     
     // Style properties
-    property color primaryTextColor: "#D4AF37"
-    property color fieldBackground: "#333"
-    property color fieldText: "#BBB"
-    property color buttonBackground: "#555"
-    property color buttonText: "#000"
-    property color buttonHoverBackground: "#333"
-    property color buttonHoverText: "#FFF"
-    property color borderColor: "#D4AF37"
-    property color toggleBorderColor: "#555"
-    property color toggleActiveColor: "#D4AF37"
-    property color toggleInactiveColor: "#555"
-    property color separatorColor: "#444"
-    property color successColor: "#4CAF50"
-    property color errorColor: "#F44336"
-    property int spacing: 10
-    property int margin: 20
-    property int padding: 10
-    property int borderRadius: 8
-    property int borderWidth: 1
-    property int titleFontSize: 20
-    property int labelFontSize: 16
-    property int textFontSize: 14
-    property int animationDuration: 200
+    property color primaryTextColor: Constants.primaryTextColor
+    property color fieldBackground: Constants.fieldBackground
+    property color fieldText: Constants.fieldText
+    property color buttonBackground: Constants.buttonBackground
+    property color buttonText: Constants.buttonText
+    property color buttonHoverBackground: Constants.buttonHoverBackground
+    property color buttonHoverText: Constants.buttonHoverText
+    property color borderColor: Constants.borderColor
+    property color toggleBorderColor: Constants.toggleBorderColor
+    property color toggleActiveColor: Constants.toggleActiveColor
+    property color toggleInactiveColor: Constants.toggleInactiveColor
+    property color separatorColor: Constants.separatorColor
+    property color successColor: Constants.successColor
+    property color errorColor: Constants.errorColor
+    property int spacing: Constants.spacing
+    property int margin: Constants.margin
+    property int padding: Constants.padding
+    property int borderRadius: Constants.borderRadius
+    property int borderWidth: Constants.borderWidth
+    property int titleFontSize: Constants.titleFontSize
+    property int labelFontSize: Constants.labelFontSize
+    property int textFontSize: Constants.textFontSize
+    property int animationDuration: Constants.animationDuration
     
     // C++ backend reference
     SpectrogramGenerator {
@@ -113,76 +115,111 @@ ApplicationWindow {
                 }
                 
                 // Champs cachés pour les paramètres
-                Item {
+                // Champs cachés pour les paramètres
+                ValidatedTextField {
                     id: fftSizeField
                     visible: false
-                    property string text: "8192"
+                    defaultValue: Constants.defaultFftSize.toString()
+                    isNumeric: true
+                    allowDecimals: false
                 }
                 
-                Item {
+                ValidatedTextField {
                     id: overlapField
                     visible: false
-                    property string text: "0.85"
+                    defaultValue: Constants.defaultOverlap.toString()
+                    isNumeric: true
+                    allowDecimals: true
+                    minValue: 0.0
+                    maxValue: 0.99
                 }
                 
-                Item {
+                ValidatedTextField {
                     id: minFreqField
                     visible: false
-                    property string text: "65"
+                    defaultValue: Constants.defaultMinFreq.toString()
+                    isNumeric: true
+                    allowDecimals: true
+                    minValue: 20.0
                 }
                 
-                Item {
+                ValidatedTextField {
                     id: maxFreqField
                     visible: false
-                    property string text: "16640"
+                    defaultValue: Constants.defaultMaxFreq.toString()
+                    isNumeric: true
+                    allowDecimals: true
+                    minValue: 100.0
                 }
                 
-                Item {
+                ValidatedTextField {
                     id: durationField
                     visible: false
-                    property string text: "4.0"
+                    defaultValue: Constants.defaultDuration.toString()
+                    isNumeric: true
+                    allowDecimals: true
+                    minValue: 0.1
                 }
                 
-                Item {
+                ValidatedTextField {
                     id: sampleRateField
                     visible: false
-                    property string text: "192000"
+                    defaultValue: Constants.defaultSampleRate.toString()
+                    isNumeric: true
+                    allowDecimals: false
+                    minValue: 8000
                 }
                 
-                Item {
+                ValidatedTextField {
                     id: dynamicRangeField
                     visible: false
-                    property string text: "60.0"
+                    defaultValue: Constants.defaultDynamicRange.toString()
+                    isNumeric: true
+                    allowDecimals: true
+                    minValue: 20.0
+                    maxValue: 120.0
                 }
                 
-                Item {
+                ValidatedTextField {
                     id: gammaCorrectionField
                     visible: false
-                    property string text: "0.8"
+                    defaultValue: Constants.defaultGammaCorrection.toString()
+                    isNumeric: true
+                    allowDecimals: true
+                    minValue: 0.1
+                    maxValue: 2.0
                 }
                 
                 Item {
                     id: ditheringToggle
                     visible: false
-                    property bool checked: false
+                    property bool checked: Constants.defaultEnableDithering
                 }
                 
-                Item {
+                ValidatedTextField {
                     id: contrastFactorField
                     visible: false
-                    property string text: "1.9"
+                    defaultValue: Constants.defaultContrastFactor.toString()
+                    isNumeric: true
+                    allowDecimals: true
+                    minValue: 0.1
+                    maxValue: 5.0
                 }
                 
                 Item {
                     id: highBoostToggle
                     visible: false
-                    property bool checked: true
+                    property bool checked: Constants.defaultEnableHighBoost
                 }
                 
-                Item {
+                ValidatedTextField {
                     id: highBoostAlphaField
                     visible: false
-                    property string text: "0.99"
+                    defaultValue: Constants.defaultHighBoostAlpha.toString()
+                    isNumeric: true
+                    allowDecimals: true
+                    minValue: 0.0
+                    maxValue: 1.0
                 }
                 
                 Item {
@@ -191,34 +228,31 @@ ApplicationWindow {
                     property int currentIndex: 0
                 }
                 
-                Item {
+                ValidatedTextField {
                     id: bottomMarginField
                     visible: false
-                    property string text: "50.0"
-                    
-                    function getValue() {
-                        return parseFloat(text);
-                    }
+                    defaultValue: "50.0"
+                    isNumeric: true
+                    allowDecimals: true
+                    minValue: 0.0
                 }
                 
-                Item {
+                ValidatedTextField {
                     id: spectroHeightField
                     visible: false
-                    property string text: "216.7"
-                    
-                    function getValue() {
-                        return parseFloat(text);
-                    }
+                    defaultValue: "216.7"
+                    isNumeric: true
+                    allowDecimals: true
+                    minValue: 50.0
                 }
                 
-                Item {
+                ValidatedTextField {
                     id: writingSpeedField
                     visible: false
-                    property string text: "8.0"
-                    
-                    function getValue() {
-                        return parseFloat(text);
-                    }
+                    defaultValue: "8.0"
+                    isNumeric: true
+                    allowDecimals: true
+                    minValue: 0.1
                 }
                 
                 Item {
@@ -239,341 +273,44 @@ ApplicationWindow {
                     spacing: window.spacing
                     
                     // Bouton Refresh Preview
-                    Button {
+                    AnimatedButton {
                         id: refreshPreviewButton
                         text: "Refresh Preview"
-                        font.family: orbitronFont.name
-                        font.pixelSize: labelFontSize
+                        successText: "Preview Updated!"
+                        processingText: "Processing..."
                         Layout.preferredWidth: 180
                         
-                        property bool isAnimating: false
-                        property bool isProcessing: false
-                        property string originalText: "Refresh Preview"
-                        property string successText: "Preview Updated!"
-                        property string processingText: "Processing..."
-                        property string buttonState: "normal" // "normal", "processing", "success", "error"
-                        
-                        // Timer pour retarder le démarrage du traitement après l'animation de clic
-                        Timer {
-                            id: previewClickDelayTimer
-                            interval: 150
-                            repeat: false
-                            onTriggered: {
-                                // Démarrer l'animation de traitement
-                                refreshPreviewButton.startProcessingAnimation()
-                                
-                                // Appeler la fonction de génération de prévisualisation
-                                generator.generatePreview(
-                                    parseInt(fftSizeField.text),
-                                    parseFloat(overlapField.text),
-                                    parseFloat(minFreqField.text),
-                                    parseFloat(maxFreqField.text),
-                                    parseFloat(durationField.text),
-                                    parseInt(sampleRateField.text),
-                                    parseFloat(dynamicRangeField.text),
-                                    parseFloat(gammaCorrectionField.text),
-                                    ditheringToggle.checked,
-                                    parseFloat(contrastFactorField.text),
-                                    highBoostToggle.checked,
-                                    parseFloat(highBoostAlphaField.text),
-                                    pageFormatCombo.currentIndex,
-                                    bottomMarginField.getValue(),
-                                    spectroHeightField.getValue(),
-                                    writingSpeedField.getValue(),
-                                    inputFileField.text
-                                )
-                            }
-                        }
-                        
-                        function startSuccessAnimation() {
-                            isAnimating = true
-                            isProcessing = false
-                            buttonState = "success"
-                            previewProgressIndicator.running = false
-                            previewProgressIndicator.visible = false
-                            
-                            // Changer immédiatement le texte
-                            text = successText
-                            
-                            // Animation de succès sobre
-                            previewSuccessAnimation.start()
-                            
-                            // Timer pour revenir à l'état normal
-                            previewResetTimer.start()
-                        }
-                        
-                        function startProcessingAnimation() {
-                            isProcessing = true
-                            buttonState = "processing"
-                            text = processingText
-                            previewProgressIndicator.visible = true
-                            previewProgressIndicator.running = true
-                            background.opacity = 0.7 // Réduire l'opacité du fond pour mettre en évidence l'indicateur
-                        }
-                        
-                        function stopProcessingAnimation() {
-                            isProcessing = false
-                            previewProgressIndicator.running = false
-                            previewProgressIndicator.visible = false
-                            background.opacity = 1.0
-                        }
-                        
-                        function resetState() {
-                            buttonState = "normal"
-                            text = originalText
-                            isAnimating = false
-                            isProcessing = false
-                            scale = 1.0
-                            background.color = buttonBackground
-                            background.opacity = 1.0
-                        }
-                        
-                        Timer {
-                            id: previewResetTimer
-                            interval: 1500
-                            onTriggered: {
-                                // Animation de retour à l'état normal
-                                previewReturnToNormalAnimation.start()
-                            }
-                        }
-                        
-                        // Indicateur de progression circulaire
-                        BusyIndicator {
-                            id: previewProgressIndicator
-                            anchors.centerIn: parent
-                            width: parent.width * 0.8
-                            height: width
-                            running: false
-                            visible: false
-                            
-                            // Style personnalisé pour l'indicateur
-                            contentItem: Item {
-                                implicitWidth: 64
-                                implicitHeight: 64
-                                
-                                Rectangle {
-                                    id: previewItem
-                                    anchors.centerIn: parent
-                                    width: parent.width
-                                    height: width
-                                    radius: width / 2
-                                    color: "transparent"
-                                    border.width: width * 0.1
-                                    border.color: primaryTextColor
-                                    opacity: 0.0
-                                    
-                                    RotationAnimation {
-                                        target: previewItem
-                                        running: previewProgressIndicator.running
-                                        from: 0
-                                        to: 360
-                                        duration: 1500
-                                        loops: Animation.Infinite
-                                    }
-                                    
-                                    // Animation d'apparition
-                                    NumberAnimation {
-                                        target: previewItem
-                                        property: "opacity"
-                                        from: 0.0
-                                        to: 0.8
-                                        duration: 300
-                                        running: previewProgressIndicator.running
-                                    }
-                                }
-                            }
-                        }
-                        
-                        // Animation de succès sobre
-                        SequentialAnimation {
-                            id: previewSuccessAnimation
-                            
-                            ParallelAnimation {
-                                // Changement de couleur vers la couleur de succès
-                                ColorAnimation {
-                                    target: refreshPreviewButton.background
-                                    property: "color"
-                                    to: successColor
-                                    duration: 200
-                                }
-                                
-                                // Légère augmentation de taille pour attirer l'attention
-                                NumberAnimation {
-                                    target: refreshPreviewButton
-                                    property: "scale"
-                                    to: 1.05
-                                    duration: 200
-                                    easing.type: Easing.OutBack
-                                }
-                            }
-                        }
-                        
-                        // Animation de retour à l'état normal
-                        SequentialAnimation {
-                            id: previewReturnToNormalAnimation
-                            
-                            ParallelAnimation {
-                                // Retour à la couleur normale
-                                ColorAnimation {
-                                    target: refreshPreviewButton.background
-                                    property: "color"
-                                    to: buttonBackground
-                                    duration: 300
-                                }
-                                
-                                // Retour à la taille normale
-                                NumberAnimation {
-                                    target: refreshPreviewButton
-                                    property: "scale"
-                                    to: 1.0
-                                    duration: 300
-                                    easing.type: Easing.InOutQuad
-                                }
-                            }
-                            
-                            // Réinitialisation des propriétés
-                            ScriptAction {
-                                script: {
-                                    refreshPreviewButton.resetState();
-                                }
-                            }
-                        }
-                        
-                        // Animation de clic améliorée avec retour visuel immédiat
-                        SequentialAnimation {
-                            id: previewClickAnimation
-                            alwaysRunToEnd: true
-                            
-                            ParallelAnimation {
-                                // Animation de réduction d'échelle
-                                NumberAnimation {
-                                    target: refreshPreviewButton
-                                    property: "scale"
-                                    from: 1.0
-                                    to: 0.92
-                                    duration: 100
-                                    easing.type: Easing.OutQuad
-                                }
-                                
-                                // Animation de couleur pour un feedback visuel plus fort
-                                ColorAnimation {
-                                    target: refreshPreviewButton.background
-                                    property: "color"
-                                    to: Qt.darker(buttonBackground, 1.3)
-                                    duration: 100
-                                }
-                            }
-                            
-                            ParallelAnimation {
-                                // Retour à l'état normal ou transition vers l'état de traitement
-                                NumberAnimation {
-                                    target: refreshPreviewButton
-                                    property: "scale"
-                                    from: 0.92
-                                    to: 1.0
-                                    duration: 150
-                                    easing.type: Easing.OutBack
-                                    easing.overshoot: 1.5
-                                }
-                            }
-                        }
-                        
-                        contentItem: Item {
-                            implicitWidth: previewButtonText.implicitWidth
-                            implicitHeight: previewButtonText.implicitHeight
-                            
-                            Text {
-                                id: previewButtonText
-                                anchors.centerIn: parent
-                                text: parent.parent.text
-                                font.family: orbitronFont.name
-                                font.pixelSize: labelFontSize
-                                color: parent.parent.hovered || parent.parent.isAnimating || parent.parent.isProcessing ? buttonHoverText : buttonText
-                                horizontalAlignment: Text.AlignHCenter
-                                verticalAlignment: Text.AlignVCenter
-                                
-                                Behavior on opacity {
-                                    NumberAnimation { duration: 150 }
-                                }
-                            }
-                        }
-                        
-                        background: Rectangle {
-                            color: parent.hovered && !parent.isProcessing ? buttonHoverBackground : buttonBackground
-                            radius: borderRadius
-                            implicitHeight: 40
-                            
-                            // Effet de lueur pour l'état de succès
-                            Rectangle {
-                                id: previewGlowEffect
-                                anchors.fill: parent
-                                anchors.margins: -4
-                                radius: parent.radius + 4
-                                color: "transparent"
-                                border.width: 2
-                                border.color: successColor
-                                opacity: 0
-                                
-                                // Animation de pulsation pour l'effet de lueur
-                                SequentialAnimation {
-                                    running: refreshPreviewButton.buttonState === "success"
-                                    loops: 1
-                                    
-                                    NumberAnimation {
-                                        target: previewGlowEffect
-                                        property: "opacity"
-                                        from: 0
-                                        to: 0.8
-                                        duration: 300
-                                        easing.type: Easing.OutCubic
-                                    }
-                                    
-                                    NumberAnimation {
-                                        target: previewGlowEffect
-                                        property: "opacity"
-                                        from: 0.8
-                                        to: 0
-                                        duration: 800
-                                        easing.type: Easing.InCubic
-                                    }
-                                }
-                            }
-                            
-                            Behavior on color {
-                                ColorAnimation { 
-                                    duration: animationDuration
-                                }
-                            }
-                            
-                            Behavior on opacity {
-                                NumberAnimation { 
-                                    duration: animationDuration
-                                }
-                            }
-                        }
-                        
-                        onClicked: {
-                            // Vérifier si le bouton n'est pas déjà en cours de traitement
-                            if (buttonState === "processing") return
-                            
-                            // Animation de clic avec retour visuel immédiat
-                            previewClickAnimation.start()
-                            
-                            // Démarrer le timer pour retarder le démarrage du traitement
-                            previewClickDelayTimer.start()
+                        // Connecter le signal processingStarted à la fonction de génération
+                        onProcessingStarted: {
+                            generator.generatePreview(
+                                parseInt(fftSizeField.text),
+                                parseFloat(overlapField.text),
+                                parseFloat(minFreqField.text),
+                                parseFloat(maxFreqField.text),
+                                parseFloat(durationField.text),
+                                parseInt(sampleRateField.text),
+                                parseFloat(dynamicRangeField.text),
+                                parseFloat(gammaCorrectionField.text),
+                                ditheringToggle.checked,
+                                parseFloat(contrastFactorField.text),
+                                highBoostToggle.checked,
+                                parseFloat(highBoostAlphaField.text),
+                                pageFormatCombo.currentIndex,
+                                bottomMarginField.getValue(),
+                                spectroHeightField.getValue(),
+                                writingSpeedField.getValue(),
+                                inputFileField.text
+                            )
                         }
                     }
                     
                     // Generate button (simplifié)
-                    Button {
+                    AnimatedButton {
                         id: generateButton
                         text: "Generate Spectrogram"
-                        font.family: orbitronFont.name
-                        font.pixelSize: labelFontSize
+                        successText: "Spectrogram Generated!"
+                        processingText: "Generating..."
                         Layout.preferredWidth: 180
-                        
-                        function startSuccessAnimation() {}
-                        function stopProcessingAnimation() {}
                     }
                 }
                 

@@ -33,8 +33,8 @@ int spectral_generator_impl(const SpectrogramSettings *cfg,
     double  highBoostAlpha  = DEFAULT_DBL(s.highBoostAlpha, HIGH_BOOST_ALPHA);
     
     /* Use default paths if input/output files are not specified */
-    const char* inputFilePath = DEFAULT_STR(inputFile, DEFAULT_INPUT_FILE);
-    const char* outputFilePath = DEFAULT_STR(outputFile, DEFAULT_OUTPUT_FILE);
+    const char* inputFilePath = DEFAULT_STR(inputFile, DEFAULT_INPUT_FILENAME);
+    const char* outputFilePath = DEFAULT_STR(outputFile, DEFAULT_OUTPUT_FILENAME);
 
     // Si une vitesse d'écriture est spécifiée, calculer la durée en fonction de la vitesse
     // Mais on ne modifie pas la durée si l'utilisateur a explicitement fourni une valeur
@@ -80,8 +80,13 @@ int spectral_generator_impl(const SpectrogramSettings *cfg,
     int total_samples = 0;
     double *signal = NULL;
     
+    // Récupérer le paramètre de normalisation
+    int enableNormalization = DEFAULT_BOOL(s.enableNormalization, 1);
+    
     printf(" - Loading WAV file with duration: %.2f seconds\n", s.duration);
-    if (load_wav_file(inputFilePath, &signal, &total_samples, &sample_rate, s.duration) != 0) {
+    printf(" - Normalization: %s\n", enableNormalization ? "enabled" : "disabled");
+    
+    if (load_wav_file(inputFilePath, &signal, &total_samples, &sample_rate, s.duration, enableNormalization) != 0) {
         fprintf(stderr, "Error: Unable to load WAV file.\n");
         return EXIT_FAILURE;
     }

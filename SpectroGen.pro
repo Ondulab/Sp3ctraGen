@@ -45,7 +45,10 @@ SOURCES += \
     src/RasterVisualizationStrategy.cpp \
     src/VectorVisualizationStrategy.cpp \
     src/VisualizationFactory.cpp \
-    src/TaskManager.cpp
+    src/TaskManager.cpp \
+    src/VisualizationStrategy.cpp \
+    src/QmlConstants.cpp \
+    src/PathManager.cpp
 
 # Fichiers d'en-tête
 HEADERS += \
@@ -59,12 +62,15 @@ HEADERS += \
     include/vectorprintprovider.h \
     include/SpectrogramSettingsCpp.h \
     include/Constants.h \
+    include/SharedConstants.h \
     include/FileManager.h \
     include/VisualizationStrategy.h \
     include/RasterVisualizationStrategy.h \
     include/VectorVisualizationStrategy.h \
     include/VisualizationFactory.h \
-    include/TaskManager.h
+    include/TaskManager.h \
+    include/QmlConstants.h \
+    include/PathManager.h
 
 # Chemins d'inclusion
 INCLUDEPATH += $$PWD/include

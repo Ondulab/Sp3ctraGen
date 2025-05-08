@@ -2,6 +2,7 @@
 #define CONSTANTS_H
 
 #include <QString>
+#include "SharedConstants.h"
 
 /**
  * @brief Espace de noms pour les constantes centralisées
@@ -11,37 +12,38 @@
  */
 namespace Constants {
     // Paramètres audio par défaut
-    constexpr int DEFAULT_FFT_SIZE = 8192;
-    constexpr double DEFAULT_OVERLAP = 0.85;
-    constexpr double DEFAULT_MIN_FREQ = 65.0;
-    constexpr double DEFAULT_MAX_FREQ = 16640.0;
-    constexpr double DEFAULT_DURATION = 4.0;
-    constexpr int DEFAULT_SAMPLE_RATE = 192000;
-    constexpr double DYNAMIC_RANGE_DB = 60.0;
-    constexpr double GAMMA_CORRECTION = 0.8;
-    constexpr bool ENABLE_DITHERING = false;
-    constexpr double CONTRAST_FACTOR = 1.9;
-    constexpr bool ENABLE_HIGH_BOOST = true;
-    constexpr double HIGH_BOOST_ALPHA = 0.99;
+    constexpr int FFT_SIZE = DEFAULT_FFT_SIZE;
+    constexpr double OVERLAP = DEFAULT_OVERLAP;
+    constexpr double MIN_FREQ = DEFAULT_MIN_FREQ;
+    constexpr double MAX_FREQ = DEFAULT_MAX_FREQ;
+    constexpr double DURATION = DEFAULT_DURATION;
+    constexpr int SAMPLE_RATE = DEFAULT_SAMPLE_RATE;
+    constexpr double DYNAMIC_RANGE = DYNAMIC_RANGE_DB;
+    constexpr double GAMMA = GAMMA_CORRECTION;
+    constexpr bool DITHERING = (ENABLE_DITHERING != 0);
+    constexpr double CONTRAST = CONTRAST_FACTOR;
+    constexpr bool HIGH_BOOST = (ENABLE_HIGH_BOOST != 0);
+    constexpr double HIGH_BOOST_ALPHA_VAL = HIGH_BOOST_ALPHA;
     
     // Formats de page
     constexpr int PAGE_FORMAT_A4_PORTRAIT = 0;
     constexpr int PAGE_FORMAT_A3_LANDSCAPE = 1;
     
     // Dimensions de page en millimètres
-    constexpr double A4_WIDTH_MM = 210.0;
-    constexpr double A4_HEIGHT_MM = 297.0;
-    constexpr double A3_WIDTH_MM = 420.0;
-    constexpr double A3_HEIGHT_MM = 297.0;
+    constexpr double A4_WIDTH = A4_WIDTH_MM;
+    constexpr double A4_HEIGHT = A4_HEIGHT_MM;
+    constexpr double A3_WIDTH = A3_WIDTH_MM;
+    constexpr double A3_HEIGHT = A3_HEIGHT_MM;
     
     // Facteurs de conversion
-    constexpr double MM_TO_PIXELS = 31.5;    // 800 DPI / 25.4 mm/inch
-    constexpr double MM_TO_POINTS = 2.83;    // 72 DPI / 25.4 mm/inch
-    constexpr double POINTS_PER_INCH = 72.0;
+    constexpr double MM_TO_PX = MM_TO_PIXELS;
+    constexpr double MM_TO_PT = MM_TO_POINTS;
+    constexpr double POINTS_PER_IN = POINTS_PER_INCH;
+    constexpr double PX_TO_CM = PIXELS_TO_CM;
     
     // Marges par défaut
-    constexpr double DEFAULT_BOTTOM_MARGIN_MM = 50.8;  // ~2 inches
-    constexpr double DEFAULT_SPECTRO_HEIGHT_MM = 169.3; // ~6.7 inches
+    constexpr double BOTTOM_MARGIN = DEFAULT_BOTTOM_MARGIN_MM;
+    constexpr double SPECTRO_HEIGHT = DEFAULT_SPECTRO_HEIGHT_MM;
     
     // Couleurs de l'interface utilisateur
     const QString PRIMARY_COLOR = "#D4AF37";  // Or
@@ -61,10 +63,10 @@ namespace Constants {
     const QString ERROR_COLOR = "#F44336";
     
     // Chemins par défaut (à remplacer par des chemins relatifs ou configurables)
-    const QString DEFAULT_INPUT_FILE = "sample.wav";
-    const QString DEFAULT_OUTPUT_FOLDER = ".";
-    const QString DEFAULT_OUTPUT_FILE = "spectrogram.png";
-    const QString DEFAULT_PDF_OUTPUT = "spectrogram.pdf";
+    const QString DEFAULT_INPUT_FILE = DEFAULT_INPUT_FILENAME;
+    const QString DEFAULT_OUTPUT_FOLDER_PATH = DEFAULT_OUTPUT_FOLDER;
+    const QString DEFAULT_OUTPUT_FILE = DEFAULT_OUTPUT_FILENAME;
+    const QString DEFAULT_PDF_OUTPUT = DEFAULT_PDF_FILENAME;
 }
 
 #endif // CONSTANTS_H

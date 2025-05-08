@@ -39,8 +39,8 @@ int spectral_generator_vector_pdf_impl(const SpectrogramSettings *cfg,
     double  contrastFactor = DEFAULT_DBL(s.contrastFactor, CONTRAST_FACTOR);
     
     /* Use default paths if input/output files are not specified */
-    const char* inputFilePath = DEFAULT_STR(inputFile, DEFAULT_INPUT_FILE);
-    const char* outputFilePath = DEFAULT_STR(outputFile, DEFAULT_PDF_OUTPUT);
+    const char* inputFilePath = DEFAULT_STR(inputFile, DEFAULT_INPUT_FILENAME);
+    const char* outputFilePath = DEFAULT_STR(outputFile, DEFAULT_PDF_FILENAME);
     
     /* Validate DPI */
     if (dpi <= 0) {
@@ -95,8 +95,13 @@ int spectral_generator_vector_pdf_impl(const SpectrogramSettings *cfg,
         printf(" - Calculated duration based on writing speed: %.2f seconds\n", duration);
     }
     
+    // Récupérer le paramètre de normalisation
+    int enableNormalization = DEFAULT_BOOL(s.enableNormalization, 1);
+    
     printf(" - Loading WAV file with duration: %.2f seconds\n", s.duration);
-    if (load_wav_file(inputFilePath, &signal, &total_samples, &sample_rate, s.duration) != 0) {
+    printf(" - Normalization: %s\n", enableNormalization ? "enabled" : "disabled");
+    
+    if (load_wav_file(inputFilePath, &signal, &total_samples, &sample_rate, s.duration, enableNormalization) != 0) {
         fprintf(stderr, "Error: Unable to load WAV file.\n");
         return EXIT_FAILURE;
     }

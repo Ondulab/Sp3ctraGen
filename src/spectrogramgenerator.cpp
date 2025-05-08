@@ -54,7 +54,8 @@ void SpectrogramGenerator::generateSpectrogram(
     double writingSpeed,
     const QString &inputFile,
     const QString &outputFolder,
-    const QString &visualizationType)
+    const QString &visualizationType,
+    bool enableNormalization)
 {
     // Créer les paramètres
     SpectrogramSettingsCpp settings = createSettings(
@@ -62,7 +63,8 @@ void SpectrogramGenerator::generateSpectrogram(
         dynamicRangeDB, gammaCorrection, enableDithering, contrastFactor,
         enableHighBoost, highBoostAlpha, enableHighPassFilter,
         highPassCutoffFreq, highPassFilterOrder, pageFormat,
-        bottomMarginMM, spectroHeightMM, writingSpeed
+        bottomMarginMM, spectroHeightMM, writingSpeed,
+        enableNormalization
     );
     
     // Valider le fichier d'entrée
@@ -366,7 +368,8 @@ SpectrogramSettingsCpp SpectrogramGenerator::createSettings(
     int pageFormat,
     double bottomMarginMM,
     double spectroHeightMM,
-    double writingSpeed)
+    double writingSpeed,
+    bool enableNormalization)
 {
     SpectrogramSettingsCpp settings;
     settings.initFromQmlParameters(
@@ -374,7 +377,8 @@ SpectrogramSettingsCpp SpectrogramGenerator::createSettings(
         dynamicRangeDB, gammaCorrection, enableDithering, contrastFactor,
         enableHighBoost, highBoostAlpha, enableHighPassFilter,
         highPassCutoffFreq, highPassFilterOrder, pageFormat,
-        bottomMarginMM, spectroHeightMM, writingSpeed
+        bottomMarginMM, spectroHeightMM, writingSpeed,
+        enableNormalization
     );
     return settings;
 }

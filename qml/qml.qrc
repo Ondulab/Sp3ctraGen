@@ -5,6 +5,8 @@
         <file>main_with_preview.qml</file>
         <file>simple_preview.qml</file>
         <file>AudioWaveform.qml</file>
+        <file>components/AnimatedButton.qml</file>
+        <file>components/ValidatedTextField.qml</file>
     </qresource>
     <qresource prefix="/fonts">
         <file alias="Orbitron-Regular.ttf">../fonts/Orbitron-Regular.ttf</file>
