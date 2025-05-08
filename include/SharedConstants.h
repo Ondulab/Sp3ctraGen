@@ -33,7 +33,7 @@ extern "C" {
 
 // Marges par défaut
 #define DEFAULT_BOTTOM_MARGIN_MM 50.8
-#define DEFAULT_SPECTRO_HEIGHT_MM 169.3
+#define DEFAULT_SPECTRO_HEIGHT_MM 216.7
 
 // Chemins par défaut
 #define DEFAULT_INPUT_FILENAME  "sample.wav"
