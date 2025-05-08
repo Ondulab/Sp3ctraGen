@@ -4,11 +4,8 @@
 #include <QPainter>
 #include <QPageLayout>
 #include <QProcess>
-
-// Forward declarations for QtPrintSupport classes
-namespace QtPrintSupport {
-    class QPrinter;
-}
+#include <QtPrintSupport/QPrinter>
+#include <QtPrintSupport/QPrintDialog>
 
 PreviewImageProvider::PreviewImageProvider()
     : QQuickImageProvider(QQuickImageProvider::Image)
@@ -156,4 +153,58 @@ bool PreviewImageProvider::saveOriginalImage(const QString &filePath, const QStr
     }
     
     return success;
+}
+
+bool PreviewImageProvider::printImage() const
+{
+    if (m_originalImage.isNull()) {
+        qDebug() << "ERROR: Cannot print null image";
+        return false;
+    }
+    
+    // Créer une imprimante avec résolution élevée
+    QPrinter printer(QPrinter::HighResolution);
+    
+    // Configurer la résolution à 800 DPI
+    printer.setResolution(800);
+    
+    // Créer la boîte de dialogue d'impression avec toutes les options
+    QPrintDialog printDialog(&printer);
+    
+    // Activer toutes les options, y compris la mise à l'échelle
+    printDialog.setOption(QPrintDialog::PrintToFile, true);
+    printDialog.setOption(QPrintDialog::PrintSelection, true);
+    printDialog.setOption(QPrintDialog::PrintPageRange, true);
+    printDialog.setOption(QPrintDialog::PrintShowPageSize, true);
+    printDialog.setOption(QPrintDialog::PrintCollateCopies, true);
+    
+    // Afficher la boîte de dialogue
+    if (printDialog.exec() != QDialog::Accepted) {
+        return false;
+    }
+    
+    // Imprimer l'image en haute résolution
+    QPainter painter(&printer);
+    
+    // Calculer le rectangle d'impression pour conserver le ratio
+    QRect rect = painter.viewport();
+    QSize size = m_originalImage.size();
+    size.scale(rect.size(), Qt::KeepAspectRatio);
+    
+    // Centrer l'image sur la page
+    painter.setViewport(rect.x(), rect.y(), size.width(), size.height());
+    painter.setWindow(m_originalImage.rect());
+    
+    // Dessiner l'image avec la plus haute qualité
+    painter.setRenderHint(QPainter::SmoothPixmapTransform, true);
+    painter.setRenderHint(QPainter::Antialiasing, true);
+    painter.setRenderHint(QPainter::TextAntialiasing, true);
+    painter.setRenderHint(QPainter::HighQualityAntialiasing, true);
+    
+    // Dessiner l'image
+    painter.drawImage(0, 0, m_originalImage);
+    
+    qDebug() << "Printing image at 800 DPI, size:" << m_originalImage.width() << "x" << m_originalImage.height();
+    
+    return true;
 }

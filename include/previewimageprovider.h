@@ -18,6 +18,9 @@ public:
     // Méthode pour sauvegarder l'image originale dans un fichier
     bool saveOriginalImage(const QString &filePath, const QString &format = "png") const;
     
+    // Méthode pour imprimer l'image originale en haute résolution
+    Q_INVOKABLE bool printImage() const;
+    
     // Méthode de débogage pour vérifier l'état de l'image
     void debugImageState() {
         qDebug() << "PreviewImageProvider::debugImageState";

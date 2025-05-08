@@ -1403,7 +1403,39 @@ ApplicationWindow {
                             radius: borderRadius / 2
                             
                             Behavior on color {
-                                ColorAnimation { 
+                                ColorAnimation {
+                                    duration: animationDuration
+                                }
+                            }
+                        }
+                    }
+                    
+                    // Bouton pour imprimer la prévisualisation
+                    Button {
+                        id: printButton
+                        text: "Imprimer"
+                        font.family: orbitronFont.name
+                        enabled: generator.previewCounter > 0
+                        
+                        onClicked: {
+                            // Appeler la méthode d'impression du générateur
+                            generator.printPreview();
+                        }
+                        
+                        contentItem: Text {
+                            text: parent.text
+                            font.family: orbitronFont.name
+                            color: parent.hovered ? window.buttonHoverText : window.buttonText
+                            horizontalAlignment: Text.AlignHCenter
+                            verticalAlignment: Text.AlignVCenter
+                        }
+                        
+                        background: Rectangle {
+                            color: parent.hovered ? buttonHoverBackground : buttonBackground
+                            radius: borderRadius / 2
+                            
+                            Behavior on color {
+                                ColorAnimation {
                                     duration: animationDuration
                                 }
                             }

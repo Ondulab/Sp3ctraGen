@@ -1,4 +1,4 @@
-#include <QGuiApplication>
+#include <QtWidgets/QApplication>
 #include <QQmlApplicationEngine>
 #include <QQmlContext>
 #include "../include/spectrogramgenerator.h"
@@ -16,7 +16,7 @@ int main(int argc, char *argv[])
 #if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
     QCoreApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
 #endif
-    QGuiApplication app(argc, argv);
+    QApplication app(argc, argv);
     
     // Initialiser les singletons
     VisualizationFactory::getInstance();

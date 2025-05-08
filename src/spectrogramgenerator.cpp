@@ -521,3 +521,17 @@ void SpectrogramGenerator::runSegmentPreviewGeneration(
     
     qDebug() << "Génération de la prévisualisation du segment terminée avec le résultat:" << (result == EXIT_SUCCESS ? "SUCCÈS" : "ÉCHEC");
 }
+
+bool SpectrogramGenerator::printPreview()
+{
+    qDebug() << "SpectrogramGenerator::printPreview - Impression de la prévisualisation actuelle";
+    
+    // Vérifier que le fournisseur d'images est disponible
+    if (!s_previewProvider) {
+        qWarning() << "Fournisseur d'images non disponible!";
+        return false;
+    }
+    
+    // Appeler la méthode d'impression du fournisseur d'images
+    return s_previewProvider->printImage();
+}
