@@ -82,18 +82,41 @@ Pour des instructions détaillées sur le débogage, consultez le fichier [doc/d
 - `src/`: Fichiers source C/C++
 - `include/`: Fichiers d'en-tête C/C++
 - `qml/`: Fichiers QML pour l'interface utilisateur
+  - `components/`: Composants QML réutilisables
 - `scripts/`: Scripts utilitaires pour la compilation, l'exécution et le débogage
 - `build/`: Fichiers générés lors de la compilation
 - `doc/`: Documentation du projet
 - `assets/`: Ressources non-code
 - `config/`: Fichiers de configuration
 
+## Architecture
+
+L'architecture du projet est basée sur une séparation claire entre:
+
+1. **Interface utilisateur** (QML)
+   - Interface principale et composants réutilisables
+   - Constantes exposées via `QmlConstants`
+
+2. **Logique métier** (C++)
+   - `SpectrogramGenerator` (classe intermédiaire)
+   - Stratégies de visualisation (`VisualizationStrategy`, `RasterVisualizationStrategy`, `VectorVisualizationStrategy`)
+   - Gestionnaires (`FileManager`, `PathManager`, `TaskManager`)
+
+3. **Moteur de traitement** (C)
+   - `spectral_generator.c` (moteur principal)
+   - `spectral_fft.c` (traitement FFT)
+   - `spectral_raster.c` et `spectral_vector.c` (génération d'images)
+
+Pour une description détaillée de l'architecture, consultez le fichier [doc/SpectrogramGenerator_Specification.md](SpectrogramGenerator_Specification.md) et [doc/dev/ARCHITECTURE.md](dev/ARCHITECTURE.md).
+
 ## Fonctionnalités
 
 - Configuration des paramètres du spectrogramme
 - Sélection des fichiers d'entrée/sortie
-- Génération de spectrogrammes haute qualité
+- Génération de spectrogrammes haute qualité (raster PNG et vectoriel PDF)
 - Traitement multithreadé
+- Interface utilisateur réactive avec composants réutilisables
+- Prévisualisation du spectrogramme
 
 ## Remarques sur le portage
 
@@ -103,6 +126,7 @@ Cette application est un portage de l'application CISYNTH_App originale dévelop
 2. Créant une classe C++ pour faire le pont entre QML et le code C existant
 3. Intégrant le code C existant sans modification
 4. Ajoutant un système de threading pour éviter de bloquer l'interface
+5. Implémentant le pattern Strategy pour les différentes visualisations
 
 ## Dépannage
 
@@ -165,3 +189,11 @@ Si vous rencontrez des problèmes avec le débogage pas à pas:
    - Redémarrer le débogueur
 
 5. Pour les Mac avec Apple Silicon (M1, M2, etc.), consultez la section spécifique dans `doc/dev/DEBUGGING.md`
+
+## Documentation
+
+- [SpectrogramGenerator_Specification.md](SpectrogramGenerator_Specification.md): Spécification détaillée du générateur de spectrogramme
+- [STRUCTURE_PROJET.md](STRUCTURE_PROJET.md): Description de la structure du projet
+- [dev/ARCHITECTURE.md](dev/ARCHITECTURE.md): Description de l'architecture du projet
+- [dev/DEBUGGING.md](dev/DEBUGGING.md): Guide de débogage
+- [dev/Charte_Graphique_SpectroGen.md](dev/Charte_Graphique_SpectroGen.md): Charte graphique de l'application
