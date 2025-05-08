@@ -6,13 +6,33 @@
 
 ## 2. Architecture du Système de Génération de Spectrogramme
 
-L'architecture du système comprend plusieurs composants:
-- Interface utilisateur QT (qml/main.qml)
-- SpectrogramGenerator (classe C++ intermédiaire - spectrogramgenerator.cpp)
-- spectral_generator.c (moteur de traitement C)
-- Bibliothèques: FFTW3 (FFT), libsndfile (lecture audio), Cairo (rendu graphique)
+L'architecture du système comprend plusieurs composants organisés en trois couches distinctes:
 
-L'interaction entre ces composants permet une séparation claire entre l'interface utilisateur, la logique de traitement intermédiaire et le moteur de traitement du signal.
+### 2.1. Vue d'ensemble des couches
+
+1. **Interface utilisateur** (QML)
+   - Interface principale (`main.qml`, `minimal_main.qml`)
+   - Composants réutilisables (`AnimatedButton.qml`, `ValidatedTextField.qml`)
+   - Constantes exposées via `QmlConstants`
+
+2. **Logique métier** (C++)
+   - `SpectrogramGenerator` (classe C++ intermédiaire)
+   - Stratégies de visualisation (`VisualizationStrategy`, `RasterVisualizationStrategy`, `VectorVisualizationStrategy`)
+   - Gestionnaires (`FileManager`, `PathManager`, `TaskManager`)
+
+3. **Moteur de traitement** (C)
+   - `spectral_generator.c` (moteur principal)
+   - `spectral_fft.c` (traitement FFT)
+   - `spectral_raster.c` et `spectral_vector.c` (génération d'images)
+   - Bibliothèques: FFTW3 (FFT), libsndfile (lecture audio), Cairo (rendu graphique)
+
+### 2.2. Patterns de conception utilisés
+
+- **Pattern Strategy**: Utilisé pour encapsuler différentes implémentations de génération de spectrogrammes (raster, vectoriel)
+- **Pattern Template Method**: Utilisé dans la classe `VisualizationStrategy` pour définir le squelette de l'algorithme de génération
+- **Pattern Singleton**: Utilisé pour les classes utilitaires comme `QmlConstants` et `PathManager`
+
+L'interaction entre ces composants permet une séparation claire entre l'interface utilisateur, la logique de traitement intermédiaire et le moteur de traitement du signal, facilitant la maintenance et l'extension du système.
 
 ## 3. Paramètres par Défaut et Valeurs Clés
 
@@ -35,6 +55,11 @@ D'après l'analyse du code, les valeurs par défaut optimales dans la version QT
 | bottomMarginMM | 50.0 | mm | Marge inférieure |
 | spectroHeightMM | 216.7 | mm | Hauteur du spectrogramme |
 | writingSpeed | 8.0 | cm/s | Vitesse d'écriture |
+
+Ces constantes sont maintenant centralisées dans le fichier `SharedConstants.h` et accessibles via:
+- Le namespace `Constants` en C++
+- Le singleton `Constants` en QML
+- Les macros directes en C
 
 ## 4. Processus de Génération du Spectrogramme
 
@@ -236,10 +261,10 @@ Une des améliorations majeures est le calcul dynamique de la durée audio affic
    ```
    Cette représentation logarithmique des fréquences est essentielle pour une représentation perceptuellement correcte.
 
-2. **Résolution**: La résolution est fixée à 300 DPI, une valeur qui offre un bon compromis entre qualité d'image et taille de fichier:
+2. **Résolution**: La résolution est fixée à 800 DPI, une valeur qui offre un bon compromis entre qualité d'image et taille de fichier:
    ```c
-   // Définitions de formats de page (en pixels à 300 DPI)
-   #define A4_WIDTH               2480.0  // 210mm à 300 DPI
+   // Définitions de formats de page (en pixels à 800 DPI)
+   #define A4_WIDTH               6615.0  // 210mm à 800 DPI
    ```
    Cette résolution est suffisante pour l'impression de haute qualité et la numérisation.
 
@@ -276,14 +301,30 @@ Pour qu'un spectrogramme soit lisible par un scanner après impression, les cara
 
 4. **Dimensions Physiques Précises**: Le système utilise des constantes de conversion précises pour maintenir les dimensions physiques correctes:
    ```c
-   #define PIXELS_TO_CM           0.00847   // 1 pixel = 0.00847 cm à 300 DPI
-   #define MM_TO_PIXELS           11.81     // 1 mm = 11.81 pixels à 300 DPI
+   #define PIXELS_TO_CM           0.00317   // 1 pixel = 0.00317 cm à 800 DPI
+   #define MM_TO_PIXELS           31.5      // 1 mm = 31.5 pixels à 800 DPI
    ```
    Ces constantes assurent que les dimensions du spectrogramme imprimé correspondent exactement aux spécifications.
 
 5. **Filtrage des Hautes Fréquences**: L'amplification des hautes fréquences est cruciale pour la numérisation car elle améliore la détection des composantes à haute fréquence qui pourraient être atténuées par le processus d'impression et de numérisation.
 
-## 6. Contraintes Importantes pour la Version JUCE
+## 6. Stratégies de Visualisation
+
+Le système utilise le pattern Strategy pour encapsuler différentes implémentations de génération de spectrogrammes:
+
+1. **Stratégie Raster (PNG)**:
+   - Utilise Cairo pour générer des images PNG à 800 DPI
+   - Optimisée pour l'impression et la numérisation
+   - Supporte les formats A4 portrait et A3 paysage
+
+2. **Stratégie Vectorielle (PDF)**:
+   - Génère des fichiers PDF vectoriels
+   - Permet une mise à l'échelle sans perte de qualité
+   - Supporte différentes résolutions (DPI)
+
+Ces stratégies partagent une interface commune définie dans la classe abstraite `VisualizationStrategy`, ce qui permet d'ajouter facilement de nouveaux formats de sortie sans modifier le code existant.
+
+## 7. Contraintes Importantes pour la Version JUCE
 
 Pour assurer une compatibilité parfaite avec la version QT, la version JUCE doit:
 
@@ -306,7 +347,7 @@ Pour assurer une compatibilité parfaite avec la version QT, la version JUCE doi
 
 8. **Chargement complet du fichier audio**: Charger toujours l'intégralité du fichier audio indépendamment de la durée qui sera effectivement visible.
 
-## 7. Conclusion
+## 8. Conclusion
 
 La génération d'un spectrogramme optimal pour l'impression et la lecture par scanner repose sur plusieurs éléments clés implémentés dans le code existant:
 
@@ -320,3 +361,19 @@ La génération d'un spectrogramme optimal pour l'impression et la lecture par s
 8. Un traitement optimisé du contraste pour la numérisation
 
 Ces paramètres et méthodes de traitement constituent la base pour obtenir un spectrogramme de qualité compatible avec les besoins d'impression et de numérisation. La version JUCE devra respecter scrupuleusement ces spécifications pour garantir la compatibilité avec la version QT existante.
+
+## 9. Améliorations Apportées par la Refactorisation
+
+La refactorisation du projet a apporté plusieurs améliorations significatives:
+
+1. **Centralisation des constantes**: Toutes les constantes sont maintenant définies dans un seul endroit (`SharedConstants.h`), éliminant la duplication et les incohérences potentielles.
+
+2. **Architecture modulaire**: L'utilisation du pattern Strategy permet d'ajouter facilement de nouveaux formats de sortie sans modifier le code existant.
+
+3. **Composants réutilisables**: Les composants QML réutilisables (`AnimatedButton`, `ValidatedTextField`) améliorent la cohérence de l'interface utilisateur et réduisent la duplication de code.
+
+4. **Gestion améliorée des chemins**: La classe `PathManager` élimine les chemins codés en dur et fournit une gestion cohérente des chemins de fichiers.
+
+5. **Documentation améliorée**: La documentation a été mise à jour pour refléter l'architecture actuelle et fournir des guides pour les développeurs.
+
+Ces améliorations rendent le code plus robuste, plus maintenable et plus facile à étendre avec de nouvelles fonctionnalités à l'avenir.
