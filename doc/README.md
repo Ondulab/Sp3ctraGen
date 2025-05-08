@@ -117,6 +117,7 @@ Pour une description détaillée de l'architecture, consultez le fichier [doc/Sp
 - Traitement multithreadé
 - Interface utilisateur réactive avec composants réutilisables
 - Prévisualisation du spectrogramme
+- Impression directe des spectrogrammes en haute résolution (800 DPI)
 
 ## Remarques sur le portage
 
