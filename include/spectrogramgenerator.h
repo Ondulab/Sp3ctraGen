@@ -193,6 +193,13 @@ public:
     Q_INVOKABLE void saveCurrentPreview(const QString &outputFolder, const QString &format = "png");
     
     /**
+     * @brief Imprime l'image de prévisualisation actuelle
+     *
+     * @return true si l'impression a réussi, false sinon
+     */
+    Q_INVOKABLE bool printPreview();
+    
+    /**
      * @brief Obtient la liste des types de visualisation disponibles
      * 
      * @return Liste des types de visualisation
