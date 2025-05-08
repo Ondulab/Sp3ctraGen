@@ -6,6 +6,7 @@
 #include <QUrl>
 #include <QQmlEngine>
 #include <QImage>
+#include <QByteArray>
 #include "spectral_generator.h"
 
 // Déclaration anticipée
@@ -36,6 +37,9 @@ public:
         double contrastFactor,
         bool enableHighBoost,
         double highBoostAlpha,
+        bool enableHighPassFilter,
+        double highPassCutoffFreq,
+        int highPassFilterOrder,
         int pageFormat,
         double bottomMarginMM,
         double spectroHeightMM,
@@ -57,16 +61,48 @@ public:
         double contrastFactor,
         bool enableHighBoost,
         double highBoostAlpha,
+        bool enableHighPassFilter,
+        double highPassCutoffFreq,
+        int highPassFilterOrder,
         int pageFormat,
         double bottomMarginMM,
         double spectroHeightMM,
         double writingSpeed,
         const QString &inputFile
     );
+    
+    // Nouvelle méthode pour générer un spectrogramme à partir d'un segment audio
+    Q_INVOKABLE void generateSpectrogramFromSegment(
+        int fftSize,
+        double overlap,
+        double minFreq,
+        double maxFreq,
+        double segmentDuration,
+        int sampleRate,
+        double dynamicRangeDB,
+        double gammaCorrection,
+        bool enableDithering,
+        double contrastFactor,
+        bool enableHighBoost,
+        double highBoostAlpha,
+        bool enableHighPassFilter,
+        double highPassCutoffFreq,
+        int highPassFilterOrder,
+        int pageFormat,
+        double bottomMarginMM,
+        double spectroHeightMM,
+        double writingSpeed,
+        const QByteArray &audioSegment
+    );
+    
+    // Méthode pour sauvegarder directement l'image de prévisualisation
+    Q_INVOKABLE void saveCurrentPreview(const QString &outputFolder, const QString &format = "png");
 
 signals:
     void spectrogramGenerated(bool success, const QString &outputPath, const QString &errorMessage = "");
     void previewGenerated(bool success, const QImage &previewImage, const QString &errorMessage = "");
+    void segmentPreviewGenerated(bool success, const QImage &previewImage, const QString &errorMessage = "");
+    void previewSaved(bool success, const QString &outputPath, const QString &format, const QString &errorMessage = "");
 
 private:
     // Méthode privée pour exécuter la génération dans un thread séparé
@@ -80,6 +116,12 @@ private:
     void runPreviewGeneration(
         const SpectrogramSettings &settings,
         const QString &inputFile
+    );
+    
+    // Méthode privée pour générer une prévisualisation à partir d'un segment audio
+    void runSegmentPreviewGeneration(
+        const SpectrogramSettings &settings,
+        const QByteArray &audioSegment
     );
     
     // Image de prévisualisation

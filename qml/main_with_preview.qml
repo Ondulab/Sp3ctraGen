@@ -199,6 +199,9 @@ ApplicationWindow {
                                     parseFloat(contrastFactorField.text),
                                     highBoostToggle.checked,
                                     parseFloat(highBoostAlphaField.text),
+                                    false, // enableHighPassFilter (désactivé par défaut)
+                                    100.0, // highPassCutoffFreq (valeur par défaut)
+                                    2,     // highPassFilterOrder (valeur par défaut)
                                     pageFormatCombo.currentIndex,
                                     bottomMarginField.getValue(),
                                     spectroHeightField.getValue(),
@@ -532,6 +535,9 @@ ApplicationWindow {
                                     parseFloat(contrastFactorField.text),
                                     highBoostToggle.checked,
                                     parseFloat(highBoostAlphaField.text),
+                                    false, // enableHighPassFilter (désactivé par défaut)
+                                    100.0, // highPassCutoffFreq (valeur par défaut)
+                                    2,     // highPassFilterOrder (valeur par défaut)
                                     pageFormatCombo.currentIndex,
                                     bottomMarginField.getValue(),
                                     spectroHeightField.getValue(),

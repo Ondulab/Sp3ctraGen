@@ -3,6 +3,7 @@
 #include <QQmlContext>
 #include "../include/spectrogramgenerator.h"
 #include "../include/previewimageprovider.h"
+#include "../include/waveformprovider.h"
 
 int main(int argc, char *argv[])
 {
@@ -11,8 +12,9 @@ int main(int argc, char *argv[])
 #endif
     QGuiApplication app(argc, argv);
 
-    // Enregistrer notre type C++ pour QML
+    // Enregistrer nos types C++ pour QML
     qmlRegisterType<SpectrogramGenerator>("com.spectrogen.backend", 1, 0, "SpectrogramGenerator");
+    qmlRegisterType<WaveformProvider>("com.spectrogen.backend", 1, 0, "WaveformProvider");
 
     QQmlApplicationEngine engine;
     

@@ -135,11 +135,42 @@ ApplicationWindow {
                             true,    // enableHighBoost
                             0.99,    // highBoostAlpha
                             0,       // pageFormat
-                            50.0,    // bottomMarginMM
-                            216.7,   // spectroHeightMM
+                            50.0,    // bottomMarginMM - 50mm est correct en tant que valeur physique
+                            169.5,   // spectroHeightMM - ajusté pour mieux s'adapter à l'écran avec 800 DPI
                             8.0,     // writingSpeed
                             ""       // inputFile (utilise le chemin par défaut)
                         )
+                    }
+                }
+                
+                // Bouton Save Preview
+                Button {
+                    id: savePreviewButton
+                    text: "Save Preview"
+                    font.family: orbitronFont.name
+                    font.pixelSize: labelFontSize
+                    Layout.alignment: Qt.AlignHCenter
+                    Layout.preferredWidth: 180
+                    Layout.topMargin: 10
+                    
+                    background: Rectangle {
+                        color: parent.hovered ? buttonHoverBackground : buttonBackground
+                        radius: borderRadius
+                        implicitHeight: 40
+                    }
+                    
+                    contentItem: Text {
+                        text: parent.text
+                        font.family: orbitronFont.name
+                        font.pixelSize: labelFontSize
+                        color: parent.hovered ? buttonHoverText : buttonText
+                        horizontalAlignment: Text.AlignHCenter
+                        verticalAlignment: Text.AlignVCenter
+                    }
+                    
+                    onClicked: {
+                        // Sauvegarder la prévisualisation
+                        generator.saveCurrentPreview("", "png");
                     }
                 }
                 
