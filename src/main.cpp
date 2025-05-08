@@ -4,6 +4,10 @@
 #include "../include/spectrogramgenerator.h"
 #include "../include/previewimageprovider.h"
 #include "../include/waveformprovider.h"
+#include "../include/VisualizationFactory.h"
+#include "../include/TaskManager.h"
+#include "../include/Constants.h"
+#include <QDebug>
 
 int main(int argc, char *argv[])
 {
@@ -11,6 +15,14 @@ int main(int argc, char *argv[])
     QCoreApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
 #endif
     QGuiApplication app(argc, argv);
+    
+    // Initialiser les singletons
+    VisualizationFactory::getInstance();
+    TaskManager::getInstance();
+    
+    qDebug() << "Initialisation de l'application SpectroGen";
+    qDebug() << "Types de visualisation disponibles:" << VisualizationFactory::getInstance()->getAvailableStrategyNames();
+    qDebug() << "Extensions supportées:" << VisualizationFactory::getInstance()->getSupportedExtensions();
 
     // Enregistrer nos types C++ pour QML
     qmlRegisterType<SpectrogramGenerator>("com.spectrogen.backend", 1, 0, "SpectrogramGenerator");
@@ -34,6 +46,16 @@ int main(int argc, char *argv[])
         if (!obj && url == objUrl)
             QCoreApplication::exit(-1);
     }, Qt::QueuedConnection);
+    
+    // Nettoyer les ressources lors de la fermeture de l'application
+    QObject::connect(&app, &QGuiApplication::aboutToQuit, []() {
+        qDebug() << "Nettoyage des ressources...";
+        
+        // Annuler toutes les tâches en cours
+        TaskManager::getInstance()->cancelAllTasks();
+        
+        qDebug() << "Nettoyage terminé";
+    });
     
     engine.load(url);
 
