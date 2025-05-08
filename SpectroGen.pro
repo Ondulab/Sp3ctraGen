@@ -39,7 +39,13 @@ SOURCES += \
     src/spectral_vector.c \
     src/previewimageprovider.cpp \
     src/waveformprovider.cpp \
-    src/vectorprintprovider.cpp
+    src/vectorprintprovider.cpp \
+    src/SpectrogramSettingsCpp.cpp \
+    src/FileManager.cpp \
+    src/RasterVisualizationStrategy.cpp \
+    src/VectorVisualizationStrategy.cpp \
+    src/VisualizationFactory.cpp \
+    src/TaskManager.cpp
 
 # Fichiers d'en-tête
 HEADERS += \
@@ -50,7 +56,15 @@ HEADERS += \
     src/spectral_fft.h \
     include/previewimageprovider.h \
     include/waveformprovider.h \
-    include/vectorprintprovider.h
+    include/vectorprintprovider.h \
+    include/SpectrogramSettingsCpp.h \
+    include/Constants.h \
+    include/FileManager.h \
+    include/VisualizationStrategy.h \
+    include/RasterVisualizationStrategy.h \
+    include/VectorVisualizationStrategy.h \
+    include/VisualizationFactory.h \
+    include/TaskManager.h
 
 # Chemins d'inclusion
 INCLUDEPATH += $$PWD/include
