@@ -3,7 +3,7 @@
 ###############################################################################
 
 # Configuration Qt
-QT += quick
+QT += quick printsupport
 
 # Configuration du projet
 CONFIG += c++17
@@ -33,13 +33,24 @@ SOURCES += \
     src/main.cpp \
     src/spectrogramgenerator.cpp \
     src/spectral_generator.c \
-    src/previewimageprovider.cpp
+    src/spectral_wav_processing.c \
+    src/spectral_fft.c \
+    src/spectral_raster.c \
+    src/spectral_vector.c \
+    src/previewimageprovider.cpp \
+    src/waveformprovider.cpp \
+    src/vectorprintprovider.cpp
 
 # Fichiers d'en-tête
 HEADERS += \
     include/spectrogramgenerator.h \
     include/spectral_generator.h \
-    include/previewimageprovider.h
+    src/spectral_common.h \
+    src/spectral_wav_processing.h \
+    src/spectral_fft.h \
+    include/previewimageprovider.h \
+    include/waveformprovider.h \
+    include/vectorprintprovider.h
 
 # Chemins d'inclusion
 INCLUDEPATH += $$PWD/include

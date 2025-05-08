@@ -4,6 +4,7 @@
         <file>minimal_main.qml</file>
         <file>main_with_preview.qml</file>
         <file>simple_preview.qml</file>
+        <file>AudioWaveform.qml</file>
     </qresource>
     <qresource prefix="/fonts">
         <file alias="Orbitron-Regular.ttf">../fonts/Orbitron-Regular.ttf</file>

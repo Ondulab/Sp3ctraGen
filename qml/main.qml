@@ -58,7 +58,7 @@ ApplicationWindow {
     minimumWidth: 800
     minimumHeight: 600
 
-    // C++ backend reference
+    // C++ backend references
     SpectrogramGenerator {
         id: generator
         onSpectrogramGenerated: {
@@ -83,9 +83,6 @@ ApplicationWindow {
         onPreviewGenerated: {
             console.log("Signal previewGenerated received: success=" + success + ", errorMessage=" + errorMessage);
             
-            // Arrêter l'animation de traitement
-            refreshPreviewButton.stopProcessingAnimation()
-            
             if (success) {
                 // Incrémenter le compteur pour forcer un nouveau chargement
                 previewCounter++;
@@ -98,10 +95,87 @@ ApplicationWindow {
                 
                 previewStatusText.text = "Preview updated"
                 previewStatusText.color = successColor
-                refreshPreviewButton.startSuccessAnimation()
             } else {
                 previewStatusText.text = "Error generating preview: " + errorMessage
                 previewStatusText.color = errorColor
+            }
+        }
+        
+        // Gestionnaire pour la prévisualisation du segment
+        onSegmentPreviewGenerated: {
+            console.log("Signal segmentPreviewGenerated received: success=" + success + ", errorMessage=" + errorMessage);
+            
+            if (success) {
+                // Incrémenter le compteur pour forcer un nouveau chargement
+                previewCounter++;
+                
+                // Forcer le rechargement de l'image avec un identifiant unique
+                previewImageLoader.active = false;  // Désactiver le loader pour détruire l'image
+                
+                // Utiliser un timer pour laisser le temps au loader de se désactiver
+                previewResetTimer.start();
+                
+                previewStatusText.text = "Segment preview updated"
+                previewStatusText.color = successColor
+                audioWaveformStatusText.text = "Segment preview generated successfully"
+                audioWaveformStatusText.color = successColor
+            } else {
+                previewStatusText.text = "Error generating segment preview: " + errorMessage
+                previewStatusText.color = errorColor
+                audioWaveformStatusText.text = "Error generating segment preview: " + errorMessage
+                audioWaveformStatusText.color = errorColor
+            }
+        }
+        
+        // Gestionnaire pour la sauvegarde de la prévisualisation
+        onPreviewSaved: {
+            console.log("Signal previewSaved received: success=" + success + ", outputPath=" + outputPath + ", format=" + format + ", errorMessage=" + errorMessage);
+            
+            // Réinitialiser le bouton de sauvegarde
+            savePreviewButton.isProcessing = false;
+            savePreviewButton.text = "Save Preview";
+            
+            if (success) {
+                previewStatusText.text = "Preview saved successfully as " + format.toUpperCase() + ": " + outputPath;
+                previewStatusText.color = successColor;
+            } else {
+                previewStatusText.text = "Error saving preview in " + format.toUpperCase() + " format: " + errorMessage;
+                previewStatusText.color = errorColor;
+            }
+        }
+    }
+    
+    // Fournisseur de données de forme d'onde
+    WaveformProvider {
+        id: waveformProvider
+        
+        onFileLoaded: {
+            console.log("Audio file loaded: success=" + success + ", duration=" + durationSeconds + "s, sampleRate=" + sampleRate);
+            
+            if (success) {
+                // Get waveform data for display
+                var waveformWidth = audioWaveform.width;
+                audioWaveform.waveformData = waveformProvider.getWaveformData(waveformWidth);
+                
+                // Calculate initial segment
+                var segment = waveformProvider.calculateExtractionSegment(
+                    audioWaveform.cursorPosition,
+                    pageFormatCombo.currentIndex,
+                    writingSpeedField.getValue()
+                );
+                
+                // Update visual indicators
+                audioWaveform.segmentStart = segment.startPosition / waveformProvider.getTotalDuration();
+                audioWaveform.segmentDuration = segment.duration / waveformProvider.getTotalDuration();
+                
+                // Mettre à jour le champ sampleRateField avec la fréquence d'échantillonnage native
+                sampleRateField.text = sampleRate.toString();
+                
+                audioWaveformStatusText.text = "Audio file loaded: " + durationSeconds.toFixed(2) + " seconds at " + sampleRate + " Hz";
+                audioWaveformStatusText.color = successColor;
+            } else {
+                audioWaveformStatusText.text = "Error loading audio file";
+                audioWaveformStatusText.color = errorColor;
             }
         }
     }
@@ -158,15 +232,10 @@ ApplicationWindow {
                 width: parametersScrollView.width - 20  // Marge pour la scrollbar
                 spacing: window.spacing
 
-                // Main title
-                Label {
-                    text: "SpectroGen"
-                    font.bold: true
-                    font.pixelSize: titleFontSize
-                    font.family: orbitronFont.name
-                    color: primaryTextColor
-                    Layout.topMargin: margin
-                    Layout.alignment: Qt.AlignHCenter
+                // Espace en haut pour l'équilibre visuel
+                Item {
+                    Layout.topMargin: margin / 2
+                    Layout.preferredHeight: 1
                 }
             
                 // Parameters container with border
@@ -280,7 +349,7 @@ ApplicationWindow {
                             }
 
                             Label { 
-                                text: "Vitesse d'écriture (cm/s):" 
+                                text: "Writing Speed (cm/s):" 
                                 font.family: orbitronFont.name
                                 color: primaryTextColor
                             }
@@ -293,7 +362,7 @@ ApplicationWindow {
                                     bottom: 0.1
                                     decimals: 2
                                     notation: DoubleValidator.StandardNotation
-                                    locale: "fr_FR" // Utilisation du locale français pour accepter la virgule
+                                    locale: "en_US" // Use English locale to accept decimal point
                                 }
                                 color: fieldText
                                 font.family: orbitronFont.name
@@ -303,7 +372,7 @@ ApplicationWindow {
                                 }
                                 horizontalAlignment: Text.AlignHCenter
                                 
-                                // Fonction pour remplacer les virgules par des points lors de la conversion en nombre
+                                // Function to handle decimal separator conversion if needed
                                 function getValue() {
                                     return parseFloat(text.replace(',', '.'));
                                 }
@@ -316,24 +385,11 @@ ApplicationWindow {
                                 property string text: "4.0"
                             }
 
-                            Label { 
-                                text: "Sample Rate:" 
-                                font.family: orbitronFont.name
-                                color: primaryTextColor
-                            }
-                            TextField {
+                            // Champ caché pour maintenir la compatibilité avec le code existant
+                            Item {
                                 id: sampleRateField
-                                text: "192000"
-                                Layout.preferredWidth: window.isSmall ? 120 : 80
-                                Layout.fillWidth: window.isSmall
-                                validator: IntValidator { bottom: 1 }
-                                color: fieldText
-                                font.family: orbitronFont.name
-                                background: Rectangle {
-                                    color: fieldBackground
-                                    radius: borderRadius / 2
-                                }
-                                horizontalAlignment: Text.AlignHCenter
+                                visible: false
+                                property string text: "0" // Sera remplacé par la fréquence native du fichier
                             }
 
                             Label { 
@@ -521,6 +577,134 @@ ApplicationWindow {
                                 }
                                 horizontalAlignment: Text.AlignHCenter
                             }
+                            
+                            // Contrôles du filtre passe-haut
+                            Label { 
+                                text: "High-Pass Filter:" 
+                                font.family: orbitronFont.name
+                                color: primaryTextColor
+                            }
+                            Item {
+                                id: highPassToggle
+                                Layout.preferredWidth: window.isSmall ? 120 : 80
+                                Layout.preferredHeight: 30
+                                Layout.fillWidth: window.isSmall
+                                
+                                property bool checked: false
+                                
+                                Rectangle {
+                                    id: highPassBackground
+                                    anchors.fill: parent
+                                    radius: height / 2
+                                    color: "transparent"
+                                    border.width: 1
+                                    border.color: toggleBorderColor
+                                    
+                                    Rectangle {
+                                        id: highPassIndicator
+                                        width: parent.width / 2
+                                        height: parent.height - 4
+                                        radius: height / 2
+                                        x: highPassToggle.checked ? parent.width - width - 2 : 2
+                                        y: 2
+                                        color: highPassToggle.checked ? toggleActiveColor : toggleInactiveColor
+                                        
+                                        Behavior on x {
+                                            NumberAnimation { 
+                                                duration: animationDuration
+                                                easing.type: Easing.InOutQuad
+                                            }
+                                        }
+                                        
+                                        Behavior on color {
+                                            ColorAnimation { 
+                                                duration: animationDuration
+                                            }
+                                        }
+                                    }
+                                }
+                                
+                                MouseArea {
+                                    anchors.fill: parent
+                                    onClicked: {
+                                        highPassToggle.checked = !highPassToggle.checked
+                                    }
+                                }
+                            }
+                            
+                            Label { 
+                                text: "Cutoff Frequency (Hz):" 
+                                font.family: orbitronFont.name
+                                color: primaryTextColor
+                                enabled: highPassToggle.checked
+                            }
+                            TextField {
+                                id: highPassCutoffField
+                                text: "100"
+                                Layout.preferredWidth: window.isSmall ? 120 : 80
+                                Layout.fillWidth: window.isSmall
+                                validator: DoubleValidator { bottom: 1.0 }
+                                color: fieldText
+                                font.family: orbitronFont.name
+                                background: Rectangle {
+                                    color: fieldBackground
+                                    radius: borderRadius / 2
+                                }
+                                horizontalAlignment: Text.AlignHCenter
+                                enabled: highPassToggle.checked
+                            }
+                            
+                            Label { 
+                                text: "Filter Order (1-8):" 
+                                font.family: orbitronFont.name
+                                color: primaryTextColor
+                                enabled: highPassToggle.checked
+                            }
+                            ComboBox {
+                                id: highPassOrderCombo
+                                model: ["1", "2", "3", "4", "5", "6", "7", "8"]
+                                currentIndex: 1  // Ordre 2 par défaut
+                                Layout.preferredWidth: window.isSmall ? 120 : 80
+                                Layout.fillWidth: window.isSmall
+                                enabled: highPassToggle.checked
+                                
+                                background: Rectangle {
+                                    color: fieldBackground
+                                    radius: borderRadius / 2
+                                }
+                                
+                                contentItem: Text {
+                                    text: highPassOrderCombo.displayText
+                                    font.family: orbitronFont.name
+                                    color: fieldText
+                                    horizontalAlignment: Text.AlignHCenter
+                                    verticalAlignment: Text.AlignVCenter
+                                    elide: Text.ElideRight
+                                }
+                                
+                                popup: Popup {
+                                    y: highPassOrderCombo.height
+                                    width: highPassOrderCombo.width
+                                    implicitHeight: contentItem.implicitHeight
+                                    padding: 1
+                                    
+                                    contentItem: ListView {
+                                        clip: true
+                                        implicitHeight: contentHeight
+                                        model: highPassOrderCombo.popup.visible ? highPassOrderCombo.delegateModel : null
+                                        
+                                        ScrollBar.vertical: ScrollBar {
+                                            active: highPassOrderCombo.popup.visible
+                                        }
+                                    }
+                                    
+                                    background: Rectangle {
+                                        color: fieldBackground
+                                        border.color: borderColor
+                                        radius: borderRadius / 2
+                                    }
+                                }
+                            }
                         }
                     }
                 }
@@ -550,7 +734,7 @@ ApplicationWindow {
                         spacing: window.spacing
                         
                         Label {
-                            text: "Format de Sortie"
+                            text: "Output Format"
                             font.bold: true
                             font.pixelSize: labelFontSize
                             font.family: orbitronFont.name
@@ -564,13 +748,13 @@ ApplicationWindow {
                             rowSpacing: window.spacing / 2
                             
                             Label { 
-                                text: "Format de page:" 
+                                text: "Page Format:" 
                                 font.family: orbitronFont.name
                                 color: primaryTextColor
                             }
                             ComboBox {
                                 id: pageFormatCombo
-                                model: ["A4 Portrait", "A3 Paysage"]
+                                model: ["A4 Portrait", "A3 Landscape"]
                                 Layout.preferredWidth: window.isSmall ? 120 : 120
                                 Layout.fillWidth: window.isSmall
                                 
@@ -614,7 +798,7 @@ ApplicationWindow {
                             }
                             
                             Label { 
-                                text: "Marge inférieure (mm):" 
+                                text: "Bottom Margin (mm):" 
                                 font.family: orbitronFont.name
                                 color: primaryTextColor
                             }
@@ -627,7 +811,7 @@ ApplicationWindow {
                                     bottom: 0.0 
                                     decimals: 2
                                     notation: DoubleValidator.StandardNotation
-                                    locale: "fr_FR" // Utilisation du locale français pour accepter la virgule
+                                    locale: "en_US" // Use English locale to accept decimal point
                                 }
                                 color: fieldText
                                 font.family: orbitronFont.name
@@ -637,14 +821,14 @@ ApplicationWindow {
                                 }
                                 horizontalAlignment: Text.AlignHCenter
                                 
-                                // Fonction pour remplacer les virgules par des points lors de la conversion en nombre
+                                // Function to handle decimal separator conversion if needed
                                 function getValue() {
                                     return parseFloat(text.replace(',', '.'));
                                 }
                             }
                             
                             Label { 
-                                text: "Hauteur spectrogramme (mm):" 
+                                text: "Spectrogram Height (mm):" 
                                 font.family: orbitronFont.name
                                 color: primaryTextColor
                             }
@@ -657,7 +841,7 @@ ApplicationWindow {
                                     bottom: 0.0 
                                     decimals: 2
                                     notation: DoubleValidator.StandardNotation
-                                    locale: "fr_FR" // Utilisation du locale français pour accepter la virgule
+                                    locale: "en_US" // Use English locale to accept decimal point
                                 }
                                 color: fieldText
                                 font.family: orbitronFont.name
@@ -667,7 +851,7 @@ ApplicationWindow {
                                 }
                                 horizontalAlignment: Text.AlignHCenter
                                 
-                                // Fonction pour remplacer les virgules par des points lors de la conversion en nombre
+                                // Function to handle decimal separator conversion if needed
                                 function getValue() {
                                     return parseFloat(text.replace(',', '.'));
                                 }
@@ -701,119 +885,14 @@ ApplicationWindow {
                         spacing: window.spacing
                         
                         Label { 
-                            text: "File Selection" 
+                            text: "Output Settings" 
                             font.bold: true
                             font.pixelSize: labelFontSize
                             font.family: orbitronFont.name
                             color: primaryTextColor
                         }
                         
-                        GridLayout {
-                            columns: 2
-                            Layout.fillWidth: true
-                            
-                            Label { 
-                                text: "Input File:" 
-                                font.family: orbitronFont.name
-                                color: primaryTextColor
-                            }
-                            
-                            Item {
-                                id: useDefaultInputToggle
-                                Layout.preferredWidth: window.isSmall ? 120 : 80
-                                Layout.preferredHeight: 30
-                                
-                                property bool checked: false
-                                
-                                Rectangle {
-                                    anchors.fill: parent
-                                    radius: height / 2
-                                    color: "transparent"
-                                    border.width: 1
-                                    border.color: toggleBorderColor
-                                    
-                                    Rectangle {
-                                        width: parent.width / 2
-                                        height: parent.height - 4
-                                        radius: height / 2
-                                        x: useDefaultInputToggle.checked ? parent.width - width - 2 : 2
-                                        y: 2
-                                        color: useDefaultInputToggle.checked ? toggleActiveColor : toggleInactiveColor
-                                        
-                                        Behavior on x {
-                                            NumberAnimation { 
-                                                duration: animationDuration
-                                                easing.type: Easing.InOutQuad
-                                            }
-                                        }
-                                    }
-                                    
-                                    Text {
-                                        anchors.centerIn: parent
-                                        text: useDefaultInputToggle.checked ? "Défaut" : "Perso"
-                                        color: fieldText
-                                        font.family: orbitronFont.name
-                                        font.pixelSize: 10
-                                    }
-                                }
-                                
-                                MouseArea {
-                                    anchors.fill: parent
-                                    onClicked: {
-                                        useDefaultInputToggle.checked = !useDefaultInputToggle.checked
-                                        if (useDefaultInputToggle.checked) {
-                                            inputFileField.text = ""
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                        
-                        RowLayout {
-                            Layout.fillWidth: true
-                            spacing: window.spacing / 2
-                            
-                            TextField {
-                                id: inputFileField
-                                Layout.fillWidth: true
-                                placeholderText: useDefaultInputToggle.checked ? "Using default path" : "Choose a WAV file..."
-                                readOnly: true
-                                color: useDefaultInputToggle.checked ? Qt.darker(fieldText, 1.3) : fieldText
-                                font.family: orbitronFont.name
-                                background: Rectangle {
-                                    color: useDefaultInputToggle.checked ? Qt.darker(fieldBackground, 1.2) : fieldBackground
-                                    radius: borderRadius / 2
-                                }
-                                enabled: !useDefaultInputToggle.checked
-                            }
-                            
-                            Button {
-                                text: "Browse..."
-                                font.family: orbitronFont.name
-                                onClicked: inputFileDialog.open()
-                                enabled: !useDefaultInputToggle.checked
-                                opacity: useDefaultInputToggle.checked ? 0.5 : 1.0
-                                
-                                contentItem: Text {
-                                    text: parent.text
-                                    font.family: orbitronFont.name
-                                    color: parent.hovered ? window.buttonHoverText : window.buttonText
-                                    horizontalAlignment: Text.AlignHCenter
-                                    verticalAlignment: Text.AlignVCenter
-                                }
-                                
-                                background: Rectangle {
-                                    color: parent.hovered ? buttonHoverBackground : buttonBackground
-                                    radius: borderRadius / 2
-                                    
-                                    Behavior on color {
-                                        ColorAnimation { 
-                                            duration: animationDuration
-                                        }
-                                    }
-                                }
-                            }
-                        }
+                        // Note: Input File selection is now handled in the Audio Waveform section
                         
                         GridLayout {
                             columns: 2
@@ -825,81 +904,10 @@ ApplicationWindow {
                                 color: primaryTextColor
                             }
                             
-                            Item {
-                                id: useDefaultOutputToggle
-                                Layout.preferredWidth: window.isSmall ? 120 : 80
-                                Layout.preferredHeight: 30
-                                
-                                property bool checked: false
-                                
-                                Rectangle {
-                                    anchors.fill: parent
-                                    radius: height / 2
-                                    color: "transparent"
-                                    border.width: 1
-                                    border.color: toggleBorderColor
-                                    
-                                    Rectangle {
-                                        width: parent.width / 2
-                                        height: parent.height - 4
-                                        radius: height / 2
-                                        x: useDefaultOutputToggle.checked ? parent.width - width - 2 : 2
-                                        y: 2
-                                        color: useDefaultOutputToggle.checked ? toggleActiveColor : toggleInactiveColor
-                                        
-                                        Behavior on x {
-                                            NumberAnimation { 
-                                                duration: animationDuration
-                                                easing.type: Easing.InOutQuad
-                                            }
-                                        }
-                                    }
-                                    
-                                    Text {
-                                        anchors.centerIn: parent
-                                        text: useDefaultOutputToggle.checked ? "Défaut" : "Perso"
-                                        color: fieldText
-                                        font.family: orbitronFont.name
-                                        font.pixelSize: 10
-                                    }
-                                }
-                                
-                                MouseArea {
-                                    anchors.fill: parent
-                                    onClicked: {
-                                        useDefaultOutputToggle.checked = !useDefaultOutputToggle.checked
-                                        if (useDefaultOutputToggle.checked) {
-                                            outputFolderField.text = ""
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                        
-                        RowLayout {
-                            Layout.fillWidth: true
-                            spacing: window.spacing / 2
-                            
-                            TextField {
-                                id: outputFolderField
-                                Layout.fillWidth: true
-                                placeholderText: useDefaultOutputToggle.checked ? "Using default path" : "Choose a folder..."
-                                readOnly: true
-                                color: useDefaultOutputToggle.checked ? Qt.darker(fieldText, 1.3) : fieldText
-                                font.family: orbitronFont.name
-                                background: Rectangle {
-                                    color: useDefaultOutputToggle.checked ? Qt.darker(fieldBackground, 1.2) : fieldBackground
-                                    radius: borderRadius / 2
-                                }
-                                enabled: !useDefaultOutputToggle.checked
-                            }
-                            
                             Button {
                                 text: "Browse..."
                                 font.family: orbitronFont.name
                                 onClicked: outputFolderDialog.open()
-                                enabled: !useDefaultOutputToggle.checked
-                                opacity: useDefaultOutputToggle.checked ? 0.5 : 1.0
                                 
                                 contentItem: Text {
                                     text: parent.text
@@ -920,6 +928,26 @@ ApplicationWindow {
                                     }
                                 }
                             }
+                        }
+                        
+                        TextField {
+                            id: outputFolderField
+                            Layout.fillWidth: true
+                            placeholderText: "Default output path will be used if empty"
+                            readOnly: true
+                            color: fieldText
+                            font.family: orbitronFont.name
+                            background: Rectangle {
+                                color: fieldBackground
+                                radius: borderRadius / 2
+                            }
+                        }
+                        
+                        // Hidden field to maintain compatibility
+                        Item {
+                            id: useDefaultOutputToggle
+                            visible: false
+                            property bool checked: outputFolderField.text === ""
                         }
                     }
                 }
@@ -933,697 +961,200 @@ ApplicationWindow {
                     Layout.bottomMargin: window.spacing
                 }
                 
-                // Buttons container
-                RowLayout {
-                    Layout.alignment: Qt.AlignHCenter
-                    spacing: window.spacing
+                // Audio Waveform container with border
+                Rectangle {
+                    id: audioWaveformContainer
+                    Layout.fillWidth: true
+                    Layout.preferredHeight: 200
+                    color: "transparent"
+                    border.width: borderWidth
+                    border.color: borderColor
+                    radius: borderRadius
                     
-                    // Refresh Preview button
-                    Button {
-                        id: refreshPreviewButton
-                        text: "Refresh Preview"
-                        font.family: orbitronFont.name
-                        font.pixelSize: labelFontSize
-                        Layout.preferredWidth: 180
+                    ColumnLayout {
+                        id: audioWaveformLayout
+                        anchors.fill: parent
+                        anchors.margins: padding
+                        spacing: window.spacing
                         
-                        property bool isAnimating: false
-                        property bool isProcessing: false
-                        property string originalText: "Refresh Preview"
-                        property string successText: "Preview Updated!"
-                        property string processingText: "Processing..."
-                        property string buttonState: "normal" // "normal", "processing", "success", "error"
-                        
-                        // Timer pour retarder le démarrage du traitement après l'animation de clic
-                        Timer {
-                            id: previewClickDelayTimer
-                            interval: 150
-                            repeat: false
-                            onTriggered: {
-                                // Démarrer l'animation de traitement
-                                refreshPreviewButton.startProcessingAnimation()
-                                
-                                // Appeler la fonction de génération de prévisualisation
-                                generator.generatePreview(
-                                    parseInt(fftSizeField.text),
-                                    parseFloat(overlapField.text),
-                                    parseFloat(minFreqField.text),
-                                    parseFloat(maxFreqField.text),
-                                    parseFloat(durationField.text),
-                                    parseInt(sampleRateField.text),
-                                    parseFloat(dynamicRangeField.text),
-                                    parseFloat(gammaCorrectionField.text),
-                                    ditheringToggle.checked,
-                                    parseFloat(contrastFactorField.text),
-                                    highBoostToggle.checked,
-                                    parseFloat(highBoostAlphaField.text),
-                                    pageFormatCombo.currentIndex,
-                                    bottomMarginField.getValue(),
-                                    spectroHeightField.getValue(),
-                                    writingSpeedField.getValue(),
-                                    inputFileField.text
-                                )
-                            }
+                        Label {
+                            text: "Audio Waveform"
+                            font.bold: true
+                            font.pixelSize: labelFontSize
+                            font.family: orbitronFont.name
+                            color: primaryTextColor
                         }
                         
-                        function startSuccessAnimation() {
-                            isAnimating = true
-                            isProcessing = false
-                            buttonState = "success"
-                            previewProgressIndicator.running = false
-                            previewProgressIndicator.visible = false
+                        // Composant de visualisation de forme d'onde
+                        AudioWaveform {
+                            id: audioWaveform
+                            Layout.fillWidth: true
+                            Layout.fillHeight: true
+                            waveColor: primaryTextColor
                             
-                            // Changer immédiatement le texte
-                            text = successText
-                            
-                            // Animation de succès sobre
-                            previewSuccessAnimation.start()
-                            
-                            // Timer pour revenir à l'état normal
-                            previewResetTimer.start()
-                        }
-                        
-                        function startProcessingAnimation() {
-                            isProcessing = true
-                            buttonState = "processing"
-                            text = processingText
-                            previewProgressIndicator.visible = true
-                            previewProgressIndicator.running = true
-                            background.opacity = 0.7 // Réduire l'opacité du fond pour mettre en évidence l'indicateur
-                        }
-                        
-                        function stopProcessingAnimation() {
-                            isProcessing = false
-                            previewProgressIndicator.running = false
-                            previewProgressIndicator.visible = false
-                            background.opacity = 1.0
-                        }
-                        
-                        function resetState() {
-                            buttonState = "normal"
-                            text = originalText
-                            isAnimating = false
-                            isProcessing = false
-                            scale = 1.0
-                            background.color = buttonBackground
-                            background.opacity = 1.0
-                        }
-                        
-                        Timer {
-                            id: previewButtonResetTimer
-                            interval: 1500
-                            onTriggered: {
-                                // Animation de retour à l'état normal
-                                previewReturnToNormalAnimation.start()
-                            }
-                        }
-                        
-                        // Indicateur de progression circulaire
-                        BusyIndicator {
-                            id: previewProgressIndicator
-                            anchors.centerIn: parent
-                            width: parent.width * 0.8
-                            height: width
-                            running: false
-                            visible: false
-                            
-                            // Style personnalisé pour l'indicateur
-                            contentItem: Item {
-                                implicitWidth: 64
-                                implicitHeight: 64
-                                
-                                Rectangle {
-                                    id: previewItem
-                                    anchors.centerIn: parent
-                                    width: parent.width
-                                    height: width
-                                    radius: width / 2
-                                    color: "transparent"
-                                    border.width: width * 0.1
-                                    border.color: primaryTextColor
-                                    opacity: 0.0
+                            onCursorMoved: {
+                                // Calculer le segment à extraire
+                                if (waveformProvider.getTotalDuration() > 0) {
+                                    var segment = waveformProvider.calculateExtractionSegment(
+                                        position,
+                                        pageFormatCombo.currentIndex,
+                                        writingSpeedField.getValue()
+                                    );
                                     
-                                    RotationAnimation {
-                                        target: previewItem
-                                        running: previewProgressIndicator.running
-                                        from: 0
-                                        to: 360
-                                        duration: 1500
-                                        loops: Animation.Infinite
-                                    }
+                                    // Mettre à jour les indicateurs visuels
+                                    audioWaveform.segmentStart = segment.startPosition / waveformProvider.getTotalDuration();
+                                    audioWaveform.segmentDuration = segment.duration / waveformProvider.getTotalDuration();
                                     
-                                    // Animation d'apparition
-                                    NumberAnimation {
-                                        target: previewItem
-                                        property: "opacity"
-                                        from: 0.0
-                                        to: 0.8
-                                        duration: 300
-                                        running: previewProgressIndicator.running
-                                    }
+                                    // Update information text
+                                    var startSec = segment.startPosition.toFixed(2);
+                                    var durationSec = segment.duration.toFixed(2);
+                                    audioWaveformStatusText.text = "Position: " + startSec + "s, Segment duration: " + durationSec + "s";
                                 }
                             }
                         }
                         
-                        // Animation de succès sobre
-                        SequentialAnimation {
-                            id: previewSuccessAnimation
+                        // Boutons pour la forme d'onde
+                        RowLayout {
+                            Layout.alignment: Qt.AlignHCenter
+                            spacing: window.spacing
                             
-                            ParallelAnimation {
-                                // Changement de couleur vers la couleur de succès
-                                ColorAnimation {
-                                    target: refreshPreviewButton.background
-                                    property: "color"
-                                    to: successColor
-                                    duration: 200
-                                }
-                                
-                                // Légère augmentation de taille pour attirer l'attention
-                                NumberAnimation {
-                                    target: refreshPreviewButton
-                                    property: "scale"
-                                    to: 1.05
-                                    duration: 200
-                                    easing.type: Easing.OutBack
-                                }
-                            }
-                        }
-                        
-                        // Animation de retour à l'état normal
-                        SequentialAnimation {
-                            id: previewReturnToNormalAnimation
-                            
-                            ParallelAnimation {
-                                // Retour à la couleur normale
-                                ColorAnimation {
-                                    target: refreshPreviewButton.background
-                                    property: "color"
-                                    to: buttonBackground
-                                    duration: 300
-                                }
-                                
-                                // Retour à la taille normale
-                                NumberAnimation {
-                                    target: refreshPreviewButton
-                                    property: "scale"
-                                    to: 1.0
-                                    duration: 300
-                                    easing.type: Easing.InOutQuad
-                                }
-                            }
-                            
-                            // Réinitialisation des propriétés
-                            ScriptAction {
-                                script: {
-                                    refreshPreviewButton.resetState();
-                                }
-                            }
-                        }
-                        
-                        // Animation de clic améliorée avec retour visuel immédiat
-                        SequentialAnimation {
-                            id: previewClickAnimation
-                            alwaysRunToEnd: true
-                            
-                            ParallelAnimation {
-                                // Animation de réduction d'échelle
-                                NumberAnimation {
-                                    target: refreshPreviewButton
-                                    property: "scale"
-                                    from: 1.0
-                                    to: 0.92
-                                    duration: 100
-                                    easing.type: Easing.OutQuad
-                                }
-                                
-                                // Animation de couleur pour un feedback visuel plus fort
-                                ColorAnimation {
-                                    target: refreshPreviewButton.background
-                                    property: "color"
-                                    to: Qt.darker(buttonBackground, 1.3)
-                                    duration: 100
-                                }
-                            }
-                            
-                            ParallelAnimation {
-                                // Retour à l'état normal ou transition vers l'état de traitement
-                                NumberAnimation {
-                                    target: refreshPreviewButton
-                                    property: "scale"
-                                    from: 0.92
-                                    to: 1.0
-                                    duration: 150
-                                    easing.type: Easing.OutBack
-                                    easing.overshoot: 1.5
-                                }
-                            }
-                        }
-                        
-                        contentItem: Item {
-                            implicitWidth: previewButtonText.implicitWidth
-                            implicitHeight: previewButtonText.implicitHeight
-                            
-                            Text {
-                                id: previewButtonText
-                                anchors.centerIn: parent
-                                text: parent.parent.text
+                            Button {
+                                id: loadAudioButton
+                                text: "Load Audio"
                                 font.family: orbitronFont.name
-                                font.pixelSize: labelFontSize
-                                color: parent.parent.hovered || parent.parent.isAnimating || parent.parent.isProcessing ? window.buttonHoverText : window.buttonText
-                                horizontalAlignment: Text.AlignHCenter
-                                verticalAlignment: Text.AlignVCenter
                                 
-                                Behavior on opacity {
-                                    NumberAnimation { duration: 150 }
+                                onClicked: {
+                                    // Ouvrir un dialogue de sélection de fichier audio
+                                    var fileDialog = inputFileDialog;
+                                    fileDialog.open();
+                                    
+                                    // Connecter temporairement au signal accepted
+                                    var connection = function() {
+                                        var filePath = fileDialog.fileUrl.toString().replace("file://", "");
+                                        waveformProvider.loadFile(filePath);
+                                        fileDialog.accepted.disconnect(connection);
+                                    };
+                                    
+                                    fileDialog.accepted.connect(connection);
                                 }
-                            }
-                        }
-                        
-                        background: Rectangle {
-                            color: parent.hovered && !parent.isProcessing ? buttonHoverBackground : buttonBackground
-                            radius: borderRadius
-                            implicitHeight: 40
-                            
-                            // Effet de lueur pour l'état de succès
-                            Rectangle {
-                                id: previewGlowEffect
-                                anchors.fill: parent
-                                anchors.margins: -4
-                                radius: parent.radius + 4
-                                color: "transparent"
-                                border.width: 2
-                                border.color: successColor
-                                opacity: 0
                                 
-                                // Animation de pulsation pour l'effet de lueur
-                                SequentialAnimation {
-                                    running: refreshPreviewButton.buttonState === "success"
-                                    loops: 1
+                                contentItem: Text {
+                                    text: parent.text
+                                    font.family: orbitronFont.name
+                                    color: parent.hovered ? window.buttonHoverText : window.buttonText
+                                    horizontalAlignment: Text.AlignHCenter
+                                    verticalAlignment: Text.AlignVCenter
+                                }
+                                
+                                background: Rectangle {
+                                    color: parent.hovered ? buttonHoverBackground : buttonBackground
+                                    radius: borderRadius / 2
                                     
-                                    NumberAnimation {
-                                        target: previewGlowEffect
-                                        property: "opacity"
-                                        from: 0
-                                        to: 0.8
-                                        duration: 300
-                                        easing.type: Easing.OutCubic
-                                    }
-                                    
-                                    NumberAnimation {
-                                        target: previewGlowEffect
-                                        property: "opacity"
-                                        from: 0.8
-                                        to: 0
-                                        duration: 800
-                                        easing.type: Easing.InCubic
+                                    Behavior on color {
+                                        ColorAnimation { 
+                                            duration: animationDuration
+                                        }
                                     }
                                 }
                             }
                             
-                            Behavior on color {
-                                ColorAnimation { 
-                                    duration: animationDuration
-                                }
-                            }
-                            
-                            Behavior on opacity {
-                                NumberAnimation { 
-                                    duration: animationDuration
-                                }
-                            }
-                        }
-                        
-                        onClicked: {
-                            // Vérifier si le bouton n'est pas déjà en cours de traitement
-                            if (buttonState === "processing") return
-                            
-                            // Animation de clic avec retour visuel immédiat
-                            previewClickAnimation.start()
-                            
-                            // Vérification des champs requis
-                            if (inputFileField.text === "" && !useDefaultInputToggle.checked) {
-                                previewStatusText.text = "Please select a WAV file or use default path"
-                                previewStatusText.color = errorColor
-                                return
-                            }
-                            
-                            // Démarrer le timer pour retarder le démarrage du traitement
-                            previewClickDelayTimer.start()
-                        }
-                    }
-                    
-                    // Generate button
-                    Button {
-                        id: generateButton
-                        text: "Generate Spectrogram"
-                        font.family: orbitronFont.name
-                        font.pixelSize: labelFontSize
-                        Layout.preferredWidth: 180
-                        
-                        property bool isAnimating: false
-                        property bool isProcessing: false
-                        property string originalText: "Generate Spectrogram"
-                        property string successText: "Generated!"
-                        property string processingText: "Processing..."
-                        property string buttonState: "normal" // "normal", "processing", "success", "error"
-                        
-                        // Timer pour retarder le démarrage du traitement après l'animation de clic
-                        Timer {
-                            id: clickDelayTimer
-                            interval: 150
-                            repeat: false
-                            onTriggered: {
-                                // Démarrer l'animation de traitement
-                                generateButton.startProcessingAnimation()
-                                
-                                // Appeler la fonction de génération
-                                generator.generateSpectrogram(
-                                    parseInt(fftSizeField.text),
-                                    parseFloat(overlapField.text),
-                                    parseFloat(minFreqField.text),
-                                    parseFloat(maxFreqField.text),
-                                    parseFloat(durationField.text),
-                                    parseInt(sampleRateField.text),
-                                    parseFloat(dynamicRangeField.text),
-                                    parseFloat(gammaCorrectionField.text),
-                                    ditheringToggle.checked,
-                                    parseFloat(contrastFactorField.text),
-                                    highBoostToggle.checked,
-                                    parseFloat(highBoostAlphaField.text),
-                                    pageFormatCombo.currentIndex,
-                                    bottomMarginField.getValue(),
-                                    spectroHeightField.getValue(),
-                                    writingSpeedField.getValue(),
-                                    inputFileField.text,
-                                    outputFolderField.text
-                                )
-                            }
-                        }
-                        
-                        function startSuccessAnimation() {
-                            isAnimating = true
-                            isProcessing = false
-                            buttonState = "success"
-                            progressIndicator.running = false
-                            progressIndicator.visible = false
-                            
-                            // Changer immédiatement le texte
-                            text = successText
-                            
-                            // Animation de succès sobre
-                            successAnimation.start()
-                            
-                            // Timer pour revenir à l'état normal
-                            resetTimer.start()
-                        }
-                        
-                        function startProcessingAnimation() {
-                            isProcessing = true
-                            buttonState = "processing"
-                            text = processingText
-                            progressIndicator.visible = true
-                            progressIndicator.running = true
-                            background.opacity = 0.7 // Réduire l'opacité du fond pour mettre en évidence l'indicateur
-                        }
-                        
-                        function stopProcessingAnimation() {
-                            isProcessing = false
-                            progressIndicator.running = false
-                            progressIndicator.visible = false
-                            background.opacity = 1.0
-                        }
-                        
-                        function resetState() {
-                            buttonState = "normal"
-                            text = originalText
-                            isAnimating = false
-                            isProcessing = false
-                            scale = 1.0
-                            background.color = buttonBackground
-                            background.opacity = 1.0
-                        }
-                        
-                        Timer {
-                            id: resetTimer
-                            interval: 1500
-                            onTriggered: {
-                                // Animation de retour à l'état normal
-                                returnToNormalAnimation.start()
-                            }
-                        }
-                        
-                        // Indicateur de progression circulaire
-                        BusyIndicator {
-                            id: progressIndicator
-                            anchors.centerIn: parent
-                            width: parent.width * 0.8
-                            height: width
-                            running: false
-                            visible: false
-                            
-                            // Style personnalisé pour l'indicateur
-                            contentItem: Item {
-                                implicitWidth: 64
-                                implicitHeight: 64
-                                
-                                Rectangle {
-                                    id: item
-                                    anchors.centerIn: parent
-                                    width: parent.width
-                                    height: width
-                                    radius: width / 2
-                                    color: "transparent"
-                                    border.width: width * 0.1
-                                    border.color: primaryTextColor
-                                    opacity: 0.0
-                                    
-                                    RotationAnimation {
-                                        target: item
-                                        running: progressIndicator.running
-                                        from: 0
-                                        to: 360
-                                        duration: 1500
-                                        loops: Animation.Infinite
-                                    }
-                                    
-                                    // Animation d'apparition
-                                    NumberAnimation {
-                                        target: item
-                                        property: "opacity"
-                                        from: 0.0
-                                        to: 0.8
-                                        duration: 300
-                                        running: progressIndicator.running
-                                    }
-                                }
-                            }
-                        }
-                        
-                        // Animation de succès sobre
-                        SequentialAnimation {
-                            id: successAnimation
-                            
-                            ParallelAnimation {
-                                // Changement de couleur vers la couleur de succès
-                                ColorAnimation {
-                                    target: generateButton.background
-                                    property: "color"
-                                    to: successColor
-                                    duration: 200
-                                }
-                                
-                                // Légère augmentation de taille pour attirer l'attention
-                                NumberAnimation {
-                                    target: generateButton
-                                    property: "scale"
-                                    to: 1.05
-                                    duration: 200
-                                    easing.type: Easing.OutBack
-                                }
-                            }
-                        }
-                        
-                        // Animation de retour à l'état normal
-                        SequentialAnimation {
-                            id: returnToNormalAnimation
-                            
-                            ParallelAnimation {
-                                // Retour à la couleur normale
-                                ColorAnimation {
-                                    target: generateButton.background
-                                    property: "color"
-                                    to: buttonBackground
-                                    duration: 300
-                                }
-                                
-                                // Retour à la taille normale
-                                NumberAnimation {
-                                    target: generateButton
-                                    property: "scale"
-                                    to: 1.0
-                                    duration: 300
-                                    easing.type: Easing.InOutQuad
-                                }
-                            }
-                            
-                            // Réinitialisation des propriétés
-                            ScriptAction {
-                                script: {
-                                    generateButton.resetState();
-                                }
-                            }
-                        }
-                        
-                        // Animation de clic améliorée avec retour visuel immédiat
-                        SequentialAnimation {
-                            id: clickAnimation
-                            alwaysRunToEnd: true
-                            
-                            ParallelAnimation {
-                                // Animation de réduction d'échelle
-                                NumberAnimation {
-                                    target: generateButton
-                                    property: "scale"
-                                    from: 1.0
-                                    to: 0.92
-                                    duration: 100
-                                    easing.type: Easing.OutQuad
-                                }
-                                
-                                // Animation de couleur pour un feedback visuel plus fort
-                                ColorAnimation {
-                                    target: generateButton.background
-                                    property: "color"
-                                    to: Qt.darker(buttonBackground, 1.3)
-                                    duration: 100
-                                }
-                            }
-                            
-                            ParallelAnimation {
-                                // Retour à l'état normal ou transition vers l'état de traitement
-                                NumberAnimation {
-                                    target: generateButton
-                                    property: "scale"
-                                    from: 0.92
-                                    to: 1.0
-                                    duration: 150
-                                    easing.type: Easing.OutBack
-                                    easing.overshoot: 1.5
-                                }
-                            }
-                        }
-                        
-                        contentItem: Item {
-                            implicitWidth: buttonText.implicitWidth
-                            implicitHeight: buttonText.implicitHeight
-                            
-                            Text {
-                                id: buttonText
-                                anchors.centerIn: parent
-                                text: parent.parent.text
+                            Button {
+                                id: generateFromSegmentButton
+                                text: "Preview Segment"
                                 font.family: orbitronFont.name
-                                font.pixelSize: labelFontSize
-                                color: parent.parent.hovered || parent.parent.isAnimating || parent.parent.isProcessing ? window.buttonHoverText : window.buttonText
-                                horizontalAlignment: Text.AlignHCenter
-                                verticalAlignment: Text.AlignVCenter
                                 
-                                Behavior on opacity {
-                                    NumberAnimation { duration: 150 }
+                                onClicked: {
+                                    if (waveformProvider.getTotalDuration() <= 0) {
+                                        audioWaveformStatusText.text = "No audio file loaded";
+                                        audioWaveformStatusText.color = errorColor;
+                                        return;
+                                    }
+                                    
+                                    // Calculer le segment à extraire
+                                    var segment = waveformProvider.calculateExtractionSegment(
+                                        audioWaveform.cursorPosition,
+                                        pageFormatCombo.currentIndex,
+                                        writingSpeedField.getValue()
+                                    );
+                                    
+                                    // Extraire le segment audio
+                                    var audioSegment = waveformProvider.extractSegment(
+                                        segment.startPosition,
+                                        segment.duration
+                                    );
+                                    
+                                    // Générer la prévisualisation
+                                    generator.generateSpectrogramFromSegment(
+                                        parseInt(fftSizeField.text),
+                                        parseFloat(overlapField.text),
+                                        parseFloat(minFreqField.text),
+                                        parseFloat(maxFreqField.text),
+                                        segment.duration,
+                                        parseInt(sampleRateField.text),
+                                        parseFloat(dynamicRangeField.text),
+                                        parseFloat(gammaCorrectionField.text),
+                                        ditheringToggle.checked,
+                                        parseFloat(contrastFactorField.text),
+                                        highBoostToggle.checked,
+                                        parseFloat(highBoostAlphaField.text),
+                                        highPassToggle.checked,
+                                        parseFloat(highPassCutoffField.text),
+                                        parseInt(highPassOrderCombo.currentText),
+                                        pageFormatCombo.currentIndex,
+                                        bottomMarginField.getValue(),
+                                        spectroHeightField.getValue(),
+                                        writingSpeedField.getValue(),
+                                        audioSegment
+                                    );
+                                    
+                                    audioWaveformStatusText.text = "Generating segment preview...";
+                                }
+                                
+                                contentItem: Text {
+                                    text: parent.text
+                                    font.family: orbitronFont.name
+                                    color: parent.hovered ? window.buttonHoverText : window.buttonText
+                                    horizontalAlignment: Text.AlignHCenter
+                                    verticalAlignment: Text.AlignVCenter
+                                }
+                                
+                                background: Rectangle {
+                                    color: parent.hovered ? buttonHoverBackground : buttonBackground
+                                    radius: borderRadius / 2
+                                    
+                                    Behavior on color {
+                                        ColorAnimation { 
+                                            duration: animationDuration
+                                        }
+                                    }
                                 }
                             }
                         }
                         
-                        background: Rectangle {
-                            color: parent.hovered && !parent.isProcessing ? buttonHoverBackground : buttonBackground
-                            radius: borderRadius
-                            implicitHeight: 40
-                            
-                            // Effet de lueur pour l'état de succès
-                            Rectangle {
-                                id: glowEffect
-                                anchors.fill: parent
-                                anchors.margins: -4
-                                radius: parent.radius + 4
-                                color: "transparent"
-                                border.width: 2
-                                border.color: successColor
-                                opacity: 0
-                                
-                                // Animation de pulsation pour l'effet de lueur
-                                SequentialAnimation {
-                                    running: generateButton.buttonState === "success"
-                                    loops: 1
-                                    
-                                    NumberAnimation {
-                                        target: glowEffect
-                                        property: "opacity"
-                                        from: 0
-                                        to: 0.8
-                                        duration: 300
-                                        easing.type: Easing.OutCubic
-                                    }
-                                    
-                                    NumberAnimation {
-                                        target: glowEffect
-                                        property: "opacity"
-                                        from: 0.8
-                                        to: 0
-                                        duration: 800
-                                        easing.type: Easing.InCubic
-                                    }
-                                }
-                            }
-                            
-                            Behavior on color {
-                                ColorAnimation { 
-                                    duration: animationDuration
-                                }
-                            }
-                            
-                            Behavior on opacity {
-                                NumberAnimation { 
-                                    duration: animationDuration
-                                }
-                            }
-                        }
-                        
-                        onClicked: {
-                            // Vérifier si le bouton n'est pas déjà en cours de traitement
-                            if (buttonState === "processing") return
-                            
-                            // Animation de clic avec retour visuel immédiat
-                            clickAnimation.start()
-                            
-                            // Vérification des champs requis
-                            if (inputFileField.text === "" && !useDefaultInputToggle.checked) {
-                                statusText.text = "Please select a WAV file or use default path"
-                                statusText.color = errorColor
-                                return
-                            }
-                            
-                            if (outputFolderField.text === "" && !useDefaultOutputToggle.checked) {
-                                statusText.text = "Please select an output folder or use default path"
-                                statusText.color = errorColor
-                                return
-                            }
-                            
-                            // Démarrer le timer pour retarder le démarrage du traitement
-                            clickDelayTimer.start()
+                        // Texte de statut pour la forme d'onde
+                        Label {
+                            id: audioWaveformStatusText
+                            text: "No audio file loaded"
+                            font.family: orbitronFont.name
+                            color: fieldText
+                            Layout.alignment: Qt.AlignHCenter
+                            horizontalAlignment: Text.AlignHCenter
+                            wrapMode: Text.WordWrap
                         }
                     }
                 }
                 
-                // Status text
-                Label {
-                    id: statusText
-                    text: "Ready"
-                    font.family: orbitronFont.name
-                    color: fieldText
+                // Separator
+                Rectangle {
+                    height: 1
+                    color: separatorColor
+                    Layout.fillWidth: true
                     Layout.topMargin: window.spacing
-                    Layout.alignment: Qt.AlignHCenter
-                    Layout.preferredWidth: window.isSmall ? parent.width * 0.9 : 250
-                    horizontalAlignment: Text.AlignHCenter
-                    wrapMode: Text.WordWrap
+                    Layout.bottomMargin: window.spacing
                 }
+                
+                // Note: Le bouton "Generate Spectrogram" a été supprimé car il était redondant avec "Save Preview"
+                // qui utilise l'image déjà générée par "Preview Segment" sans recalcul
             }
         }
         
@@ -1727,10 +1258,102 @@ ApplicationWindow {
                         // Afficher un message si aucune prévisualisation n'est disponible
                         Text {
                             anchors.centerIn: parent
-                            text: "Click 'Refresh Preview' to generate a preview"
+                            text: "Use 'Preview Segment' to generate a preview"
                             color: fieldText
                             font.family: orbitronFont.name
                             visible: !previewImageLoader.active || generator.previewCounter === 0
+                        }
+                    }
+                }
+                
+                // Conteneur pour les contrôles d'exportation
+                RowLayout {
+                    Layout.alignment: Qt.AlignHCenter
+                    spacing: window.spacing
+                    
+                    // Menu déroulant pour le format d'exportation
+                    ComboBox {
+                        id: exportFormatCombo
+                        model: ["PNG", "PDF", "JPEG"]
+                        currentIndex: 0
+                        
+                        background: Rectangle {
+                            color: fieldBackground
+                            radius: borderRadius / 2
+                        }
+                        
+                        contentItem: Text {
+                            text: exportFormatCombo.displayText
+                            font.family: orbitronFont.name
+                            color: fieldText
+                            horizontalAlignment: Text.AlignHCenter
+                            verticalAlignment: Text.AlignVCenter
+                            elide: Text.ElideRight
+                        }
+                        
+                        popup: Popup {
+                            y: exportFormatCombo.height
+                            width: exportFormatCombo.width
+                            implicitHeight: contentItem.implicitHeight
+                            padding: 1
+                            
+                            contentItem: ListView {
+                                clip: true
+                                implicitHeight: contentHeight
+                                model: exportFormatCombo.popup.visible ? exportFormatCombo.delegateModel : null
+                                
+                                ScrollBar.vertical: ScrollBar {
+                                    active: exportFormatCombo.popup.visible
+                                }
+                            }
+                            
+                            background: Rectangle {
+                                color: fieldBackground
+                                border.color: borderColor
+                                radius: borderRadius / 2
+                            }
+                        }
+                    }
+                    
+                    // Bouton pour sauvegarder la prévisualisation
+                    Button {
+                        id: savePreviewButton
+                        text: "Save Preview"
+                        font.family: orbitronFont.name
+                        enabled: generator.previewCounter > 0
+                        
+                        property bool isProcessing: false
+                        
+                        onClicked: {
+                            if (isProcessing) return;
+                            
+                            isProcessing = true;
+                            text = "Saving...";
+                            
+                            // Récupérer le format sélectionné (en minuscules)
+                            var format = exportFormatCombo.currentText.toLowerCase();
+                            
+                            // Sauvegarder la prévisualisation actuelle dans le format sélectionné
+                            generator.saveCurrentPreview(outputFolderField.text, format);
+                        }
+                    
+                        contentItem: Text {
+                            text: parent.text
+                            font.family: orbitronFont.name
+                            color: parent.hovered ? window.buttonHoverText : window.buttonText
+                            horizontalAlignment: Text.AlignHCenter
+                            verticalAlignment: Text.AlignVCenter
+                        }
+                        
+                        background: Rectangle {
+                            color: parent.hovered ? buttonHoverBackground : buttonBackground
+                            radius: borderRadius / 2
+                            
+                            Behavior on color {
+                                ColorAnimation { 
+                                    duration: animationDuration
+                                }
+                            }
                         }
                     }
                 }
@@ -1745,8 +1368,6 @@ ApplicationWindow {
                     horizontalAlignment: Text.AlignHCenter
                     wrapMode: Text.WordWrap
                 }
-                
-                // Espace pour les contrôles supplémentaires de prévisualisation si nécessaire
             }
         }
     }
