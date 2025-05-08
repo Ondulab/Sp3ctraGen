@@ -10,7 +10,7 @@
 #include "spectral_common.h"
 
 // Function prototypes
-int load_wav_file(const char *filename, double **signal, int *num_samples, int *sample_rate, double duration);
+int load_wav_file(const char *filename, double **signal, int *num_samples, int *sample_rate, double duration, int normalize);
 void generate_sine_wave(double *signal, int total_samples, double sample_rate, double frequency, double amplitude);
 void apply_hann_window(double *buffer, int size);
 void apply_high_freq_boost_filter(double *signal, int num_samples, double alpha);

@@ -2,25 +2,26 @@
 #include "../include/Constants.h"
 
 SpectrogramSettingsCpp::SpectrogramSettingsCpp()
-    : m_fftSize(Constants::DEFAULT_FFT_SIZE)
-    , m_overlap(Constants::DEFAULT_OVERLAP)
-    , m_minFreq(Constants::DEFAULT_MIN_FREQ)
-    , m_maxFreq(Constants::DEFAULT_MAX_FREQ)
-    , m_duration(Constants::DEFAULT_DURATION)
-    , m_sampleRate(Constants::DEFAULT_SAMPLE_RATE)
-    , m_dynamicRangeDB(Constants::DYNAMIC_RANGE_DB)
-    , m_gammaCorrection(Constants::GAMMA_CORRECTION)
-    , m_enableDithering(Constants::ENABLE_DITHERING)
-    , m_contrastFactor(Constants::CONTRAST_FACTOR)
-    , m_enableHighBoost(Constants::ENABLE_HIGH_BOOST)
-    , m_highBoostAlpha(Constants::HIGH_BOOST_ALPHA)
+    : m_fftSize(Constants::FFT_SIZE)
+    , m_overlap(Constants::OVERLAP)
+    , m_minFreq(Constants::MIN_FREQ)
+    , m_maxFreq(Constants::MAX_FREQ)
+    , m_duration(Constants::DURATION)
+    , m_sampleRate(Constants::SAMPLE_RATE)
+    , m_dynamicRangeDB(Constants::DYNAMIC_RANGE)
+    , m_gammaCorrection(Constants::GAMMA)
+    , m_enableDithering(Constants::DITHERING)
+    , m_contrastFactor(Constants::CONTRAST)
+    , m_enableHighBoost(Constants::HIGH_BOOST)
+    , m_highBoostAlpha(Constants::HIGH_BOOST_ALPHA_VAL)
     , m_enableHighPassFilter(false)
     , m_highPassCutoffFreq(0.0)
     , m_highPassFilterOrder(2)
     , m_pageFormat(Constants::PAGE_FORMAT_A4_PORTRAIT)
-    , m_bottomMarginMM(Constants::DEFAULT_BOTTOM_MARGIN_MM)
-    , m_spectroHeightMM(Constants::DEFAULT_SPECTRO_HEIGHT_MM)
+    , m_bottomMarginMM(Constants::BOTTOM_MARGIN)
+    , m_spectroHeightMM(Constants::SPECTRO_HEIGHT)
     , m_writingSpeed(0.0)
+    , m_enableNormalization(true) // Par défaut, la normalisation est activée
 {
 }
 
@@ -62,6 +63,7 @@ SpectrogramSettings SpectrogramSettingsCpp::toCStruct() const
     cSettings.bottomMarginMM = m_bottomMarginMM;
     cSettings.spectroHeightMM = m_spectroHeightMM;
     cSettings.writingSpeed = m_writingSpeed;
+    cSettings.enableNormalization = m_enableNormalization ? 1 : 0;
     return cSettings;
 }
 
@@ -87,6 +89,7 @@ SpectrogramSettingsCpp SpectrogramSettingsCpp::fromCStruct(const SpectrogramSett
     settings.m_bottomMarginMM = cSettings.bottomMarginMM;
     settings.m_spectroHeightMM = cSettings.spectroHeightMM;
     settings.m_writingSpeed = cSettings.writingSpeed;
+    settings.m_enableNormalization = cSettings.enableNormalization != 0;
     return settings;
 }
 
@@ -109,7 +112,8 @@ void SpectrogramSettingsCpp::initFromQmlParameters(
     int pageFormat,
     double bottomMarginMM,
     double spectroHeightMM,
-    double writingSpeed)
+    double writingSpeed,
+    bool enableNormalization)
 {
     m_fftSize = fftSize;
     m_overlap = overlap;
@@ -130,4 +134,5 @@ void SpectrogramSettingsCpp::initFromQmlParameters(
     m_bottomMarginMM = bottomMarginMM;
     m_spectroHeightMM = spectroHeightMM;
     m_writingSpeed = writingSpeed;
+    m_enableNormalization = enableNormalization;
 }

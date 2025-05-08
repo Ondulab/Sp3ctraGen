@@ -5,11 +5,12 @@
  *
  * Loads audio from a WAV file for the exact specified duration.
  * If a non-zero duration is specified, only that amount is loaded.
+ * If normalize is set to 1, the audio will be normalized to a maximum amplitude of 1.0.
  *
  * Returns:
  *  - 0 on success, non-zero on error.
  *---------------------------------------------------------------------*/
-int load_wav_file(const char *filename, double **signal, int *num_samples, int *sample_rate, double duration)
+int load_wav_file(const char *filename, double **signal, int *num_samples, int *sample_rate, double duration, int normalize)
 {
     SNDFILE *sf;
     SF_INFO info;
@@ -91,17 +92,32 @@ int load_wav_file(const char *filename, double **signal, int *num_samples, int *
     // Close the file
     sf_close(sf);
     
-    // Normalize the audio to a maximum absolute amplitude of 1
-    double max_abs = 0.0;
-    for (int i = 0; i < *num_samples; i++) {
-        if (fabs((*signal)[i]) > max_abs) {
-            max_abs = fabs((*signal)[i]);
-        }
-    }
-    if (max_abs > 0.0) {
+    // Normalize the audio if requested
+    if (normalize) {
+        printf(" - Normalizing audio to maximum amplitude of 1.0\n");
+        double max_abs = 0.0;
         for (int i = 0; i < *num_samples; i++) {
-            (*signal)[i] /= max_abs;
+            if (fabs((*signal)[i]) > max_abs) {
+                max_abs = fabs((*signal)[i]);
+            }
         }
+        if (max_abs > 0.0) {
+            printf(" - Maximum amplitude before normalization: %.6f\n", max_abs);
+            for (int i = 0; i < *num_samples; i++) {
+                (*signal)[i] /= max_abs;
+            }
+        }
+    } else {
+        printf(" - Skipping normalization (preserving original amplitude)\n");
+        
+        // Optionally, we could print the maximum amplitude for information
+        double max_abs = 0.0;
+        for (int i = 0; i < *num_samples; i++) {
+            if (fabs((*signal)[i]) > max_abs) {
+                max_abs = fabs((*signal)[i]);
+            }
+        }
+        printf(" - Maximum amplitude: %.6f\n", max_abs);
     }
     
     printf(" - Loaded %d samples at %d Hz (%.2f seconds)\n", 

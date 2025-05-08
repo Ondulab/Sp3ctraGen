@@ -27,6 +27,7 @@ typedef struct SpectrogramSettings
     int     enableHighPassFilter;  // 0 = disabled, 1 = enabled
     double  highPassCutoffFreq;    // Cutoff frequency in Hz
     int     highPassFilterOrder;   // Filter order (1-8)
+    int     enableNormalization;   // 0 = disabled, 1 = enabled (preserve original amplitude)
 } SpectrogramSettings;
 
 // C function we want to call from C++

@@ -81,6 +81,9 @@ public:
     double getWritingSpeed() const { return m_writingSpeed; }
     void setWritingSpeed(double value) { m_writingSpeed = value; }
     
+    bool getEnableNormalization() const { return m_enableNormalization; }
+    void setEnableNormalization(bool value) { m_enableNormalization = value; }
+    
     // Méthode pour initialiser à partir des paramètres QML
     void initFromQmlParameters(
         int fftSize,
@@ -101,7 +104,8 @@ public:
         int pageFormat,
         double bottomMarginMM,
         double spectroHeightMM,
-        double writingSpeed
+        double writingSpeed,
+        bool enableNormalization = true
     );
     
 private:
@@ -124,6 +128,7 @@ private:
     double m_bottomMarginMM;
     double m_spectroHeightMM;
     double m_writingSpeed;
+    bool m_enableNormalization;
 };
 
 #endif // SPECTROGRAMSETTINGSCPP_H

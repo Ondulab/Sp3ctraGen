@@ -62,6 +62,7 @@ public:
      * @param inputFile Fichier audio d'entrée
      * @param outputFolder Dossier de sortie
      * @param visualizationType Type de visualisation (par défaut "Raster (PNG)")
+     * @param enableNormalization Activer la normalisation du volume (par défaut true)
      */
     Q_INVOKABLE void generateSpectrogram(
         int fftSize,
@@ -85,7 +86,8 @@ public:
         double writingSpeed,
         const QString &inputFile,
         const QString &outputFolder,
-        const QString &visualizationType = "Raster (PNG)"
+        const QString &visualizationType = "Raster (PNG)",
+        bool enableNormalization = true
     );
     
     /**
@@ -275,6 +277,7 @@ private:
      * @param spectroHeightMM Hauteur du spectrogramme en millimètres
      * @param writingSpeed Vitesse d'écriture en cm/s
      * @return Objet SpectrogramSettingsCpp initialisé
+     * @param enableNormalization Activer la normalisation du volume
      */
     SpectrogramSettingsCpp createSettings(
         int fftSize,
@@ -295,7 +298,8 @@ private:
         int pageFormat,
         double bottomMarginMM,
         double spectroHeightMM,
-        double writingSpeed
+        double writingSpeed,
+        bool enableNormalization
     );
     
     /**
