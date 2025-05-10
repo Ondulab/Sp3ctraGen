@@ -20,31 +20,72 @@
 void draw_vertical_scale(cairo_t *cr, double spectro_left, double spectro_top,
                           double spectro_height, double minFreq, double maxFreq, double octaves,
                           double textScaleFactor, double lineThicknessFactor) {
-    // Draw the main vertical line
-    cairo_set_source_rgb(cr, 0.0, 0.0, 0.0);
-    cairo_set_line_width(cr, lineThicknessFactor);
-    cairo_move_to(cr, spectro_left, spectro_top);
-    cairo_line_to(cr, spectro_left, spectro_top + spectro_height);
-    cairo_stroke(cr);
+    // Configure font to use Orbitron according to the style guide
+    cairo_select_font_face(cr, "Orbitron", CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_NORMAL);
+    cairo_set_font_size(cr, 28.0 * textScaleFactor); // Size adapted for 800 DPI, adjusted by scale factor
+    
+    // Paramètres pour les graduations et les étiquettes
+    double graduation_length = 12.0 * lineThicknessFactor; // Longueur des graduations
+    double text_margin = 25.0; // Marge entre la graduation et le texte
     
     // Calculate octaves for graduations
     double start_octave = ceil(log2(minFreq));
     double end_octave = floor(log2(maxFreq));
     
-    // Draw graduations and labels for each octave
-    cairo_set_font_size(cr, 32.0 * textScaleFactor); // Size adapted for 800 DPI, adjusted by scale factor
+    // Définir l'épaisseur de ligne pour les graduations
+    cairo_set_source_rgb(cr, 0.0, 0.0, 0.0);
+    cairo_set_line_width(cr, lineThicknessFactor);
+    
+    // Ajouter l'étiquette pour la fréquence minimale si elle ne correspond pas à une octave exacte
+    if (start_octave > log2(minFreq)) {
+        double y = spectro_top + spectro_height; // Position pour la fréquence minimale
+        
+        // Draw the graduation mark (ligne horizontale courte)
+        cairo_move_to(cr, spectro_left - graduation_length, y);
+        cairo_line_to(cr, spectro_left, y);
+        cairo_stroke(cr);
+        
+        // Display the frequency label vertically
+        char label[32];
+        if (minFreq >= 1000) {
+            snprintf(label, sizeof(label), "%.1f kHz", minFreq / 1000.0);
+        } else {
+            snprintf(label, sizeof(label), "%.0f Hz", minFreq);
+        }
+        
+        // Calculer les dimensions du texte
+        cairo_text_extents_t label_extents;
+        cairo_text_extents(cr, label, &label_extents);
+        
+        // Sauvegarder l'état actuel
+        cairo_save(cr);
+        
+        // Déplacer l'origine au point de rotation (à gauche de la graduation)
+        cairo_translate(cr, spectro_left - graduation_length - text_margin, y);
+        
+        // Rotation du texte de -90 degrés (sens horaire)
+        cairo_rotate(cr, -M_PI/2);
+        
+        // Afficher le texte verticalement (maintenant l'origine est différente)
+        // Centrer le texte par rapport à la ligne
+        cairo_move_to(cr, -label_extents.width/2, 0);
+        cairo_show_text(cr, label);
+        
+        // Restaurer l'état original
+        cairo_restore(cr);
+    }
     
     for (double octave = start_octave; octave <= end_octave; octave++) {
         double freq = pow(2.0, octave);
         double log_ratio = log2(freq / minFreq) / octaves;
         double y = spectro_top + (1.0 - log_ratio) * spectro_height;
         
-        // Draw the graduation mark
-        cairo_move_to(cr, spectro_left - 5 * lineThicknessFactor, y);
+        // Draw the graduation mark (ligne horizontale courte)
+        cairo_move_to(cr, spectro_left - graduation_length, y);
         cairo_line_to(cr, spectro_left, y);
         cairo_stroke(cr);
         
-        // Display the frequency label
+        // Display the frequency label vertically
         char label[32];
         if (freq >= 1000) {
             snprintf(label, sizeof(label), "%.1f kHz", freq / 1000.0);
@@ -52,8 +93,26 @@ void draw_vertical_scale(cairo_t *cr, double spectro_left, double spectro_top,
             snprintf(label, sizeof(label), "%.0f Hz", freq);
         }
         
-        cairo_move_to(cr, spectro_left - 50, y + 4);
+        // Calculer les dimensions du texte
+        cairo_text_extents_t label_extents;
+        cairo_text_extents(cr, label, &label_extents);
+        
+        // Sauvegarder l'état actuel
+        cairo_save(cr);
+        
+        // Déplacer l'origine au point de rotation (à gauche de la graduation)
+        cairo_translate(cr, spectro_left - graduation_length - text_margin, y);
+        
+        // Rotation du texte de -90 degrés (sens horaire)
+        cairo_rotate(cr, -M_PI/2);
+        
+        // Afficher le texte verticalement (maintenant l'origine est différente)
+        // Centrer le texte par rapport à la ligne
+        cairo_move_to(cr, -label_extents.width/2, 0);
         cairo_show_text(cr, label);
+        
+        // Restaurer l'état original
+        cairo_restore(cr);
     }
 }
 
