@@ -1,3 +1,11 @@
+/*
+ * Copyright (C) 2025 - present Ondulab
+ * All rights reserved.
+ *
+ * This software is licensed under terms that can be found in the LICENSE file
+ * in the root directory of this software component.
+ */
+
 #include "../include/VisualizationStrategy.h"
 #include "../include/FileManager.h"
 #include <QDebug>
@@ -13,23 +21,23 @@ bool VisualizationStrategy::generate(const SpectrogramSettingsCpp& settings,
                                    const QString& inputFile,
                                    const QString& outputFile)
 {
-    // Valider les fichiers d'entrée et de sortie
+    // Validate input and output files
     if (!FileManager::validateInputFile(inputFile)) {
-        emit generationCompleted(false, "", "Le fichier d'entrée n'existe pas ou n'est pas lisible");
+        emit generationCompleted(false, "", "Input file does not exist or is not readable");
         return false;
     }
     
-    // Vérifier que le dossier de sortie existe
+    // Check that the output directory exists
     QString outputDir = QFileInfo(outputFile).path();
     if (!FileManager::ensureDirectoryExists(outputDir)) {
-        emit generationCompleted(false, "", "Impossible de créer le dossier de sortie");
+        emit generationCompleted(false, "", "Unable to create output directory");
         return false;
     }
     
-    // Convertir les paramètres en structure C
+    // Convert parameters to C structure
     SpectrogramSettings cSettings = settings.toCStruct();
     
-    // Exécuter la génération dans un thread séparé
+    // Execute generation in a separate thread
     QFuture<void> future = QtConcurrent::run([=]() {
         this->runGeneration(cSettings, inputFile, outputFile);
     });
@@ -41,42 +49,42 @@ void VisualizationStrategy::runGeneration(const SpectrogramSettings& settings,
                                         const QString& inputFile,
                                         const QString& outputFile)
 {
-    // Ajouter des logs détaillés
-    qDebug() << "Génération du spectrogramme avec la stratégie: " << getName();
-    qDebug() << "Fichier d'entrée: " << inputFile;
-    qDebug() << "Fichier de sortie: " << outputFile;
-    qDebug() << "Taille FFT: " << settings.fftSize;
+    // Add detailed logs
+    qDebug() << "Generating spectrogram with strategy: " << getName();
+    qDebug() << "Input file: " << inputFile;
+    qDebug() << "Output file: " << outputFile;
+    qDebug() << "FFT size: " << settings.fftSize;
     
-    emit progressUpdated(10, "Préparation de la génération...");
+    emit progressUpdated(10, "Preparing generation...");
     
-    // Convertir les QString en const char* pour l'API C
+    // Convert QString to const char* for C API
     QByteArray inputFileBytes = inputFile.toLocal8Bit();
     QByteArray outputFileBytes = outputFile.toLocal8Bit();
     
     const char *inputFileCStr = inputFileBytes.constData();
     const char *outputFileCStr = outputFileBytes.constData();
     
-    emit progressUpdated(20, "Génération du spectrogramme...");
+    emit progressUpdated(20, "Generating spectrogram...");
     
-    // Appeler la fonction C spécifique à la stratégie
+    // Call the strategy-specific C function
     int result = callGeneratorFunction(settings, inputFileCStr, outputFileCStr);
     
-    emit progressUpdated(90, "Finalisation...");
+    emit progressUpdated(90, "Finalizing...");
     
-    // Émettre le signal avec le résultat
+    // Emit signal with the result
     if (result == EXIT_SUCCESS) {
-        qDebug() << "Spectrogramme généré avec succès à: " << outputFile;
-        // Vérifier que le fichier existe
+        qDebug() << "Spectrogram successfully generated at: " << outputFile;
+        // Check that the file exists
         if (QFile::exists(outputFile)) {
-            qDebug() << "Le fichier de sortie existe, émission du signal de succès";
-            emit progressUpdated(100, "Génération terminée avec succès");
+            qDebug() << "Output file exists, emitting success signal";
+            emit progressUpdated(100, "Generation completed successfully");
             emit generationCompleted(true, outputFile);
         } else {
-            qWarning() << "Le fichier de sortie n'existe pas: " << outputFile;
-            emit generationCompleted(false, "", "Le fichier de sortie n'a pas été créé");
+            qWarning() << "Output file does not exist: " << outputFile;
+            emit generationCompleted(false, "", "Output file was not created");
         }
     } else {
-        qWarning() << "Échec de la génération du spectrogramme, code d'erreur: " << result;
-        emit generationCompleted(false, "", "Erreur lors de la génération du spectrogramme (code: " + QString::number(result) + ")");
+        qWarning() << "Failed to generate spectrogram, error code: " << result;
+        emit generationCompleted(false, "", "Error generating spectrogram (code: " + QString::number(result) + ")");
     }
 }

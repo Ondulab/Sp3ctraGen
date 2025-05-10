@@ -1,8 +1,16 @@
+/*
+ * Copyright (C) 2025 - present Ondulab
+ * All rights reserved.
+ *
+ * This software is licensed under terms that can be found in the LICENSE file
+ * in the root directory of this software component.
+ */
+
 #include "spectral_common.h"
 #include "spectral_wav_processing.h"
 #include "spectral_fft.h"
 
-// Déclarations externes des fonctions implémentées dans les autres modules
+// External declarations of functions implemented in other modules
 extern int spectral_generator_impl(const SpectrogramSettings *cfg, 
                                   const char *inputFile, 
                                   const char *outputFile);
@@ -15,7 +23,7 @@ extern int spectral_generator_vector_pdf_impl(const SpectrogramSettings *cfg,
 /*---------------------------------------------------------------------
  * spectral_generator()
  *
- * Wrapper pour la fonction d'implémentation dans spectral_raster.c
+ * Wrapper for the implementation function in spectral_raster.c
  * 
  * Generates a spectrogram PNG image.
  * Parameters are extracted from the SpectrogramSettings structure.
@@ -29,14 +37,14 @@ int spectral_generator(const SpectrogramSettings *cfg,
                        const char *inputFile,
                        const char *outputFile)
 {
-    // Redirecteur vers l'implémentation dans spectral_raster.c
+    // Redirects to the implementation in spectral_raster.c
     return spectral_generator_impl(cfg, inputFile, outputFile);
 }
 
 /*---------------------------------------------------------------------
  * spectral_generator_vector_pdf()
  *
- * Wrapper pour la fonction d'implémentation dans spectral_vector.c
+ * Wrapper for the implementation function in spectral_vector.c
  *
  * Generates a vector PDF spectrogram with precise physical dimensions.
  * Uses Cairo PDF surface for high-quality vector output.
@@ -55,6 +63,6 @@ int spectral_generator_vector_pdf(const SpectrogramSettings *cfg,
                                   const char *outputFile,
                                   int dpi)
 {
-    // Redirecteur vers l'implémentation dans spectral_vector.c
+    // Redirects to the implementation in spectral_vector.c
     return spectral_generator_vector_pdf_impl(cfg, inputFile, outputFile, dpi);
 }

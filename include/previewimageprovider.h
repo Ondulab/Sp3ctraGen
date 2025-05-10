@@ -1,3 +1,11 @@
+/*
+ * Copyright (C) 2025 - present Ondulab
+ * All rights reserved.
+ *
+ * This software is licensed under terms that can be found in the LICENSE file
+ * in the root directory of this software component.
+ */
+
 #ifndef PREVIEWIMAGEPROVIDER_H
 #define PREVIEWIMAGEPROVIDER_H
 
@@ -12,16 +20,16 @@ public:
     QImage requestImage(const QString &id, QSize *size, const QSize &requestedSize) override;
     void updateImage(const QImage &image);
     
-    // Méthode pour récupérer l'image originale à haute résolution
+    // Method to retrieve the original high-resolution image
     QImage getOriginalImage() const { return m_originalImage; }
     
-    // Méthode pour sauvegarder l'image originale dans un fichier
+    // Method to save the original image to a file
     bool saveOriginalImage(const QString &filePath, const QString &format = "png") const;
     
-    // Méthode pour imprimer l'image originale en haute résolution
+    // Method to print the original image in high resolution
     Q_INVOKABLE bool printImage() const;
     
-    // Méthode de débogage pour vérifier l'état de l'image
+    // Debug method to check the image state
     void debugImageState() {
         qDebug() << "PreviewImageProvider::debugImageState";
         qDebug() << "Display image dimensions: " << m_displayImage.width() << "x" << m_displayImage.height();
@@ -32,8 +40,8 @@ public:
     }
 
 private:
-    QImage m_displayImage;  // Version redimensionnée pour l'affichage
-    QImage m_originalImage; // Image originale à haute résolution
+    QImage m_displayImage;  // Resized version for display
+    QImage m_originalImage; // Original high-resolution image
 };
 
 #endif // PREVIEWIMAGEPROVIDER_H

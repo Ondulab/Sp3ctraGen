@@ -1,3 +1,11 @@
+/*
+ * Copyright (C) 2025 - present Ondulab
+ * All rights reserved.
+ *
+ * This software is licensed under terms that can be found in the LICENSE file
+ * in the root directory of this software component.
+ */
+
 #ifndef VISUALIZATIONSTRATEGY_H
 #define VISUALIZATIONSTRATEGY_H
 
@@ -6,11 +14,11 @@
 #include "SpectrogramSettingsCpp.h"
 
 /**
- * @brief Interface de stratégie pour les différents types de visualisation
+ * @brief Strategy interface for different visualization types
  *
- * Cette classe définit l'interface commune pour toutes les stratégies de visualisation.
- * Elle utilise le pattern Strategy pour permettre l'ajout facile de nouveaux types de visualisation.
- * Elle implémente également le pattern Template Method pour factoriser le code commun.
+ * This class defines the common interface for all visualization strategies.
+ * It uses the Strategy pattern to allow easy addition of new visualization types.
+ * It also implements the Template Method pattern to factor common code.
  */
 class VisualizationStrategy : public QObject
 {
@@ -21,63 +29,63 @@ public:
     virtual ~VisualizationStrategy() = default;
     
     /**
-     * @brief Génère une visualisation (Template Method)
+     * @brief Generates a visualization (Template Method)
      *
-     * Cette méthode implémente le squelette de l'algorithme de génération
-     * et délègue les étapes spécifiques aux sous-classes.
+     * This method implements the skeleton of the generation algorithm
+     * and delegates specific steps to subclasses.
      *
-     * @param settings Paramètres du spectrogramme
-     * @param inputFile Fichier audio d'entrée
-     * @param outputFile Fichier de sortie
-     * @return true si la génération a démarré avec succès
+     * @param settings Spectrogram settings
+     * @param inputFile Input audio file
+     * @param outputFile Output file
+     * @return true if generation started successfully
      */
     bool generate(const SpectrogramSettingsCpp& settings,
                  const QString& inputFile,
                  const QString& outputFile);
                          
     /**
-     * @brief Obtient le nom de la stratégie
+     * @brief Gets the strategy name
      *
-     * @return Nom de la stratégie
+     * @return Strategy name
      */
     virtual QString getName() const = 0;
     
     /**
-     * @brief Obtient la description de la stratégie
+     * @brief Gets the strategy description
      *
-     * @return Description de la stratégie
+     * @return Strategy description
      */
     virtual QString getDescription() const = 0;
     
     /**
-     * @brief Obtient les extensions de fichier supportées
+     * @brief Gets the supported file extensions
      *
-     * @return Liste des extensions supportées (sans le point)
+     * @return List of supported extensions (without the dot)
      */
     virtual QStringList getSupportedExtensions() const = 0;
     
 protected:
     /**
-     * @brief Méthode abstraite pour l'implémentation spécifique de la génération
+     * @brief Abstract method for specific generation implementation
      *
-     * Cette méthode doit être implémentée par les sous-classes pour fournir
-     * l'implémentation spécifique de la génération.
+     * This method must be implemented by subclasses to provide
+     * the specific implementation of generation.
      *
-     * @param settings Paramètres du spectrogramme
-     * @param inputFile Fichier audio d'entrée
-     * @param outputFile Fichier de sortie
-     * @return Code de retour (EXIT_SUCCESS ou EXIT_FAILURE)
+     * @param settings Spectrogram settings
+     * @param inputFile Input audio file
+     * @param outputFile Output file
+     * @return Return code (EXIT_SUCCESS or EXIT_FAILURE)
      */
     virtual int callGeneratorFunction(const SpectrogramSettings& settings,
                                      const char* inputFile,
                                      const char* outputFile) = 0;
     
     /**
-     * @brief Exécute la génération dans un thread séparé
+     * @brief Executes generation in a separate thread
      *
-     * @param settings Paramètres du spectrogramme
-     * @param inputFile Fichier audio d'entrée
-     * @param outputFile Fichier de sortie
+     * @param settings Spectrogram settings
+     * @param inputFile Input audio file
+     * @param outputFile Output file
      */
     void runGeneration(const SpectrogramSettings& settings,
                       const QString& inputFile,
@@ -85,19 +93,19 @@ protected:
     
 signals:
     /**
-     * @brief Signal émis pendant la génération pour indiquer la progression
+     * @brief Signal emitted during generation to indicate progress
      *
-     * @param progress Progression (0-100)
-     * @param message Message de progression
+     * @param progress Progress (0-100)
+     * @param message Progress message
      */
     void progressUpdated(int progress, const QString& message);
     
     /**
-     * @brief Signal émis lorsque la génération est terminée
+     * @brief Signal emitted when generation is complete
      *
-     * @param success Succès de la génération
-     * @param outputPath Chemin du fichier de sortie
-     * @param errorMessage Message d'erreur en cas d'échec
+     * @param success Generation success
+     * @param outputPath Output file path
+     * @param errorMessage Error message in case of failure
      */
     void generationCompleted(bool success, const QString& outputPath, const QString& errorMessage = "");
 };

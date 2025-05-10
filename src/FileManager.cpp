@@ -1,3 +1,11 @@
+/*
+ * Copyright (C) 2025 - present Ondulab
+ * All rights reserved.
+ *
+ * This software is licensed under terms that can be found in the LICENSE file
+ * in the root directory of this software component.
+ */
+
 #include "../include/FileManager.h"
 #include "../include/Constants.h"
 #include <QFileInfo>
@@ -39,7 +47,7 @@ bool FileManager::validateOutputDirectory(const QString& path)
         return false;
     }
     
-    // Vérifier si le dossier est accessible en écriture
+    // Check if the directory is writable
     QFileInfo dirInfo(path);
     if (!dirInfo.isWritable()) {
         qWarning() << "Output directory is not writable:" << path;
@@ -61,7 +69,7 @@ bool FileManager::ensureDirectoryExists(const QString& path)
         return true;
     }
     
-    // Créer le dossier et tous les dossiers parents nécessaires
+    // Create the directory and all necessary parent directories
     if (dir.mkpath(".")) {
         qDebug() << "Created directory:" << path;
         return true;
@@ -73,15 +81,15 @@ bool FileManager::ensureDirectoryExists(const QString& path)
 
 QString FileManager::getDefaultInputPath()
 {
-    // Utiliser le chemin relatif depuis le répertoire de l'application
+    // Use the relative path from the application directory
     QString defaultPath = QDir::currentPath() + "/" + Constants::DEFAULT_INPUT_FILE;
     
-    // Vérifier si le fichier existe
+    // Check if the file exists
     if (QFileInfo::exists(defaultPath)) {
         return defaultPath;
     }
     
-    // Sinon, chercher dans les dossiers de musique standard
+    // Otherwise, look in standard music folders
     QStringList musicPaths = QStandardPaths::standardLocations(QStandardPaths::MusicLocation);
     for (const QString& musicPath : musicPaths) {
         QString testPath = musicPath + "/" + Constants::DEFAULT_INPUT_FILE;
@@ -90,21 +98,21 @@ QString FileManager::getDefaultInputPath()
         }
     }
     
-    // Si aucun fichier n'est trouvé, retourner le chemin par défaut
+    // If no file is found, return the default path
     return defaultPath;
 }
 
 QString FileManager::getDefaultOutputPath()
 {
-    // Utiliser le répertoire de l'application comme dossier de sortie par défaut
+    // Use the application directory as the default output folder
     QString defaultPath = QDir::currentPath();
     
-    // Vérifier si le dossier est accessible en écriture
+    // Check if the directory is writable
     if (QFileInfo(defaultPath).isWritable()) {
         return defaultPath;
     }
     
-    // Sinon, utiliser le dossier Documents ou Images
+    // Otherwise, use the Documents or Pictures folder
     QStringList docPaths = QStandardPaths::standardLocations(QStandardPaths::DocumentsLocation);
     if (!docPaths.isEmpty() && QFileInfo(docPaths.first()).isWritable()) {
         return docPaths.first();
@@ -115,7 +123,7 @@ QString FileManager::getDefaultOutputPath()
         return picPaths.first();
     }
     
-    // En dernier recours, utiliser le dossier temporaire
+    // As a last resort, use the temporary folder
     return QDir::tempPath();
 }
 
@@ -125,13 +133,13 @@ QString FileManager::generateOutputFilename(const QString& outputFolder,
 {
     QDir dir(outputFolder);
     
-    // Si le nom de base est vide, utiliser un nom par défaut avec horodatage
+    // If the base name is empty, use a default name with timestamp
     QString fileName;
     if (baseName.isEmpty()) {
         QString timestamp = QDateTime::currentDateTime().toString("yyyyMMdd_hhmmss");
         fileName = QString("spectrogram_%1.%2").arg(timestamp).arg(format);
     } else {
-        // S'assurer que l'extension est correcte
+        // Ensure the extension is correct
         if (baseName.endsWith("." + format, Qt::CaseInsensitive)) {
             fileName = baseName;
         } else {

@@ -4,6 +4,139 @@
 #include <cairo/cairo-pdf.h>  // Ajout de l'en-tête spécifique pour les fonctions PDF
 
 /*---------------------------------------------------------------------
+ * draw_vertical_scale_vector()
+ *
+ * Draws a vertical scale with frequency labels on the left side of the spectrogram.
+ * Uses logarithmic scale with one graduation per octave.
+ * Vector version for PDF output.
+ *
+ * Parameters:
+ *  - cr: Cairo context
+ *  - spectro_x: Left position of the spectrogram
+ *  - spectro_y: Top position of the spectrogram
+ *  - spectro_height: Height of the spectrogram in points
+ *  - minFreq: Minimum frequency in Hz
+ *  - maxFreq: Maximum frequency in Hz
+ *---------------------------------------------------------------------*/
+void draw_vertical_scale_vector(cairo_t *cr, double spectro_x, double spectro_y,
+                               double spectro_height, double minFreq, double maxFreq) {
+    // Dessiner la ligne verticale principale
+    cairo_set_source_rgb(cr, 0.0, 0.0, 0.0);
+    cairo_set_line_width(cr, 0.5);
+    cairo_move_to(cr, spectro_x, spectro_y);
+    cairo_line_to(cr, spectro_x, spectro_y + spectro_height);
+    cairo_stroke(cr);
+    
+    // Calculer les octaves pour les graduations
+    double octave_min = log2(minFreq);
+    double octave_max = log2(maxFreq);
+    
+    // Dessiner les graduations et étiquettes pour chaque octave
+    cairo_select_font_face(cr, "Arial", CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_NORMAL);
+    cairo_set_font_size(cr, 8);
+    
+    for (double octave = ceil(octave_min); octave <= floor(octave_max); octave += 1.0) {
+        double freq = pow(2.0, octave);
+        double y_pos = spectro_y + spectro_height * (1.0 - (log2(freq) - octave_min) / (octave_max - octave_min));
+        
+        // Dessiner la graduation
+        cairo_move_to(cr, spectro_x - 5, y_pos);
+        cairo_line_to(cr, spectro_x, y_pos);
+        cairo_stroke(cr);
+        
+        // Afficher l'étiquette de fréquence
+        char label[32];
+        if (freq >= 1000) {
+            snprintf(label, sizeof(label), "%.1f kHz", freq / 1000.0);
+        } else {
+            snprintf(label, sizeof(label), "%.0f Hz", freq);
+        }
+        
+        cairo_move_to(cr, spectro_x - 30, y_pos + 3);
+        cairo_show_text(cr, label);
+    }
+}
+
+/*---------------------------------------------------------------------
+ * draw_reference_lines_vector()
+ *
+ * Draws horizontal reference lines above and/or below the spectrogram.
+ * Vector version for PDF output.
+ *
+ * Parameters:
+ *  - cr: Cairo context
+ *  - spectro_x: Left position of the spectrogram
+ *  - spectro_width: Width of the spectrogram in points
+ *  - spectro_y: Top position of the spectrogram
+ *  - spectro_height: Height of the spectrogram in points
+ *  - enableBottom: Whether to draw the bottom reference line
+ *  - bottomOffset: Offset of the bottom reference line in mm (negative = downward)
+ *  - enableTop: Whether to draw the top reference line
+ *  - topOffset: Offset of the top reference line in mm (positive = upward)
+ *---------------------------------------------------------------------*/
+void draw_reference_lines_vector(cairo_t *cr, double spectro_x, double spectro_width,
+                                double spectro_y, double spectro_height,
+                                int enableBottom, double bottomOffset,
+                                int enableTop, double topOffset) {
+    cairo_set_source_rgb(cr, 0.0, 0.0, 0.0);
+    cairo_set_line_width(cr, 0.5);
+    
+    // Ligne de repère inférieure
+    if (enableBottom) {
+        double y = spectro_y + spectro_height + bottomOffset * MM_TO_POINTS;
+        cairo_move_to(cr, spectro_x, y);
+        cairo_line_to(cr, spectro_x + spectro_width, y);
+        cairo_stroke(cr);
+    }
+    
+    // Ligne de repère supérieure
+    if (enableTop) {
+        double y = spectro_y - topOffset * MM_TO_POINTS;
+        cairo_move_to(cr, spectro_x, y);
+        cairo_line_to(cr, spectro_x + spectro_width, y);
+        cairo_stroke(cr);
+    }
+}
+
+/*---------------------------------------------------------------------
+ * draw_parameters_text_vector()
+ *
+ * Displays the spectrogram parameters at the bottom of the page.
+ * Vector version for PDF output.
+ *
+ * Parameters:
+ *  - cr: Cairo context
+ *  - page_width_pt: Width of the page in points
+ *  - page_height_pt: Height of the page in points
+ *  - s: Spectrogram settings
+ *---------------------------------------------------------------------*/
+void draw_parameters_text_vector(cairo_t *cr, double page_width_pt, double page_height_pt,
+                                const SpectrogramSettings *s) {
+    // Formater la chaîne de paramètres
+    char params[1024];
+    snprintf(params, sizeof(params),
+             "FFT: %d, Overlap: %.2f, Freq: %.0f-%.0f Hz, SR: %d Hz, DR: %.1f dB, "
+             "Gamma: %.1f, Contrast: %.1f, HB: %s (%.2f), WS: %.1f cm/s",
+             s->fftSize, s->overlap, s->minFreq, s->maxFreq, s->sampleRate,
+             s->dynamicRangeDB, s->gammaCorrection, s->contrastFactor,
+             s->enableHighBoost ? "On" : "Off", s->highBoostAlpha, s->writingSpeed);
+    
+    // Positionner et dessiner le texte
+    cairo_set_source_rgb(cr, 0.0, 0.0, 0.0);
+    cairo_select_font_face(cr, "Arial", CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_NORMAL);
+    cairo_set_font_size(cr, 8);
+    
+    cairo_text_extents_t extents;
+    cairo_text_extents(cr, params, &extents);
+    
+    double text_x = (page_width_pt - extents.width) / 2;
+    double text_y = page_height_pt - 15.0;
+    
+    cairo_move_to(cr, text_x, text_y);
+    cairo_show_text(cr, params);
+}
+
+/*---------------------------------------------------------------------
  * spectral_generator_vector_pdf_impl()
  *
  * Generates a vector PDF spectrogram with precise physical dimensions.
@@ -226,64 +359,69 @@ int spectral_generator_vector_pdf_impl(const SpectrogramSettings *cfg,
     double *spectrogram = spectro_data.data;
     double freq_range = maxFreq - minFreq;
     
-    // Grille fréquentielle (tous les 1kHz ou octaves selon l'échelle)
-    cairo_set_line_width(cr, 0.2);
-    cairo_set_source_rgba(cr, 0.5, 0.5, 0.5, 0.5);
-    
-    // Dessiner des lignes horizontales pour les fréquences (toutes les octaves)
-    cairo_select_font_face(cr, "Arial", CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_NORMAL);
-    cairo_set_font_size(cr, 8);
-    
-    if (USE_LOG_FREQUENCY) {
-        // Échelle logarithmique par octaves
-        double octave_min = log2(minFreq);
-        double octave_max = log2(maxFreq);
-        
-        for (double octave = ceil(octave_min); octave <= floor(octave_max); octave += 1.0) {
-            double freq = pow(2.0, octave);
-            double y_pos = spectro_y + spectro_height_pt * (1.0 - (log2(freq) - octave_min) / (octave_max - octave_min));
-            
-            // Ligne horizontale
-            cairo_move_to(cr, spectro_x, y_pos);
-            cairo_line_to(cr, spectro_x + spectro_width_pt, y_pos);
-            cairo_stroke(cr);
-            
-            // Libellé de fréquence
-            char label[32];
-            if (freq >= 1000) {
-                snprintf(label, sizeof(label), "%.1f kHz", freq / 1000.0);
-            } else {
-                snprintf(label, sizeof(label), "%.0f Hz", freq);
-            }
-            
-            cairo_move_to(cr, spectro_x - 30, y_pos + 3);
-            cairo_show_text(cr, label);
-        }
+    // Draw vertical scale if enabled
+    if (s.enableVerticalScale) {
+        draw_vertical_scale_vector(cr, spectro_x, spectro_y, spectro_height_pt, minFreq, maxFreq);
     } else {
-        // Échelle linéaire par paliers de 1 kHz
-        int step = 1000; // 1 kHz par ligne
-        if (freq_range > 10000) step = 2000; // Adapter pour les grandes plages
+        // Grille fréquentielle (tous les 1kHz ou octaves selon l'échelle)
+        cairo_set_line_width(cr, 0.2);
+        cairo_set_source_rgba(cr, 0.5, 0.5, 0.5, 0.5);
         
-        for (int freq = ((int)minFreq / step) * step; freq <= maxFreq; freq += step) {
-            if (freq < minFreq) continue;
+        // Dessiner des lignes horizontales pour les fréquences (toutes les octaves)
+        cairo_select_font_face(cr, "Arial", CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_NORMAL);
+        cairo_set_font_size(cr, 8);
+        
+        if (USE_LOG_FREQUENCY) {
+            // Échelle logarithmique par octaves
+            double octave_min = log2(minFreq);
+            double octave_max = log2(maxFreq);
             
-            double y_pos = spectro_y + spectro_height_pt * (1.0 - (freq - minFreq) / freq_range);
-            
-            // Ligne horizontale
-            cairo_move_to(cr, spectro_x, y_pos);
-            cairo_line_to(cr, spectro_x + spectro_width_pt, y_pos);
-            cairo_stroke(cr);
-            
-            // Libellé de fréquence
-            char label[32];
-            if (freq >= 1000) {
-                snprintf(label, sizeof(label), "%d kHz", freq / 1000);
-            } else {
-                snprintf(label, sizeof(label), "%d Hz", freq);
+            for (double octave = ceil(octave_min); octave <= floor(octave_max); octave += 1.0) {
+                double freq = pow(2.0, octave);
+                double y_pos = spectro_y + spectro_height_pt * (1.0 - (log2(freq) - octave_min) / (octave_max - octave_min));
+                
+                // Ligne horizontale
+                cairo_move_to(cr, spectro_x, y_pos);
+                cairo_line_to(cr, spectro_x + spectro_width_pt, y_pos);
+                cairo_stroke(cr);
+                
+                // Libellé de fréquence
+                char label[32];
+                if (freq >= 1000) {
+                    snprintf(label, sizeof(label), "%.1f kHz", freq / 1000.0);
+                } else {
+                    snprintf(label, sizeof(label), "%.0f Hz", freq);
+                }
+                
+                cairo_move_to(cr, spectro_x - 30, y_pos + 3);
+                cairo_show_text(cr, label);
             }
+        } else {
+            // Échelle linéaire par paliers de 1 kHz
+            int step = 1000; // 1 kHz par ligne
+            if (freq_range > 10000) step = 2000; // Adapter pour les grandes plages
             
-            cairo_move_to(cr, spectro_x - 30, y_pos + 3);
-            cairo_show_text(cr, label);
+            for (int freq = ((int)minFreq / step) * step; freq <= maxFreq; freq += step) {
+                if (freq < minFreq) continue;
+                
+                double y_pos = spectro_y + spectro_height_pt * (1.0 - (freq - minFreq) / freq_range);
+                
+                // Ligne horizontale
+                cairo_move_to(cr, spectro_x, y_pos);
+                cairo_line_to(cr, spectro_x + spectro_width_pt, y_pos);
+                cairo_stroke(cr);
+                
+                // Libellé de fréquence
+                char label[32];
+                if (freq >= 1000) {
+                    snprintf(label, sizeof(label), "%d kHz", freq / 1000);
+                } else {
+                    snprintf(label, sizeof(label), "%d Hz", freq);
+                }
+                
+                cairo_move_to(cr, spectro_x - 30, y_pos + 3);
+                cairo_show_text(cr, label);
+            }
         }
     }
     
@@ -334,6 +472,13 @@ int spectral_generator_vector_pdf_impl(const SpectrogramSettings *cfg,
         }
     }
     
+    // Draw reference lines if enabled
+    if (s.enableBottomReferenceLine || s.enableTopReferenceLine) {
+        draw_reference_lines_vector(cr, spectro_x, spectro_width_pt, spectro_y, spectro_height_pt,
+                                   s.enableBottomReferenceLine, s.bottomReferenceLineOffset,
+                                   s.enableTopReferenceLine, s.topReferenceLineOffset);
+    }
+    
     /* ------------------------------ */
     /* 8. Ajouter les méta-informations */
     /* ------------------------------ */
@@ -362,6 +507,11 @@ int spectral_generator_vector_pdf_impl(const SpectrogramSettings *cfg,
     cairo_text_extents(cr, info, &extents);
     cairo_move_to(cr, (page_width_pt - extents.width) / 2, page_height_pt - margin_pt / 2);
     cairo_show_text(cr, info);
+    
+    // Display parameters if enabled
+    if (s.displayParameters) {
+        draw_parameters_text_vector(cr, page_width_pt, page_height_pt, &s);
+    }
     
     /* ------------------------------ */
     /* 9. Finaliser et sauvegarder    */

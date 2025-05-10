@@ -1,3 +1,11 @@
+/*
+ * Copyright (C) 2025 - present Ondulab
+ * All rights reserved.
+ *
+ * This software is licensed under terms that can be found in the LICENSE file
+ * in the root directory of this software component.
+ */
+
 #ifndef FILEMANAGER_H
 #define FILEMANAGER_H
 
@@ -5,58 +13,58 @@
 #include <QDir>
 
 /**
- * @brief Classe utilitaire pour la gestion des fichiers
- * 
- * Cette classe fournit des méthodes statiques pour gérer les opérations de fichiers
- * de manière cohérente dans toute l'application.
+ * @brief Utility class for file management
+ *
+ * This class provides static methods to manage file operations
+ * consistently throughout the application.
  */
 class FileManager {
 public:
     /**
-     * @brief Valide un fichier d'entrée
-     * 
-     * @param path Chemin du fichier à valider
-     * @return true si le fichier existe et est lisible
+     * @brief Validates an input file
+     *
+     * @param path Path of the file to validate
+     * @return true if the file exists and is readable
      */
     static bool validateInputFile(const QString& path);
     
     /**
-     * @brief Valide un dossier de sortie
-     * 
-     * @param path Chemin du dossier à valider
-     * @return true si le dossier existe et est accessible en écriture
+     * @brief Validates an output directory
+     *
+     * @param path Path of the directory to validate
+     * @return true if the directory exists and is writable
      */
     static bool validateOutputDirectory(const QString& path);
     
     /**
-     * @brief Crée un dossier s'il n'existe pas
-     * 
-     * @param path Chemin du dossier à créer
-     * @return true si le dossier existe ou a été créé avec succès
+     * @brief Creates a directory if it doesn't exist
+     *
+     * @param path Path of the directory to create
+     * @return true if the directory exists or was successfully created
      */
     static bool ensureDirectoryExists(const QString& path);
     
     /**
-     * @brief Obtient le chemin du fichier d'entrée par défaut
-     * 
-     * @return Chemin du fichier d'entrée par défaut
+     * @brief Gets the default input file path
+     *
+     * @return Default input file path
      */
     static QString getDefaultInputPath();
     
     /**
-     * @brief Obtient le chemin du dossier de sortie par défaut
-     * 
-     * @return Chemin du dossier de sortie par défaut
+     * @brief Gets the default output directory path
+     *
+     * @return Default output directory path
      */
     static QString getDefaultOutputPath();
     
     /**
-     * @brief Génère un nom de fichier de sortie basé sur le format
-     * 
-     * @param outputFolder Dossier de sortie
-     * @param baseName Nom de base du fichier
-     * @param format Format du fichier (png, pdf, etc.)
-     * @return Chemin complet du fichier de sortie
+     * @brief Generates an output filename based on the format
+     *
+     * @param outputFolder Output directory
+     * @param baseName Base name of the file
+     * @param format File format (png, pdf, etc.)
+     * @return Complete path of the output file
      */
     static QString generateOutputFilename(const QString& outputFolder, 
                                          const QString& baseName,

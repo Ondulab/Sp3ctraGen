@@ -1,8 +1,16 @@
+/*
+ * Copyright (C) 2025 - present Ondulab
+ * All rights reserved.
+ *
+ * This software is licensed under terms that can be found in the LICENSE file
+ * in the root directory of this software component.
+ */
+
 #include "../include/TaskManager.h"
 #include <QDebug>
 #include <QtConcurrent/QtConcurrent>
 
-// Initialisation de l'instance statique
+// Initialization of the static instance
 TaskManager* TaskManager::s_instance = nullptr;
 
 TaskManager* TaskManager::getInstance()
@@ -20,61 +28,61 @@ TaskManager::TaskManager(QObject *parent)
 
 TaskManager::~TaskManager()
 {
-    // Annuler toutes les tâches en cours
+    // Cancel all running tasks
     cancelAllTasks();
 }
 
 QUuid TaskManager::runTask(std::function<void(ProgressCallback)> task, 
                          TaskCallback callback)
 {
-    // Générer un identifiant unique pour la tâche
+    // Generate a unique identifier for the task
     QUuid taskId = QUuid::createUuid();
     
-    // Créer un watcher pour suivre la tâche
+    // Create a watcher to track the task
     QFutureWatcher<void>* watcher = new QFutureWatcher<void>(this);
     
-    // Créer une fonction de progression qui émet le signal approprié
+    // Create a progress function that emits the appropriate signal
     ProgressCallback progressCallback = [this, taskId](int progress, const QString& message) {
         emit taskProgressUpdated(taskId, progress, message);
     };
     
-    // Connecter les signaux du watcher
+    // Connect the watcher signals
     connect(watcher, &QFutureWatcher<void>::finished, this, [this, taskId, watcher, callback]() {
-        // Appeler la fonction de rappel
+        // Call the callback function
         if (callback) {
-            callback(true, "Tâche terminée avec succès");
+            callback(true, "Task completed successfully");
         }
         
-        // Émettre le signal de fin de tâche
-        emit taskCompleted(taskId, true, "Tâche terminée avec succès");
+        // Emit the task completion signal
+        emit taskCompleted(taskId, true, "Task completed successfully");
         
-        // Nettoyer
+        // Cleanup
         m_tasks.remove(taskId);
         watcher->deleteLater();
     });
     
-    // Stocker les informations de la tâche
+    // Store task information
     TaskInfo taskInfo;
     taskInfo.watcher = watcher;
     taskInfo.callback = callback;
     taskInfo.progressCallback = progressCallback;
     m_tasks[taskId] = taskInfo;
     
-    // Démarrer la tâche
+    // Start the task
     QFuture<void> future = QtConcurrent::run([task, progressCallback]() {
         try {
             task(progressCallback);
         } catch (const std::exception& e) {
-            qWarning() << "Exception dans la tâche:" << e.what();
+            qWarning() << "Exception in task:" << e.what();
         } catch (...) {
-            qWarning() << "Exception inconnue dans la tâche";
+            qWarning() << "Unknown exception in task";
         }
     });
     
-    // Associer le watcher à la tâche
+    // Associate the watcher with the task
     watcher->setFuture(future);
     
-    // Émettre le signal de démarrage de tâche
+    // Emit the task start signal
     emit taskStarted(taskId);
     
     return taskId;
@@ -83,24 +91,24 @@ QUuid TaskManager::runTask(std::function<void(ProgressCallback)> task,
 bool TaskManager::cancelTask(const QUuid& taskId)
 {
     if (!m_tasks.contains(taskId)) {
-        qWarning() << "Tentative d'annulation d'une tâche inexistante:" << taskId;
+        qWarning() << "Attempt to cancel a non-existent task:" << taskId;
         return false;
     }
     
     TaskInfo taskInfo = m_tasks[taskId];
     
-    // Annuler la tâche
+    // Cancel the task
     taskInfo.watcher->cancel();
     
-    // Appeler la fonction de rappel avec un statut d'échec
+    // Call the callback function with a failure status
     if (taskInfo.callback) {
-        taskInfo.callback(false, "Tâche annulée");
+        taskInfo.callback(false, "Task cancelled");
     }
     
-    // Émettre le signal d'annulation
+    // Emit the cancellation signal
     emit taskCancelled(taskId);
     
-    // Nettoyer
+    // Cleanup
     m_tasks.remove(taskId);
     taskInfo.watcher->deleteLater();
     
@@ -109,10 +117,10 @@ bool TaskManager::cancelTask(const QUuid& taskId)
 
 void TaskManager::cancelAllTasks()
 {
-    // Copier les identifiants pour éviter les problèmes de modification pendant l'itération
+    // Copy the identifiers to avoid modification issues during iteration
     QList<QUuid> taskIds = m_tasks.keys();
     
-    // Annuler chaque tâche
+    // Cancel each task
     for (const QUuid& taskId : taskIds) {
         cancelTask(taskId);
     }

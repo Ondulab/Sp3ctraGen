@@ -1,13 +1,21 @@
+/*
+ * Copyright (C) 2025 - present Ondulab
+ * All rights reserved.
+ *
+ * This software is licensed under terms that can be found in the LICENSE file
+ * in the root directory of this software component.
+ */
+
 #ifndef VECTORVISUALIZATIONSTRATEGY_H
 #define VECTORVISUALIZATIONSTRATEGY_H
 
 #include "VisualizationStrategy.h"
 
 /**
- * @brief Stratégie de visualisation pour les spectrogrammes vectoriels (PDF)
+ * @brief Visualization strategy for vector spectrograms (PDF)
  *
- * Cette classe implémente la génération de spectrogrammes au format vectoriel (PDF)
- * en utilisant la fonction spectral_generator_vector_pdf_impl.
+ * This class implements the generation of spectrograms in vector format (PDF)
+ * using the spectral_generator_vector_pdf_impl function.
  */
 class VectorVisualizationStrategy : public VisualizationStrategy
 {
@@ -18,54 +26,54 @@ public:
     virtual ~VectorVisualizationStrategy() = default;
     
     /**
-     * @brief Obtient le nom de la stratégie
+     * @brief Gets the strategy name
      *
-     * @return Nom de la stratégie
+     * @return Strategy name
      */
     QString getName() const override;
     
     /**
-     * @brief Obtient la description de la stratégie
+     * @brief Gets the strategy description
      *
-     * @return Description de la stratégie
+     * @return Strategy description
      */
     QString getDescription() const override;
     
     /**
-     * @brief Obtient les extensions de fichier supportées
+     * @brief Gets the supported file extensions
      *
-     * @return Liste des extensions supportées (sans le point)
+     * @return List of supported extensions (without the dot)
      */
     QStringList getSupportedExtensions() const override;
     
     /**
-     * @brief Définit la résolution DPI pour la génération PDF
+     * @brief Sets the DPI resolution for PDF generation
      *
-     * @param dpi Résolution en DPI
+     * @param dpi Resolution in DPI
      */
     void setDpi(int dpi);
     
     /**
-     * @brief Obtient la résolution DPI actuelle
+     * @brief Gets the current DPI resolution
      *
-     * @return Résolution en DPI
+     * @return Resolution in DPI
      */
     int getDpi() const;
     
 protected:
     /**
-     * @brief Implémentation spécifique de la génération pour le format vectoriel
+     * @brief Specific implementation of generation for vector format
      *
-     * @param settings Paramètres du spectrogramme
-     * @param inputFile Fichier audio d'entrée
-     * @param outputFile Fichier de sortie
-     * @return Code de retour (EXIT_SUCCESS ou EXIT_FAILURE)
+     * @param settings Spectrogram settings
+     * @param inputFile Input audio file
+     * @param outputFile Output file
+     * @return Return code (EXIT_SUCCESS or EXIT_FAILURE)
      */
     int callGeneratorFunction(const SpectrogramSettings& settings,
                              const char* inputFile,
                              const char* outputFile) override;
                       
-    int m_dpi; // Résolution en DPI pour la génération PDF
+    int m_dpi; // Resolution in DPI for PDF generation
 };
 
 #endif // VECTORVISUALIZATIONSTRATEGY_H
