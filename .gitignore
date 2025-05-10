@@ -81,3 +81,49 @@ moc_predefs.h
 .vscode/*.db
 .vscode/*.db-shm
 .vscode/*.db-wal
+
+# Fichiers volumineux (>50MB)
+# Note: Git ne filtre pas directement par taille, mais ces types de fichiers sont souvent volumineux
+*.zip
+*.rar
+*.7z
+*.tar
+*.tar.gz
+*.tgz
+*.iso
+*.dmg
+*.img
+*.bin
+*.exe
+*.dll
+*.pdb
+*.db
+*.sqlite
+*.sqlite3
+*.mdf
+*.ldf
+*.bak
+*.log
+*.dmp
+*.dump
+*.hprof
+*.heapsnapshot
+*.mp4
+*.mov
+*.avi
+*.mkv
+*.flv
+*.wmv
+# Exclure les fichiers audio volumineux, mais garder les exemples/échantillons
+# *.wav
+# *.aif
+# *.aiff
+# *.mp3
+# *.flac
+# *.ogg
+*.psd
+*.ai
+*.indd
+*.pdf
+*.tif
+*.tiff
