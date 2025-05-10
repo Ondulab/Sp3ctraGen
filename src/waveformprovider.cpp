@@ -1,3 +1,11 @@
+/*
+ * Copyright (C) 2025 - present Ondulab
+ * All rights reserved.
+ *
+ * This software is licensed under terms that can be found in the LICENSE file
+ * in the root directory of this software component.
+ */
+
 #include "waveformprovider.h"
 #include <QDebug>
 #include <QFile>
@@ -10,7 +18,7 @@ WaveformProvider::WaveformProvider(QObject *parent)
     , m_file(nullptr)
     , m_fileLoaded(false)
 {
-    // Initialiser la structure SF_INFO
+    // Initialize the SF_INFO structure
     memset(&m_fileInfo, 0, sizeof(SF_INFO));
 }
 
@@ -21,12 +29,12 @@ WaveformProvider::~WaveformProvider()
 
 bool WaveformProvider::loadFile(const QString &filePath)
 {
-    // Fermer le fichier précédent s'il est ouvert
+    // Close the previous file if it's open
     closeFile();
     
     m_filePath = filePath;
     
-    // Vérifier si le fichier existe
+    // Check if the file exists
     QFile file(filePath);
     if (!file.exists()) {
         qWarning() << "File does not exist:" << filePath;
@@ -34,7 +42,7 @@ bool WaveformProvider::loadFile(const QString &filePath)
         return false;
     }
     
-    // Ouvrir le fichier audio avec libsndfile
+    // Open the audio file with libsndfile
     m_file = sf_open(filePath.toUtf8().constData(), SFM_READ, &m_fileInfo);
     if (!m_file) {
         qWarning() << "Failed to open audio file:" << filePath << "Error:" << sf_strerror(nullptr);
@@ -42,10 +50,10 @@ bool WaveformProvider::loadFile(const QString &filePath)
         return false;
     }
     
-    // Analyser le fichier audio
+    // Analyze the audio file
     analyzeAudio();
     
-    // Calculer la durée en secondes
+    // Calculate the duration in seconds
     double durationSeconds = static_cast<double>(m_fileInfo.frames) / m_fileInfo.samplerate;
     
     m_fileLoaded = true;
@@ -56,17 +64,17 @@ bool WaveformProvider::loadFile(const QString &filePath)
 
 void WaveformProvider::analyzeAudio()
 {
-    // Allouer de la mémoire pour les données audio
+    // Allocate memory for audio data
     m_audioData.resize(m_fileInfo.frames * m_fileInfo.channels);
     
-    // Lire toutes les données audio
+    // Read all audio data
     sf_count_t readCount = sf_readf_float(m_file, m_audioData.data(), m_fileInfo.frames);
     
     if (readCount != m_fileInfo.frames) {
         qWarning() << "Failed to read all audio frames. Expected:" << m_fileInfo.frames << "Read:" << readCount;
     }
     
-    // Revenir au début du fichier pour les futures lectures
+    // Return to the beginning of the file for future reads
     sf_seek(m_file, 0, SEEK_SET);
 }
 
@@ -79,7 +87,7 @@ QVariantList WaveformProvider::getWaveformData(int width)
         return result;
     }
     
-    // Rééchantillonner les données pour l'affichage
+    // Resample data for display
     resampleForDisplay(width, result);
     
     return result;
@@ -87,31 +95,31 @@ QVariantList WaveformProvider::getWaveformData(int width)
 
 void WaveformProvider::resampleForDisplay(int targetWidth, QVariantList &result)
 {
-    // Nombre d'échantillons par pixel
+    // Number of samples per pixel
     int samplesPerPixel = std::max(1, static_cast<int>(m_fileInfo.frames / targetWidth));
     
-    // Nombre de canaux
+    // Number of channels
     int channels = m_fileInfo.channels;
     
-    // Pour chaque pixel de la largeur cible
+    // For each pixel of the target width
     for (int i = 0; i < targetWidth; ++i) {
-        // Calculer l'indice de début pour ce pixel
+        // Calculate the start index for this pixel
         int startIdx = i * samplesPerPixel * channels;
         
-        // S'assurer que nous ne dépassons pas les limites
+        // Make sure we don't exceed the limits
         if (startIdx >= m_audioData.size()) {
             break;
         }
         
-        // Calculer les valeurs min et max pour ce segment
+        // Calculate min and max values for this segment
         float minValue = 0.0f;
         float maxValue = 0.0f;
         float rmsValue = 0.0f;
         int count = 0;
         
-        // Parcourir tous les échantillons pour ce pixel
+        // Go through all samples for this pixel
         for (int j = 0; j < samplesPerPixel && (startIdx + j * channels) < m_audioData.size(); ++j) {
-            // Moyenne des canaux pour chaque échantillon
+            // Average of channels for each sample
             float sampleValue = 0.0f;
             for (int ch = 0; ch < channels; ++ch) {
                 int idx = startIdx + j * channels + ch;
@@ -121,21 +129,21 @@ void WaveformProvider::resampleForDisplay(int targetWidth, QVariantList &result)
             }
             sampleValue /= channels;
             
-            // Mettre à jour min/max
+            // Update min/max
             minValue = std::min(minValue, sampleValue);
             maxValue = std::max(maxValue, sampleValue);
             
-            // Calculer RMS
+            // Calculate RMS
             rmsValue += sampleValue * sampleValue;
             count++;
         }
         
-        // Finaliser RMS
+        // Finalize RMS
         if (count > 0) {
             rmsValue = std::sqrt(rmsValue / count);
         }
         
-        // Ajouter les valeurs à la liste de résultats
+        // Add values to the result list
         QVariantMap point;
         point["min"] = minValue;
         point["max"] = maxValue;
@@ -151,20 +159,20 @@ QVariantMap WaveformProvider::calculateExtractionSegment(double cursorPosition, 
         return QVariantMap();
     }
     
-    // Largeur du papier en millimètres
+    // Paper width in millimeters
     double paperWidthMM = (pageFormat == 0) ? 210.0 : 420.0; // A4 vs A3
     
-    // Conversion de la vitesse d'écriture de cm/s à mm/s
+    // Convert writing speed from cm/s to mm/s
     double speedMMS = writingSpeed * 10.0;
     
-    // Calcul de la durée du segment en secondes
+    // Calculate segment duration in seconds
     double segmentDuration = paperWidthMM / speedMMS;
     
-    // Position de début en secondes (basée sur la position relative du curseur)
+    // Start position in seconds (based on relative cursor position)
     double totalDuration = static_cast<double>(m_fileInfo.frames) / m_fileInfo.samplerate;
     double startPosition = cursorPosition * totalDuration;
     
-    // S'assurer que le segment ne dépasse pas la fin du fichier
+    // Make sure the segment doesn't go beyond the end of the file
     if (startPosition + segmentDuration > totalDuration) {
         startPosition = totalDuration - segmentDuration;
         if (startPosition < 0) {
@@ -173,11 +181,11 @@ QVariantMap WaveformProvider::calculateExtractionSegment(double cursorPosition, 
         }
     }
     
-    // Calculer les indices d'échantillons
+    // Calculate sample indices
     qint64 startSample = static_cast<qint64>(startPosition * m_fileInfo.samplerate);
     qint64 sampleCount = static_cast<qint64>(segmentDuration * m_fileInfo.samplerate);
     
-    // Créer et retourner la carte de résultats
+    // Create and return the result map
     QVariantMap result;
     result["startPosition"] = startPosition;
     result["duration"] = segmentDuration;
@@ -194,11 +202,11 @@ QByteArray WaveformProvider::extractSegment(double startPosition, double duratio
         return QByteArray();
     }
     
-    // Calculer les indices d'échantillons
+    // Calculate sample indices
     sf_count_t startSample = static_cast<sf_count_t>(startPosition * m_fileInfo.samplerate);
     sf_count_t sampleCount = static_cast<sf_count_t>(duration * m_fileInfo.samplerate);
     
-    // S'assurer que nous ne dépassons pas les limites
+    // Make sure we don't exceed the limits
     if (startSample >= m_fileInfo.frames) {
         qWarning() << "Start position beyond end of file";
         return QByteArray();
@@ -208,20 +216,20 @@ QByteArray WaveformProvider::extractSegment(double startPosition, double duratio
         sampleCount = m_fileInfo.frames - startSample;
     }
     
-    // Positionner le curseur de fichier
+    // Position the file cursor
     sf_seek(m_file, startSample, SEEK_SET);
     
-    // Allouer un buffer pour les données audio
+    // Allocate a buffer for audio data
     std::vector<float> buffer(sampleCount * m_fileInfo.channels);
     
-    // Lire les données
+    // Read the data
     sf_count_t readCount = sf_readf_float(m_file, buffer.data(), sampleCount);
     
     if (readCount != sampleCount) {
         qWarning() << "Failed to read all requested samples. Expected:" << sampleCount << "Read:" << readCount;
     }
     
-    // Convertir en QByteArray
+    // Convert to QByteArray
     QByteArray result;
     result.resize(buffer.size() * sizeof(float));
     memcpy(result.data(), buffer.data(), buffer.size() * sizeof(float));
@@ -245,6 +253,11 @@ int WaveformProvider::getSampleRate() const
     }
     
     return m_fileInfo.samplerate;
+}
+
+QString WaveformProvider::getFilePath() const
+{
+    return m_filePath;
 }
 
 void WaveformProvider::closeFile()

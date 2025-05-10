@@ -125,7 +125,15 @@ void SpectrogramGenerator::generatePreview(
     double bottomMarginMM,
     double spectroHeightMM,
     double writingSpeed,
-    const QString &inputFile)
+    const QString &inputFile,
+    bool enableVerticalScale,
+    bool enableBottomReferenceLine,
+    double bottomReferenceLineOffset,
+    bool enableTopReferenceLine,
+    double topReferenceLineOffset,
+    bool displayParameters,
+    double textScaleFactor,
+    double lineThicknessFactor)
 {
     // Vérifier que le fichier d'entrée existe si spécifié
     if (!inputFile.isEmpty() && !QFileInfo::exists(inputFile)) {
@@ -133,27 +141,26 @@ void SpectrogramGenerator::generatePreview(
         return;
     }
     
-    // Créer la structure de paramètres
-    SpectrogramSettings settings;
-    settings.fftSize = fftSize;
-    settings.overlap = overlap;
-    settings.minFreq = minFreq;
-    settings.maxFreq = maxFreq;
-    settings.duration = duration;
-    settings.sampleRate = sampleRate;
-    settings.dynamicRangeDB = dynamicRangeDB;
-    settings.gammaCorrection = gammaCorrection;
-    settings.enableDithering = enableDithering ? 1 : 0;
-    settings.contrastFactor = contrastFactor;
-    settings.enableHighBoost = enableHighBoost ? 1 : 0;
-    settings.highBoostAlpha = highBoostAlpha;
-    settings.enableHighPassFilter = enableHighPassFilter ? 1 : 0;
-    settings.highPassCutoffFreq = highPassCutoffFreq;
-    settings.highPassFilterOrder = highPassFilterOrder;
-    settings.pageFormat = pageFormat;
-    settings.bottomMarginMM = bottomMarginMM;
-    settings.spectroHeightMM = spectroHeightMM;
-    settings.writingSpeed = writingSpeed;
+    // Créer la structure de paramètres en utilisant la méthode createSettings
+    SpectrogramSettingsCpp settingsCpp = createSettings(
+        fftSize, overlap, minFreq, maxFreq, duration, sampleRate,
+        dynamicRangeDB, gammaCorrection, enableDithering, contrastFactor,
+        enableHighBoost, highBoostAlpha, enableHighPassFilter,
+        highPassCutoffFreq, highPassFilterOrder, pageFormat,
+        bottomMarginMM, spectroHeightMM, writingSpeed,
+        true, // enableNormalization
+        enableVerticalScale,
+        enableBottomReferenceLine,
+        bottomReferenceLineOffset,
+        enableTopReferenceLine,
+        topReferenceLineOffset,
+        displayParameters,
+        textScaleFactor,
+        lineThicknessFactor
+    );
+    
+    // Convertir en structure C
+    SpectrogramSettings settings = settingsCpp.toCStruct();
     
     // Exécuter la génération de prévisualisation dans un thread séparé via TaskManager
     QUuid taskId = TaskManager::getInstance()->runTask(
@@ -181,8 +188,13 @@ void SpectrogramGenerator::generatePreview(
             const char *inputFileCStr = inputFileBytes.constData();
             const char *tempFileCStr = tempFileBytes.constData();
             
-            // Appeler la fonction C pour générer le spectrogramme dans le fichier temporaire
-            int result = spectral_generator(&settings, inputFileCStr, tempFileCStr);
+            // Extract filename from path for parameters display
+            QString audioFileName = inputFile.isEmpty() ? "Default" : QFileInfo(inputFile).fileName();
+            
+            // Call the C function to generate the spectrogram in the temporary file
+            // Pass the audio filename, start time (0.0 for preview) and duration for parameters display
+            int result = spectral_generator_with_metadata(&settings, inputFileCStr, tempFileCStr,
+                                                         audioFileName.toUtf8().constData(), 0.0, settings.duration);
             
             progressCallback(80, "Traitement de l'image...");
             
@@ -252,7 +264,17 @@ void SpectrogramGenerator::generateSpectrogramFromSegment(
     double bottomMarginMM,
     double spectroHeightMM,
     double writingSpeed,
-    const QByteArray &audioSegment)
+    bool enableVerticalScale,
+    bool enableBottomReferenceLine,
+    double bottomReferenceLineOffset,
+    bool enableTopReferenceLine,
+    double topReferenceLineOffset,
+    bool displayParameters,
+    double textScaleFactor,
+    double lineThicknessFactor,
+    const QByteArray &audioSegment,
+    const QString &originalAudioFileName,
+    double startTime)
 {
     // Vérifier que le segment audio n'est pas vide
     if (audioSegment.isEmpty()) {
@@ -260,36 +282,31 @@ void SpectrogramGenerator::generateSpectrogramFromSegment(
         return;
     }
     
-    // Créer la structure de paramètres
-    SpectrogramSettings settings;
-    settings.fftSize = fftSize;
-    settings.overlap = overlap;
-    settings.minFreq = minFreq;
-    settings.maxFreq = maxFreq;
-    settings.duration = segmentDuration;
+    // Créer la structure de paramètres en utilisant la méthode createSettings
+    SpectrogramSettingsCpp settingsCpp = createSettings(
+        fftSize, overlap, minFreq, maxFreq, segmentDuration, sampleRate,
+        dynamicRangeDB, gammaCorrection, enableDithering, contrastFactor,
+        enableHighBoost, highBoostAlpha, enableHighPassFilter,
+        highPassCutoffFreq, highPassFilterOrder, pageFormat,
+        bottomMarginMM, spectroHeightMM, writingSpeed,
+        true, // enableNormalization
+        enableVerticalScale,
+        enableBottomReferenceLine,
+        bottomReferenceLineOffset,
+        enableTopReferenceLine,
+        topReferenceLineOffset,
+        displayParameters,
+        textScaleFactor,
+        lineThicknessFactor
+    );
     
-    // Utiliser la fréquence d'échantillonnage native du fichier audio
-    // Le paramètre sampleRate est ignoré car nous utilisons toujours la fréquence native
-    // qui sera détectée lors de la lecture du fichier WAV temporaire
-    settings.sampleRate = sampleRate > 0 ? sampleRate : 44100; // Valeur par défaut raisonnable
-    settings.dynamicRangeDB = dynamicRangeDB;
-    settings.gammaCorrection = gammaCorrection;
-    settings.enableDithering = enableDithering ? 1 : 0;
-    settings.contrastFactor = contrastFactor;
-    settings.enableHighBoost = enableHighBoost ? 1 : 0;
-    settings.highBoostAlpha = highBoostAlpha;
-    settings.enableHighPassFilter = enableHighPassFilter ? 1 : 0;
-    settings.highPassCutoffFreq = highPassCutoffFreq;
-    settings.highPassFilterOrder = highPassFilterOrder;
-    settings.pageFormat = pageFormat;
-    settings.bottomMarginMM = bottomMarginMM;
-    settings.spectroHeightMM = spectroHeightMM;
-    settings.writingSpeed = writingSpeed;
+    // Convertir en structure C
+    SpectrogramSettings settings = settingsCpp.toCStruct();
     
     // Exécuter la génération de prévisualisation dans un thread séparé via TaskManager
     QUuid taskId = TaskManager::getInstance()->runTask(
-        [this, settings, audioSegment](TaskManager::ProgressCallback progressCallback) {
-            this->runSegmentPreviewGeneration(settings, audioSegment);
+        [this, settings, audioSegment, originalAudioFileName, startTime](TaskManager::ProgressCallback progressCallback) {
+            this->runSegmentPreviewGeneration(settings, audioSegment, originalAudioFileName, startTime);
         },
         [this](bool success, const QString& message) {
             // Cette fonction est appelée lorsque la tâche est terminée
@@ -369,7 +386,15 @@ SpectrogramSettingsCpp SpectrogramGenerator::createSettings(
     double bottomMarginMM,
     double spectroHeightMM,
     double writingSpeed,
-    bool enableNormalization)
+    bool enableNormalization,
+    bool enableVerticalScale,
+    bool enableBottomReferenceLine,
+    double bottomReferenceLineOffset,
+    bool enableTopReferenceLine,
+    double topReferenceLineOffset,
+    bool displayParameters,
+    double textScaleFactor,
+    double lineThicknessFactor)
 {
     SpectrogramSettingsCpp settings;
     settings.initFromQmlParameters(
@@ -378,20 +403,29 @@ SpectrogramSettingsCpp SpectrogramGenerator::createSettings(
         enableHighBoost, highBoostAlpha, enableHighPassFilter,
         highPassCutoffFreq, highPassFilterOrder, pageFormat,
         bottomMarginMM, spectroHeightMM, writingSpeed,
-        enableNormalization
+        enableNormalization,
+        enableVerticalScale,
+        enableBottomReferenceLine,
+        bottomReferenceLineOffset,
+        enableTopReferenceLine,
+        topReferenceLineOffset,
+        displayParameters
     );
+    
     return settings;
 }
 
 void SpectrogramGenerator::runSegmentPreviewGeneration(
     const SpectrogramSettings &settings,
-    const QByteArray &audioSegment)
+    const QByteArray &audioSegment,
+    const QString &originalAudioFileName,
+    double startTime)
 {
     // Log debug information
-    qDebug() << "Génération de la prévisualisation du segment";
-    qDebug() << "Taille du segment:" << audioSegment.size() << "octets";
-    qDebug() << "Taux d'échantillonnage:" << settings.sampleRate;
-    qDebug() << "Durée:" << settings.duration << "secondes";
+    qDebug() << "Generating segment preview";
+    qDebug() << "Segment size:" << audioSegment.size() << "bytes";
+    qDebug() << "Sample rate:" << settings.sampleRate;
+    qDebug() << "Duration:" << settings.duration << "seconds";
     
     // Create a temporary WAV file with proper header
     QTemporaryFile audioTempFile(QDir::tempPath() + "/spectrogen_segment_XXXXXX.wav");
@@ -403,7 +437,7 @@ void SpectrogramGenerator::runSegmentPreviewGeneration(
     }
     
     QString audioTempFilePath = audioTempFile.fileName();
-    qDebug() << "Chemin du fichier audio temporaire:" << audioTempFilePath;
+    qDebug() << "Temporary audio file path:" << audioTempFilePath;
     
     // We need to create a proper WAV file with header
     // Instead of writing raw data, we'll use libsndfile to create a valid WAV file
@@ -415,19 +449,19 @@ void SpectrogramGenerator::runSegmentPreviewGeneration(
     SF_INFO sfInfo;
     memset(&sfInfo, 0, sizeof(sfInfo));
     
-    // Utiliser la fréquence d'échantillonnage native du fichier audio
+    // Use the native sample rate of the audio file
     int nativeSampleRate = settings.sampleRate;
     
-    qDebug() << "Utilisation du taux d'échantillonnage pour le fichier WAV:" << nativeSampleRate;
+    qDebug() << "Using sample rate for WAV file:" << nativeSampleRate;
     sfInfo.samplerate = nativeSampleRate;
     sfInfo.channels = 1; // Mono for simplicity
     sfInfo.format = SF_FORMAT_WAV | SF_FORMAT_FLOAT;
     
     SNDFILE *outfile = sf_open(audioTempFilePath.toUtf8().constData(), SFM_WRITE, &sfInfo);
     if (!outfile) {
-        qWarning() << "Échec de la création du fichier WAV:" << sf_strerror(nullptr);
+        qWarning() << "Failed to create WAV file:" << sf_strerror(nullptr);
         QFile::remove(audioTempFilePath);
-        emit segmentPreviewGenerated(false, QImage(), "Échec de la création du fichier WAV: " + QString(sf_strerror(nullptr)));
+        emit segmentPreviewGenerated(false, QImage(), "Failed to create WAV file: " + QString(sf_strerror(nullptr)));
         return;
     }
     
@@ -440,86 +474,93 @@ void SpectrogramGenerator::runSegmentPreviewGeneration(
     sf_close(outfile);
     
     if (written != numSamples / sfInfo.channels) {
-        qWarning() << "Échec de l'écriture de tous les échantillons. Attendu:" << numSamples / sfInfo.channels << "Écrit:" << written;
+        qWarning() << "Failed to write all samples. Expected:" << numSamples / sfInfo.channels << "Written:" << written;
         QFile::remove(audioTempFilePath);
-        emit segmentPreviewGenerated(false, QImage(), "Échec de l'écriture de tous les échantillons audio");
+        emit segmentPreviewGenerated(false, QImage(), "Failed to write all audio samples");
         return;
     }
     
-    // Créer un fichier temporaire pour la prévisualisation
+    // Create a temporary file for the preview image
     QTemporaryFile imageTempFile;
     imageTempFile.setAutoRemove(false);
     
     if (!imageTempFile.open()) {
         QFile::remove(audioTempFilePath);
-        emit segmentPreviewGenerated(false, QImage(), "Impossible de créer le fichier temporaire pour l'image");
+        emit segmentPreviewGenerated(false, QImage(), "Unable to create temporary file for the image");
         return;
     }
     
     QString imageTempFilePath = imageTempFile.fileName();
     imageTempFile.close();
     
-    // Convertir les QString en const char* pour l'API C
+    // Convert QString to const char* for the C API
     QByteArray audioFileBytes = audioTempFilePath.toLocal8Bit();
     QByteArray imageFileBytes = imageTempFilePath.toLocal8Bit();
     
     const char *audioFileCStr = audioFileBytes.constData();
     const char *imageFileCStr = imageFileBytes.constData();
     
-    // Ajouter des logs détaillés avant d'appeler la fonction C
-    qDebug() << "Appel de spectral_generator avec:";
-    qDebug() << "  - Fichier audio: " << audioTempFilePath;
-    qDebug() << "  - Fichier image: " << imageTempFilePath;
-    qDebug() << "  - Taille FFT: " << settings.fftSize;
-    qDebug() << "  - Taux d'échantillonnage: " << settings.sampleRate;
-    qDebug() << "  - Durée: " << settings.duration;
+    // Add detailed logs before calling the C function
+    qDebug() << "Calling spectral_generator with:";
+    qDebug() << "  - Audio file: " << audioTempFilePath;
+    qDebug() << "  - Image file: " << imageTempFilePath;
+    qDebug() << "  - FFT size: " << settings.fftSize;
+    qDebug() << "  - Sample rate: " << settings.sampleRate;
+    qDebug() << "  - Duration: " << settings.duration;
     
-    // Appeler la fonction C pour générer le spectrogramme dans le fichier temporaire
-    int result = spectral_generator(&settings, audioFileCStr, imageFileCStr);
+    // Use original audio file name if provided, otherwise use temp file name
+    QString audioFileName = !originalAudioFileName.isEmpty() ? 
+                            originalAudioFileName : 
+                            QFileInfo(audioTempFilePath).fileName();
     
-    qDebug() << "spectral_generator a retourné: " << result << (result == EXIT_SUCCESS ? " (SUCCÈS)" : " (ÉCHEC)");
+    // Call the C function to generate the spectrogram in the temporary file
+    // Pass the original audio filename, start time and segment duration for parameters display
+    int result = spectral_generator_with_metadata(&settings, audioFileCStr, imageFileCStr,
+                                                 audioFileName.toUtf8().constData(), startTime, settings.duration);
+    
+    qDebug() << "spectral_generator returned: " << result << (result == EXIT_SUCCESS ? " (SUCCESS)" : " (FAILURE)");
     
     if (result == EXIT_SUCCESS) {
-        qDebug() << "Chargement de l'image générée depuis: " << imageTempFilePath;
+        qDebug() << "Loading generated image from: " << imageTempFilePath;
         // Charger l'image générée
         QImageReader reader(imageTempFilePath);
         QImage previewImage = reader.read();
         
         if (!previewImage.isNull()) {
-            qDebug() << "Image chargée avec succès: " << previewImage.width() << "x" << previewImage.height();
+            qDebug() << "Image loaded successfully: " << previewImage.width() << "x" << previewImage.height();
             // Stocker l'image et émettre le signal
             m_previewImage = previewImage;
             
             // Mettre à jour l'image dans le fournisseur d'images si disponible
             if (s_previewProvider) {
-                qDebug() << "Mise à jour de l'image dans le fournisseur de prévisualisation";
-                qDebug() << "Mise à jour de l'image dans le fournisseur d'images (segment)";
-                qDebug() << "Dimensions de l'image: " << previewImage.width() << "x" << previewImage.height();
-                qDebug() << "Format de l'image: " << previewImage.format();
+                qDebug() << "Updating image in preview provider";
+                qDebug() << "Updating image in image provider (segment)";
+                qDebug() << "Image dimensions: " << previewImage.width() << "x" << previewImage.height();
+                qDebug() << "Image format: " << previewImage.format();
                 s_previewProvider->updateImage(previewImage);
                 
                 // Vérifier l'état de l'image après la mise à jour
                 s_previewProvider->debugImageState();
             } else {
-                qDebug() << "Fournisseur d'images non disponible!";
+                qDebug() << "Image provider not available!";
             }
             
-            qDebug() << "Émission du signal segmentPreviewGenerated avec success=true";
+            qDebug() << "Emitting segmentPreviewGenerated signal with success=true";
             emit segmentPreviewGenerated(true, previewImage);
         } else {
-            qWarning() << "Échec du chargement de l'image depuis: " << imageTempFilePath;
-            emit segmentPreviewGenerated(false, QImage(), "Erreur lors du chargement de l'image de prévisualisation du segment");
+            qWarning() << "Failed to load image from: " << imageTempFilePath;
+            emit segmentPreviewGenerated(false, QImage(), "Error loading segment preview image");
         }
     } else {
-        qWarning() << "spectral_generator a échoué avec le code: " << result;
-        emit segmentPreviewGenerated(false, QImage(), "Erreur lors de la génération de la prévisualisation du segment (code: " + QString::number(result) + ")");
+        qWarning() << "spectral_generator failed with code: " << result;
+        emit segmentPreviewGenerated(false, QImage(), "Error generating segment preview (code: " + QString::number(result) + ")");
     }
     
     // Supprimer les fichiers temporaires
     QFile::remove(audioTempFilePath);
     QFile::remove(imageTempFilePath);
     
-    qDebug() << "Génération de la prévisualisation du segment terminée avec le résultat:" << (result == EXIT_SUCCESS ? "SUCCÈS" : "ÉCHEC");
+    qDebug() << "Segment preview generation completed with result:" << (result == EXIT_SUCCESS ? "SUCCESS" : "FAILURE");
 }
 
 bool SpectrogramGenerator::printPreview()

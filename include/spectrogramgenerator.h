@@ -1,3 +1,11 @@
+/*
+ * Copyright (C) 2025 - present Ondulab
+ * All rights reserved.
+ *
+ * This software is licensed under terms that can be found in the LICENSE file
+ * in the root directory of this software component.
+ */
+
 #ifndef SPECTROGRAMGENERATOR_H
 #define SPECTROGRAMGENERATOR_H
 
@@ -10,16 +18,16 @@
 #include <QUuid>
 #include "SpectrogramSettingsCpp.h"
 
-// Déclarations anticipées
+// Forward declarations
 class PreviewImageProvider;
 class VisualizationStrategy;
 
 /**
- * @brief Classe principale pour la génération de spectrogrammes
- * 
- * Cette classe fournit l'interface entre QML et le backend C/C++.
- * Elle utilise les nouvelles abstractions (SpectrogramSettingsCpp, VisualizationStrategy, etc.)
- * pour une meilleure modularité et extensibilité.
+ * @brief Main class for spectrogram generation
+ *
+ * This class provides the interface between QML and the C/C++ backend.
+ * It uses the new abstractions (SpectrogramSettingsCpp, VisualizationStrategy, etc.)
+ * for better modularity and extensibility.
  */
 class SpectrogramGenerator : public QObject
 {
@@ -31,38 +39,38 @@ public:
     virtual ~SpectrogramGenerator();
     
     /**
-     * @brief Définit le fournisseur d'images de prévisualisation
-     * 
-     * @param provider Pointeur vers le fournisseur d'images
+     * @brief Sets the preview image provider
+     *
+     * @param provider Pointer to the image provider
      */
     static void setPreviewImageProvider(PreviewImageProvider *provider);
 
     /**
-     * @brief Génère un spectrogramme
-     * 
-     * @param fftSize Taille de la FFT
-     * @param overlap Chevauchement des fenêtres
-     * @param minFreq Fréquence minimale (Hz)
-     * @param maxFreq Fréquence maximale (Hz)
-     * @param duration Durée (secondes)
-     * @param sampleRate Taux d'échantillonnage
-     * @param dynamicRangeDB Plage dynamique (dB)
-     * @param gammaCorrection Correction gamma
-     * @param enableDithering Activer le dithering
-     * @param contrastFactor Facteur de contraste
-     * @param enableHighBoost Activer l'amplification des hautes fréquences
-     * @param highBoostAlpha Alpha pour l'amplification des hautes fréquences
-     * @param enableHighPassFilter Activer le filtre passe-haut
-     * @param highPassCutoffFreq Fréquence de coupure du filtre passe-haut
-     * @param highPassFilterOrder Ordre du filtre passe-haut
-     * @param pageFormat Format de page (0=A4 portrait, 1=A3 paysage)
-     * @param bottomMarginMM Marge inférieure en millimètres
-     * @param spectroHeightMM Hauteur du spectrogramme en millimètres
-     * @param writingSpeed Vitesse d'écriture en cm/s
-     * @param inputFile Fichier audio d'entrée
-     * @param outputFolder Dossier de sortie
-     * @param visualizationType Type de visualisation (par défaut "Raster (PNG)")
-     * @param enableNormalization Activer la normalisation du volume (par défaut true)
+     * @brief Generates a spectrogram
+     *
+     * @param fftSize FFT size
+     * @param overlap Window overlap
+     * @param minFreq Minimum frequency (Hz)
+     * @param maxFreq Maximum frequency (Hz)
+     * @param duration Duration (seconds)
+     * @param sampleRate Sample rate
+     * @param dynamicRangeDB Dynamic range (dB)
+     * @param gammaCorrection Gamma correction
+     * @param enableDithering Enable dithering
+     * @param contrastFactor Contrast factor
+     * @param enableHighBoost Enable high frequency boost
+     * @param highBoostAlpha Alpha for high frequency boost
+     * @param enableHighPassFilter Enable high-pass filter
+     * @param highPassCutoffFreq High-pass filter cutoff frequency
+     * @param highPassFilterOrder High-pass filter order
+     * @param pageFormat Page format (0=A4 portrait, 1=A3 landscape)
+     * @param bottomMarginMM Bottom margin in millimeters
+     * @param spectroHeightMM Spectrogram height in millimeters
+     * @param writingSpeed Writing speed in cm/s
+     * @param inputFile Input audio file
+     * @param outputFolder Output folder
+     * @param visualizationType Visualization type (default "Raster (PNG)")
+     * @param enableNormalization Enable volume normalization (default true)
      */
     Q_INVOKABLE void generateSpectrogram(
         int fftSize,
@@ -91,28 +99,28 @@ public:
     );
     
     /**
-     * @brief Génère une prévisualisation du spectrogramme
-     * 
-     * @param fftSize Taille de la FFT
-     * @param overlap Chevauchement des fenêtres
-     * @param minFreq Fréquence minimale (Hz)
-     * @param maxFreq Fréquence maximale (Hz)
-     * @param duration Durée (secondes)
-     * @param sampleRate Taux d'échantillonnage
-     * @param dynamicRangeDB Plage dynamique (dB)
-     * @param gammaCorrection Correction gamma
-     * @param enableDithering Activer le dithering
-     * @param contrastFactor Facteur de contraste
-     * @param enableHighBoost Activer l'amplification des hautes fréquences
-     * @param highBoostAlpha Alpha pour l'amplification des hautes fréquences
-     * @param enableHighPassFilter Activer le filtre passe-haut
-     * @param highPassCutoffFreq Fréquence de coupure du filtre passe-haut
-     * @param highPassFilterOrder Ordre du filtre passe-haut
-     * @param pageFormat Format de page (0=A4 portrait, 1=A3 paysage)
-     * @param bottomMarginMM Marge inférieure en millimètres
-     * @param spectroHeightMM Hauteur du spectrogramme en millimètres
-     * @param writingSpeed Vitesse d'écriture en cm/s
-     * @param inputFile Fichier audio d'entrée
+     * @brief Generates a spectrogram preview
+     *
+     * @param fftSize FFT size
+     * @param overlap Window overlap
+     * @param minFreq Minimum frequency (Hz)
+     * @param maxFreq Maximum frequency (Hz)
+     * @param duration Duration (seconds)
+     * @param sampleRate Sample rate
+     * @param dynamicRangeDB Dynamic range (dB)
+     * @param gammaCorrection Gamma correction
+     * @param enableDithering Enable dithering
+     * @param contrastFactor Contrast factor
+     * @param enableHighBoost Enable high frequency boost
+     * @param highBoostAlpha Alpha for high frequency boost
+     * @param enableHighPassFilter Enable high-pass filter
+     * @param highPassCutoffFreq High-pass filter cutoff frequency
+     * @param highPassFilterOrder High-pass filter order
+     * @param pageFormat Page format (0=A4 portrait, 1=A3 landscape)
+     * @param bottomMarginMM Bottom margin in millimeters
+     * @param spectroHeightMM Spectrogram height in millimeters
+     * @param writingSpeed Writing speed in cm/s
+     * @param inputFile Input audio file
      */
     Q_INVOKABLE void generatePreview(
         int fftSize,
@@ -134,32 +142,40 @@ public:
         double bottomMarginMM,
         double spectroHeightMM,
         double writingSpeed,
-        const QString &inputFile
+        const QString &inputFile,
+        bool enableVerticalScale = true,
+        bool enableBottomReferenceLine = false,
+        double bottomReferenceLineOffset = -34.75,
+        bool enableTopReferenceLine = false,
+        double topReferenceLineOffset = 12.55,
+        bool displayParameters = false,
+        double textScaleFactor = 2.0,
+        double lineThicknessFactor = 2.0
     );
     
     /**
-     * @brief Génère un spectrogramme à partir d'un segment audio
-     * 
-     * @param fftSize Taille de la FFT
-     * @param overlap Chevauchement des fenêtres
-     * @param minFreq Fréquence minimale (Hz)
-     * @param maxFreq Fréquence maximale (Hz)
-     * @param segmentDuration Durée du segment (secondes)
-     * @param sampleRate Taux d'échantillonnage
-     * @param dynamicRangeDB Plage dynamique (dB)
-     * @param gammaCorrection Correction gamma
-     * @param enableDithering Activer le dithering
-     * @param contrastFactor Facteur de contraste
-     * @param enableHighBoost Activer l'amplification des hautes fréquences
-     * @param highBoostAlpha Alpha pour l'amplification des hautes fréquences
-     * @param enableHighPassFilter Activer le filtre passe-haut
-     * @param highPassCutoffFreq Fréquence de coupure du filtre passe-haut
-     * @param highPassFilterOrder Ordre du filtre passe-haut
-     * @param pageFormat Format de page (0=A4 portrait, 1=A3 paysage)
-     * @param bottomMarginMM Marge inférieure en millimètres
-     * @param spectroHeightMM Hauteur du spectrogramme en millimètres
-     * @param writingSpeed Vitesse d'écriture en cm/s
-     * @param audioSegment Segment audio (QByteArray)
+     * @brief Generates a spectrogram from an audio segment
+     *
+     * @param fftSize FFT size
+     * @param overlap Window overlap
+     * @param minFreq Minimum frequency (Hz)
+     * @param maxFreq Maximum frequency (Hz)
+     * @param segmentDuration Segment duration (seconds)
+     * @param sampleRate Sample rate
+     * @param dynamicRangeDB Dynamic range (dB)
+     * @param gammaCorrection Gamma correction
+     * @param enableDithering Enable dithering
+     * @param contrastFactor Contrast factor
+     * @param enableHighBoost Enable high frequency boost
+     * @param highBoostAlpha Alpha for high frequency boost
+     * @param enableHighPassFilter Enable high-pass filter
+     * @param highPassCutoffFreq High-pass filter cutoff frequency
+     * @param highPassFilterOrder High-pass filter order
+     * @param pageFormat Page format (0=A4 portrait, 1=A3 landscape)
+     * @param bottomMarginMM Bottom margin in millimeters
+     * @param spectroHeightMM Spectrogram height in millimeters
+     * @param writingSpeed Writing speed in cm/s
+     * @param audioSegment Audio segment (QByteArray)
      */
     Q_INVOKABLE void generateSpectrogramFromSegment(
         int fftSize,
@@ -181,110 +197,120 @@ public:
         double bottomMarginMM,
         double spectroHeightMM,
         double writingSpeed,
-        const QByteArray &audioSegment
+        bool enableVerticalScale,
+        bool enableBottomReferenceLine,
+        double bottomReferenceLineOffset,
+        bool enableTopReferenceLine,
+        double topReferenceLineOffset,
+        bool displayParameters,
+        double textScaleFactor,
+        double lineThicknessFactor,
+        const QByteArray &audioSegment,
+        const QString &originalAudioFileName = "",
+        double startTime = 0.0
     );
     
     /**
-     * @brief Sauvegarde l'image de prévisualisation actuelle
-     * 
-     * @param outputFolder Dossier de sortie
-     * @param format Format de l'image (png, pdf, etc.)
+     * @brief Saves the current preview image
+     *
+     * @param outputFolder Output folder
+     * @param format Image format (png, pdf, etc.)
      */
     Q_INVOKABLE void saveCurrentPreview(const QString &outputFolder, const QString &format = "png");
     
     /**
-     * @brief Imprime l'image de prévisualisation actuelle
+     * @brief Prints the current preview image
      *
-     * @return true si l'impression a réussi, false sinon
+     * @return true if printing succeeded, false otherwise
      */
     Q_INVOKABLE bool printPreview();
     
     /**
-     * @brief Obtient la liste des types de visualisation disponibles
-     * 
-     * @return Liste des types de visualisation
+     * @brief Gets the list of available visualization types
+     *
+     * @return List of visualization types
      */
     Q_INVOKABLE QStringList getAvailableVisualizationTypes() const;
     
     /**
-     * @brief Obtient la liste des extensions de fichier supportées
-     * 
-     * @return Liste des extensions supportées
+     * @brief Gets the list of supported file extensions
+     *
+     * @return List of supported extensions
      */
     Q_INVOKABLE QStringList getSupportedFileExtensions() const;
 
 signals:
     /**
-     * @brief Signal émis lorsqu'un spectrogramme est généré
-     * 
-     * @param success Succès de la génération
-     * @param outputPath Chemin du fichier de sortie
-     * @param errorMessage Message d'erreur en cas d'échec
+     * @brief Signal emitted when a spectrogram is generated
+     *
+     * @param success Generation success
+     * @param outputPath Output file path
+     * @param errorMessage Error message in case of failure
      */
     void spectrogramGenerated(bool success, const QString &outputPath, const QString &errorMessage = "");
     
     /**
-     * @brief Signal émis lorsqu'une prévisualisation est générée
-     * 
-     * @param success Succès de la génération
-     * @param previewImage Image de prévisualisation
-     * @param errorMessage Message d'erreur en cas d'échec
+     * @brief Signal emitted when a preview is generated
+     *
+     * @param success Generation success
+     * @param previewImage Preview image
+     * @param errorMessage Error message in case of failure
      */
     void previewGenerated(bool success, const QImage &previewImage, const QString &errorMessage = "");
     
     /**
-     * @brief Signal émis lorsqu'une prévisualisation de segment est générée
-     * 
-     * @param success Succès de la génération
-     * @param previewImage Image de prévisualisation
-     * @param errorMessage Message d'erreur en cas d'échec
+     * @brief Signal emitted when a segment preview is generated
+     *
+     * @param success Generation success
+     * @param previewImage Preview image
+     * @param errorMessage Error message in case of failure
      */
     void segmentPreviewGenerated(bool success, const QImage &previewImage, const QString &errorMessage = "");
     
     /**
-     * @brief Signal émis lorsqu'une prévisualisation est sauvegardée
-     * 
-     * @param success Succès de la sauvegarde
-     * @param outputPath Chemin du fichier de sortie
-     * @param format Format de l'image
-     * @param errorMessage Message d'erreur en cas d'échec
+     * @brief Signal emitted when a preview is saved
+     *
+     * @param success Save success
+     * @param outputPath Output file path
+     * @param format Image format
+     * @param errorMessage Error message in case of failure
      */
     void previewSaved(bool success, const QString &outputPath, const QString &format, const QString &errorMessage = "");
     
     /**
-     * @brief Signal émis lorsque la progression d'une tâche est mise à jour
-     * 
-     * @param taskId Identifiant de la tâche
-     * @param progress Progression (0-100)
-     * @param message Message de progression
+     * @brief Signal emitted when task progress is updated
+     *
+     * @param taskId Task identifier
+     * @param progress Progress (0-100)
+     * @param message Progress message
      */
     void taskProgressUpdated(const QUuid &taskId, int progress, const QString &message);
 
 private:
     /**
-     * @brief Crée un objet SpectrogramSettingsCpp à partir des paramètres QML
-     * 
-     * @param fftSize Taille de la FFT
-     * @param overlap Chevauchement des fenêtres
-     * @param minFreq Fréquence minimale (Hz)
-     * @param maxFreq Fréquence maximale (Hz)
-     * @param duration Durée (secondes)
-     * @param sampleRate Taux d'échantillonnage
-     * @param dynamicRangeDB Plage dynamique (dB)
-     * @param gammaCorrection Correction gamma
-     * @param enableDithering Activer le dithering
-     * @param contrastFactor Facteur de contraste
-     * @param enableHighBoost Activer l'amplification des hautes fréquences
-     * @param highBoostAlpha Alpha pour l'amplification des hautes fréquences
-     * @param enableHighPassFilter Activer le filtre passe-haut
-     * @param highPassCutoffFreq Fréquence de coupure du filtre passe-haut
-     * @param highPassFilterOrder Ordre du filtre passe-haut
-     * @param pageFormat Format de page (0=A4 portrait, 1=A3 paysage)
-     * @param bottomMarginMM Marge inférieure en millimètres
-     * @param spectroHeightMM Hauteur du spectrogramme en millimètres
-     * @param writingSpeed Vitesse d'écriture en cm/s
-     * @return Objet SpectrogramSettingsCpp initialisé
-     * @param enableNormalization Activer la normalisation du volume
+     * @brief Creates a SpectrogramSettingsCpp object from QML parameters
+     *
+     * @param fftSize FFT size
+     * @param overlap Window overlap
+     * @param minFreq Minimum frequency (Hz)
+     * @param maxFreq Maximum frequency (Hz)
+     * @param duration Duration (seconds)
+     * @param sampleRate Sample rate
+     * @param dynamicRangeDB Dynamic range (dB)
+     * @param gammaCorrection Gamma correction
+     * @param enableDithering Enable dithering
+     * @param contrastFactor Contrast factor
+     * @param enableHighBoost Enable high frequency boost
+     * @param highBoostAlpha Alpha for high frequency boost
+     * @param enableHighPassFilter Enable high-pass filter
+     * @param highPassCutoffFreq High-pass filter cutoff frequency
+     * @param highPassFilterOrder High-pass filter order
+     * @param pageFormat Page format (0=A4 portrait, 1=A3 landscape)
+     * @param bottomMarginMM Bottom margin in millimeters
+     * @param spectroHeightMM Spectrogram height in millimeters
+     * @param writingSpeed Writing speed in cm/s
+     * @return Initialized SpectrogramSettingsCpp object
+     * @param enableNormalization Enable volume normalization
      */
     SpectrogramSettingsCpp createSettings(
         int fftSize,
@@ -306,14 +332,22 @@ private:
         double bottomMarginMM,
         double spectroHeightMM,
         double writingSpeed,
-        bool enableNormalization
+        bool enableNormalization,
+        bool enableVerticalScale = true,
+        bool enableBottomReferenceLine = false,
+        double bottomReferenceLineOffset = -34.75,
+        bool enableTopReferenceLine = false,
+        double topReferenceLineOffset = 12.55,
+        bool displayParameters = false,
+        double textScaleFactor = 2.0,
+        double lineThicknessFactor = 2.0
     );
     
     /**
-     * @brief Méthode privée pour exécuter la génération de prévisualisation
-     * 
-     * @param settings Paramètres du spectrogramme
-     * @param inputFile Fichier audio d'entrée
+     * @brief Private method to execute preview generation
+     *
+     * @param settings Spectrogram settings
+     * @param inputFile Input audio file
      */
     void runPreviewGeneration(
         const SpectrogramSettings &settings,
@@ -321,23 +355,27 @@ private:
     );
     
     /**
-     * @brief Méthode privée pour générer une prévisualisation à partir d'un segment audio
-     * 
-     * @param settings Paramètres du spectrogramme
-     * @param audioSegment Segment audio
+     * @brief Private method to generate a preview from an audio segment
+     *
+     * @param settings Spectrogram settings
+     * @param audioSegment Audio segment
+     * @param originalAudioFileName Original audio file name for display (optional)
+     * @param startTime Start time in seconds for display (optional)
      */
     void runSegmentPreviewGeneration(
         const SpectrogramSettings &settings,
-        const QByteArray &audioSegment
+        const QByteArray &audioSegment,
+        const QString &originalAudioFileName = "",
+        double startTime = 0.0
     );
     
-    // Image de prévisualisation
+    // Preview image
     QImage m_previewImage;
     
-    // Fournisseur d'images de prévisualisation (statique)
+    // Preview image provider (static)
     static PreviewImageProvider *s_previewProvider;
     
-    // Map des tâches en cours
+    // Map of running tasks
     QMap<QUuid, QString> m_runningTasks;
 };
 

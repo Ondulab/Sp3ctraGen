@@ -3,6 +3,194 @@
 #include "spectral_fft.h"
 
 /*---------------------------------------------------------------------
+ * draw_vertical_scale()
+ *
+ * Draws a vertical scale with frequency labels on the left side of the spectrogram.
+ * Uses logarithmic scale with one graduation per octave.
+ *
+ * Parameters:
+ *  - cr: Cairo context
+ *  - spectro_left: Left position of the spectrogram
+ *  - spectro_top: Top position of the spectrogram
+ *  - spectro_height: Height of the spectrogram in pixels
+ *  - minFreq: Minimum frequency in Hz
+ *  - maxFreq: Maximum frequency in Hz
+ *  - octaves: Number of octaves between minFreq and maxFreq
+ *---------------------------------------------------------------------*/
+void draw_vertical_scale(cairo_t *cr, double spectro_left, double spectro_top,
+                          double spectro_height, double minFreq, double maxFreq, double octaves,
+                          double textScaleFactor, double lineThicknessFactor) {
+    // Draw the main vertical line
+    cairo_set_source_rgb(cr, 0.0, 0.0, 0.0);
+    cairo_set_line_width(cr, lineThicknessFactor);
+    cairo_move_to(cr, spectro_left, spectro_top);
+    cairo_line_to(cr, spectro_left, spectro_top + spectro_height);
+    cairo_stroke(cr);
+    
+    // Calculate octaves for graduations
+    double start_octave = ceil(log2(minFreq));
+    double end_octave = floor(log2(maxFreq));
+    
+    // Draw graduations and labels for each octave
+    cairo_set_font_size(cr, 32.0 * textScaleFactor); // Size adapted for 800 DPI, adjusted by scale factor
+    
+    for (double octave = start_octave; octave <= end_octave; octave++) {
+        double freq = pow(2.0, octave);
+        double log_ratio = log2(freq / minFreq) / octaves;
+        double y = spectro_top + (1.0 - log_ratio) * spectro_height;
+        
+        // Draw the graduation mark
+        cairo_move_to(cr, spectro_left - 5 * lineThicknessFactor, y);
+        cairo_line_to(cr, spectro_left, y);
+        cairo_stroke(cr);
+        
+        // Display the frequency label
+        char label[32];
+        if (freq >= 1000) {
+            snprintf(label, sizeof(label), "%.1f kHz", freq / 1000.0);
+        } else {
+            snprintf(label, sizeof(label), "%.0f Hz", freq);
+        }
+        
+        cairo_move_to(cr, spectro_left - 50, y + 4);
+        cairo_show_text(cr, label);
+    }
+}
+
+/*---------------------------------------------------------------------
+ * draw_reference_lines()
+ *
+ * Draws horizontal reference lines above and/or below the spectrogram.
+ *
+ * Parameters:
+ *  - cr: Cairo context
+ *  - spectro_left: Left position of the spectrogram
+ *  - spectro_width: Width of the spectrogram in pixels
+ *  - spectro_bottom: Bottom position of the spectrogram
+ *  - spectro_top: Top position of the spectrogram
+ *  - enableBottom: Whether to draw the bottom reference line
+ *  - bottomOffset: Offset of the bottom reference line in mm (negative = downward)
+ *  - enableTop: Whether to draw the top reference line
+ *  - topOffset: Offset of the top reference line in mm (positive = upward)
+ *---------------------------------------------------------------------*/
+void draw_reference_lines(cairo_t *cr, double spectro_left, double spectro_width,
+                          double spectro_bottom, double spectro_top,
+                          int enableBottom, double bottomOffset,
+                          int enableTop, double topOffset,
+                          double lineThicknessFactor) {
+    cairo_set_source_rgb(cr, 0.0, 0.0, 0.0);
+    cairo_set_line_width(cr, lineThicknessFactor);
+    
+    // Bottom reference line
+    if (enableBottom) {
+        // Use positive offset value but apply it downward from the bottom
+        double y = spectro_bottom + bottomOffset * MM_TO_PIXELS;
+        cairo_move_to(cr, spectro_left, y);
+        cairo_line_to(cr, spectro_left + spectro_width, y);
+        cairo_stroke(cr);
+    }
+    
+    // Top reference line
+    if (enableTop) {
+        double y = spectro_top - topOffset * MM_TO_PIXELS;
+        cairo_move_to(cr, spectro_left, y);
+        cairo_line_to(cr, spectro_left + spectro_width, y);
+        cairo_stroke(cr);
+    }
+}
+
+/*---------------------------------------------------------------------
+ * draw_parameters_text()
+ *
+ * Displays the spectrogram parameters at the bottom of the page.
+ *
+ * Parameters:
+ *  - cr: Cairo context
+ *  - page_width: Width of the page in pixels
+ *  - page_height: Height of the page in pixels
+ *  - s: Spectrogram settings
+ *---------------------------------------------------------------------*/
+/*---------------------------------------------------------------------
+ * draw_parameters_text()
+ *
+ * Displays the spectrogram parameters at the bottom of the page.
+ *
+ * Parameters:
+ *  - cr: Cairo context
+ *  - page_width: Width of the page in pixels
+ *  - page_height: Height of the page in pixels
+ *  - s: Spectrogram settings
+ *  - audioFile: Path to audio file
+ *  - startTime: Start time in seconds
+ *  - segmentDuration: Duration of the segment in seconds
+ *---------------------------------------------------------------------*/
+void draw_parameters_text(cairo_t *cr, double page_width, double page_height,
+                          const SpectrogramSettings *s, const char *audioFile, 
+                          double startTime, double segmentDuration)
+{
+    // Extract filename from path (if provided)
+    const char *filename = audioFile;
+    if (filename && *filename) {
+        // Find last slash or backslash
+        const char *lastSlash = strrchr(filename, '/');
+        const char *lastBackslash = strrchr(filename, '\\');
+        
+        // Use the last directory separator found
+        if (lastSlash && (!lastBackslash || lastSlash > lastBackslash)) {
+            filename = lastSlash + 1;
+        } else if (lastBackslash) {
+            filename = lastBackslash + 1;
+        }
+    } else {
+        filename = "Unknown";
+    }
+    
+    // Set font size scaled
+    double fontSize = 48.0 * s->textScaleFactor;
+    cairo_set_source_rgb(cr, 0.0, 0.0, 0.0);
+    cairo_set_font_size(cr, fontSize);
+    
+    // Get font extents for dynamic line height
+    cairo_font_extents_t font_extents;
+    cairo_font_extents(cr, &font_extents);
+    double line_height = font_extents.height * 1.5; // Add 50% extra spacing between lines
+    
+    // Text origin and margin
+    double margin = 50.0;
+    double text_x = margin;
+    double text_y = page_height - (line_height * 4.5);  // Leave space for 4 lines and padding
+    
+    // Prepare and draw lines
+    char buffer[1024];
+    
+    // First line: file info, start time and segment duration
+    snprintf(buffer, sizeof(buffer), "File: %s, Start: %.2fs, Duration: %.2fs", filename, startTime, segmentDuration);
+    cairo_move_to(cr, text_x, text_y);
+    cairo_show_text(cr, buffer);
+    
+    // Second line: FFT and overlap
+    text_y += line_height;
+    snprintf(buffer, sizeof(buffer), "FFT: %d, Overlap: %.2f", s->fftSize, s->overlap);
+    cairo_move_to(cr, text_x, text_y);
+    cairo_show_text(cr, buffer);
+    
+    // Third line: frequency, sample rate and dynamic range
+    text_y += line_height;
+    snprintf(buffer, sizeof(buffer), "Freq: %.0f-%.0f Hz, SR: %d Hz, DR: %.1f dB",
+             s->minFreq, s->maxFreq, s->sampleRate, s->dynamicRangeDB);
+    cairo_move_to(cr, text_x, text_y);
+    cairo_show_text(cr, buffer);
+    
+    // Fourth line: gamma, contrast, high boost and writing speed
+    text_y += line_height;
+    snprintf(buffer, sizeof(buffer), "Gamma: %.1f, Contrast: %.1f, HB: %s (%.2f), WS: %.1f cm/s",
+             s->gammaCorrection, s->contrastFactor,
+             s->enableHighBoost ? "On" : "Off", s->highBoostAlpha, s->writingSpeed);
+    cairo_move_to(cr, text_x, text_y);
+    cairo_show_text(cr, buffer);
+}
+
+/*---------------------------------------------------------------------
  * spectral_generator_impl()
  *
  * Generates a spectrogram PNG image.
@@ -354,70 +542,26 @@ int spectral_generator_impl(const SpectrogramSettings *cfg,
         }
     }
     
-    // Add frequency axis labels - taille de police native 800 DPI
-    cairo_set_source_rgb(cr, 0.0, 0.0, 0.0);
-    cairo_set_font_size(cr, 32.0); // Taille adaptée pour 800 DPI
+    // Draw vertical scale if enabled
+    if (s.enableVerticalScale) {
+        // Draw vertical scale with frequency labels
+        draw_vertical_scale(cr, spectro_left, spectro_top, spectro_height_px, minFreq, maxFreq, octaves,
+                           s.textScaleFactor, s.lineThicknessFactor);
+    }
     
-    if (USE_LOG_FREQUENCY) {
-        // Draw logarithmic frequency axis
-        double freq_step = 1.0; // Draw label at every octave
-        double start_freq = ceil(log2(minFreq));
-        double end_freq = floor(log2(maxFreq));
-        
-        for (double power = start_freq; power <= end_freq; power += freq_step) {
-            double freq = pow(2.0, power);
-            
-            // Calculate position using the same logarithmic formula
-            double log_ratio = log2(freq / minFreq) / octaves;
-            double y = spectro_bottom - (log_ratio * spectro_height_px);
-            
-            // Draw tick
-            cairo_set_line_width(cr, 2.0);
-            cairo_move_to(cr, spectro_left - 13, y);
-            cairo_line_to(cr, spectro_left, y);
-            cairo_stroke(cr);
-            
-            // Label
-            char label[32];
-            if (freq >= 1000) {
-                snprintf(label, sizeof(label), "%.1f kHz", freq / 1000.0);
-            } else {
-                snprintf(label, sizeof(label), "%.0f Hz", freq);
-            }
-            
-            cairo_move_to(cr, spectro_left - 133, y + 11);
-            cairo_show_text(cr, label);
-        }
-    } else {
-        // Draw linear frequency axis
-        int step = 1000; // 1 kHz step
-        
-        if (freq_range > 10000) step = 2000; // Increase step for large ranges
-        
-        for (int freq = ((int)minFreq / step) * step; freq <= maxFreq; freq += step) {
-            if (freq < minFreq) continue;
-            
-            // Calculate position on linear scale
-            double lin_ratio = (freq - minFreq) / freq_range;
-            double y = spectro_bottom - (lin_ratio * spectro_height_px);
-            
-            // Draw tick
-            cairo_set_line_width(cr, 2.0);
-            cairo_move_to(cr, spectro_left - 13, y);
-            cairo_line_to(cr, spectro_left, y);
-            cairo_stroke(cr);
-            
-            // Label
-            char label[32];
-            if (freq >= 1000) {
-                snprintf(label, sizeof(label), "%d kHz", freq / 1000);
-            } else {
-                snprintf(label, sizeof(label), "%d Hz", freq);
-            }
-            
-            cairo_move_to(cr, spectro_left - 133, y + 11);
-            cairo_show_text(cr, label);
-        }
+    // Draw reference lines if enabled
+    if (s.enableBottomReferenceLine || s.enableTopReferenceLine) {
+        draw_reference_lines(cr, spectro_left, spectro_width, spectro_bottom, spectro_top,
+                             s.enableBottomReferenceLine, s.bottomReferenceLineOffset,
+                             s.enableTopReferenceLine, s.topReferenceLineOffset,
+                             s.lineThicknessFactor);
+    }
+    
+    // Display parameters if enabled
+    if (s.displayParameters) {
+        // Use empty string for audio file, 0.0 for start time, and s.duration for segment duration as defaults
+        // These will be updated by the caller if needed
+        draw_parameters_text(cr, page_width, page_height, &s, "", 0.0, s.duration);
     }
     
     // Apply optional blur
@@ -447,4 +591,78 @@ int spectral_generator_impl(const SpectrogramSettings *cfg,
     printf("Spectrogram generated successfully at 800 DPI: %s\n", outputFilePath);
     
     return EXIT_SUCCESS;
+}
+
+/*---------------------------------------------------------------------
+ * spectral_generator_with_metadata()
+ *
+ * Wrapper function for spectral_generator_impl that includes metadata
+ * for parameters display (audio filename and start time).
+ *
+ * Parameters:
+ *  - cfg: Spectrogram settings
+ *  - inputFile: Path to input WAV file
+ *  - outputFile: Path to output PNG file
+ *  - audioFileName: Name of the audio file to display in parameters
+ *  - startTime: Start time in seconds to display in parameters
+ *
+ * Returns:
+ *  - EXIT_SUCCESS on success, EXIT_FAILURE on error.
+ *---------------------------------------------------------------------*/
+int spectral_generator_with_metadata(const SpectrogramSettings *cfg,
+                                    const char *inputFile,
+                                    const char *outputFile,
+                                    const char *audioFileName,
+                                    double startTime,
+                                    double segmentDuration)
+{
+    // Create a copy of the settings
+    SpectrogramSettings settings = *cfg;
+    
+    // Store the metadata for later use in draw_parameters_text
+    // This is a workaround since we can't modify the existing API
+    
+    // Call the implementation function
+    int result = spectral_generator_impl(&settings, inputFile, outputFile);
+    
+    // If successful, update the parameters text with metadata
+    if (result == EXIT_SUCCESS && settings.displayParameters) {
+        // Load the generated image
+        cairo_surface_t *surface = cairo_image_surface_create_from_png(outputFile);
+        if (cairo_surface_status(surface) == CAIRO_STATUS_SUCCESS) {
+            // Create a context for drawing
+            cairo_t *cr = cairo_create(surface);
+            
+            // Get page dimensions
+            int width = cairo_image_surface_get_width(surface);
+            int height = cairo_image_surface_get_height(surface);
+            
+            // Calculate the height needed for parameters text (4 lines with spacing)
+            double fontSize = 48.0 * settings.textScaleFactor;
+            cairo_set_font_size(cr, fontSize);
+            
+            // Get font extents for dynamic line height
+            cairo_font_extents_t font_extents;
+            cairo_font_extents(cr, &font_extents);
+            double line_height = font_extents.height * 1.5; // Add 50% extra spacing between lines
+            double text_area_height = line_height * 5; // 4 lines plus some padding
+            
+            // Draw a white rectangle over the existing parameters text area
+            cairo_set_source_rgb(cr, 1.0, 1.0, 1.0);
+            cairo_rectangle(cr, 0, height - text_area_height, width, text_area_height);
+            cairo_fill(cr);
+            
+            // Draw the parameters text with metadata
+            draw_parameters_text(cr, width, height, &settings, audioFileName, startTime, settings.duration);
+            
+            // Save the updated image
+            cairo_surface_write_to_png(surface, outputFile);
+            
+            // Clean up
+            cairo_destroy(cr);
+            cairo_surface_destroy(surface);
+        }
+    }
+    
+    return result;
 }
