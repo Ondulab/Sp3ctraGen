@@ -1,3 +1,11 @@
+/*
+ * Copyright (C) 2025 - present Ondulab
+ * All rights reserved.
+ *
+ * This software is licensed under terms that can be found in the LICENSE file
+ * in the root directory of this software component.
+ */
+
 #ifndef VISUALIZATIONFACTORY_H
 #define VISUALIZATIONFACTORY_H
 
@@ -7,10 +15,10 @@
 #include "VisualizationStrategy.h"
 
 /**
- * @brief Fabrique pour les stratégies de visualisation
- * 
- * Cette classe implémente le pattern Factory pour créer et gérer
- * les différentes stratégies de visualisation disponibles.
+ * @brief Factory for visualization strategies
+ *
+ * This class implements the Factory pattern to create and manage
+ * the different available visualization strategies.
  */
 class VisualizationFactory : public QObject
 {
@@ -18,62 +26,62 @@ class VisualizationFactory : public QObject
     
 public:
     /**
-     * @brief Obtient l'instance unique de la fabrique (Singleton)
-     * 
-     * @return Instance de la fabrique
+     * @brief Gets the unique instance of the factory (Singleton)
+     *
+     * @return Factory instance
      */
     static VisualizationFactory* getInstance();
     
     /**
-     * @brief Obtient une stratégie de visualisation par son nom
-     * 
-     * @param name Nom de la stratégie
-     * @return Pointeur vers la stratégie ou nullptr si non trouvée
+     * @brief Gets a visualization strategy by its name
+     *
+     * @param name Strategy name
+     * @return Pointer to the strategy or nullptr if not found
      */
     VisualizationStrategy* getStrategy(const QString& name);
     
     /**
-     * @brief Obtient une stratégie de visualisation par extension de fichier
-     * 
-     * @param extension Extension de fichier (sans le point)
-     * @return Pointeur vers la stratégie ou nullptr si non trouvée
+     * @brief Gets a visualization strategy by file extension
+     *
+     * @param extension File extension (without the dot)
+     * @return Pointer to the strategy or nullptr if not found
      */
     VisualizationStrategy* getStrategyForExtension(const QString& extension);
     
     /**
-     * @brief Obtient la liste des noms de stratégies disponibles
-     * 
-     * @return Liste des noms de stratégies
+     * @brief Gets the list of available strategy names
+     *
+     * @return List of strategy names
      */
     QStringList getAvailableStrategyNames() const;
     
     /**
-     * @brief Obtient la liste des extensions de fichier supportées
-     * 
-     * @return Liste des extensions supportées (sans le point)
+     * @brief Gets the list of supported file extensions
+     *
+     * @return List of supported extensions (without the dot)
      */
     QStringList getSupportedExtensions() const;
     
 private:
     /**
-     * @brief Constructeur privé (Singleton)
-     * 
-     * @param parent Objet parent
+     * @brief Private constructor (Singleton)
+     *
+     * @param parent Parent object
      */
     explicit VisualizationFactory(QObject *parent = nullptr);
     
     /**
-     * @brief Destructeur
+     * @brief Destructor
      */
     ~VisualizationFactory();
     
     /**
-     * @brief Initialise les stratégies disponibles
+     * @brief Initializes available strategies
      */
     void initializeStrategies();
     
-    static VisualizationFactory* s_instance; // Instance unique (Singleton)
-    QMap<QString, VisualizationStrategy*> m_strategies; // Stratégies par nom
+    static VisualizationFactory* s_instance; // Unique instance (Singleton)
+    QMap<QString, VisualizationStrategy*> m_strategies; // Strategies by name
 };
 
 #endif // VISUALIZATIONFACTORY_H

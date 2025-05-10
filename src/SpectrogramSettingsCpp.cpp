@@ -1,3 +1,11 @@
+/*
+ * Copyright (C) 2025 - present Ondulab
+ * All rights reserved.
+ *
+ * This software is licensed under terms that can be found in the LICENSE file
+ * in the root directory of this software component.
+ */
+
 #include "../include/SpectrogramSettingsCpp.h"
 #include "../include/Constants.h"
 
@@ -21,7 +29,15 @@ SpectrogramSettingsCpp::SpectrogramSettingsCpp()
     , m_bottomMarginMM(Constants::BOTTOM_MARGIN)
     , m_spectroHeightMM(Constants::SPECTRO_HEIGHT)
     , m_writingSpeed(0.0)
-    , m_enableNormalization(true) // Par défaut, la normalisation est activée
+    , m_enableNormalization(true) // By default, normalization is enabled
+    , m_enableVerticalScale(true) // By default, vertical scale is enabled
+    , m_enableBottomReferenceLine(false)
+    , m_bottomReferenceLineOffset(-34.75) // Default offset in mm
+    , m_enableTopReferenceLine(false)
+    , m_topReferenceLineOffset(12.55) // Default offset in mm
+    , m_displayParameters(false)
+    , m_textScaleFactor(2.0) // Default text scale factor
+    , m_lineThicknessFactor(2.0) // Default line thickness factor
 {
 }
 
@@ -64,6 +80,14 @@ SpectrogramSettings SpectrogramSettingsCpp::toCStruct() const
     cSettings.spectroHeightMM = m_spectroHeightMM;
     cSettings.writingSpeed = m_writingSpeed;
     cSettings.enableNormalization = m_enableNormalization ? 1 : 0;
+    cSettings.enableVerticalScale = m_enableVerticalScale ? 1 : 0;
+    cSettings.enableBottomReferenceLine = m_enableBottomReferenceLine ? 1 : 0;
+    cSettings.bottomReferenceLineOffset = m_bottomReferenceLineOffset;
+    cSettings.enableTopReferenceLine = m_enableTopReferenceLine ? 1 : 0;
+    cSettings.topReferenceLineOffset = m_topReferenceLineOffset;
+    cSettings.displayParameters = m_displayParameters ? 1 : 0;
+    cSettings.textScaleFactor = m_textScaleFactor;
+    cSettings.lineThicknessFactor = m_lineThicknessFactor;
     return cSettings;
 }
 
@@ -90,6 +114,14 @@ SpectrogramSettingsCpp SpectrogramSettingsCpp::fromCStruct(const SpectrogramSett
     settings.m_spectroHeightMM = cSettings.spectroHeightMM;
     settings.m_writingSpeed = cSettings.writingSpeed;
     settings.m_enableNormalization = cSettings.enableNormalization != 0;
+    settings.m_enableVerticalScale = cSettings.enableVerticalScale != 0;
+    settings.m_enableBottomReferenceLine = cSettings.enableBottomReferenceLine != 0;
+    settings.m_bottomReferenceLineOffset = cSettings.bottomReferenceLineOffset;
+    settings.m_enableTopReferenceLine = cSettings.enableTopReferenceLine != 0;
+    settings.m_topReferenceLineOffset = cSettings.topReferenceLineOffset;
+    settings.m_displayParameters = cSettings.displayParameters != 0;
+    settings.m_textScaleFactor = cSettings.textScaleFactor;
+    settings.m_lineThicknessFactor = cSettings.lineThicknessFactor;
     return settings;
 }
 
@@ -113,7 +145,15 @@ void SpectrogramSettingsCpp::initFromQmlParameters(
     double bottomMarginMM,
     double spectroHeightMM,
     double writingSpeed,
-    bool enableNormalization)
+    bool enableNormalization,
+    bool enableVerticalScale,
+    bool enableBottomReferenceLine,
+    double bottomReferenceLineOffset,
+    bool enableTopReferenceLine,
+    double topReferenceLineOffset,
+    bool displayParameters,
+    double textScaleFactor,
+    double lineThicknessFactor)
 {
     m_fftSize = fftSize;
     m_overlap = overlap;
@@ -135,4 +175,12 @@ void SpectrogramSettingsCpp::initFromQmlParameters(
     m_spectroHeightMM = spectroHeightMM;
     m_writingSpeed = writingSpeed;
     m_enableNormalization = enableNormalization;
+    m_enableVerticalScale = enableVerticalScale;
+    m_enableBottomReferenceLine = enableBottomReferenceLine;
+    m_bottomReferenceLineOffset = bottomReferenceLineOffset;
+    m_enableTopReferenceLine = enableTopReferenceLine;
+    m_topReferenceLineOffset = topReferenceLineOffset;
+    m_displayParameters = displayParameters;
+    m_textScaleFactor = textScaleFactor;
+    m_lineThicknessFactor = lineThicknessFactor;
 }

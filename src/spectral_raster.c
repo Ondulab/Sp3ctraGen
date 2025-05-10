@@ -147,10 +147,6 @@ void draw_parameters_text(cairo_t *cr, double page_width, double page_height,
     
     // Set font size scaled
     double fontSize = 48.0 * s->textScaleFactor;
-    cairo_set_source_rgb(cr, 0.0, 0.0, 0.0);
-    cairo_set_font_size(cr, fontSize);
-    
-    // Get font extents for dynamic line height
     cairo_font_extents_t font_extents;
     cairo_font_extents(cr, &font_extents);
     double line_height = font_extents.height * 1.5; // Add 50% extra spacing between lines
@@ -158,36 +154,61 @@ void draw_parameters_text(cairo_t *cr, double page_width, double page_height,
     // Text origin and margin
     double margin = 50.0;
     double text_x = margin;
-    double text_y = page_height - (line_height * 4.5);  // Leave space for 4 lines and padding
+    double text_y = page_height - (line_height * 2.5);  // Space for 2 lines + padding
     
-    // Prepare and draw lines
-    char buffer[1024];
+    // Prepare the text for the two lines
+    char line1[1024];
+    char line2[1024];
     
-    // First line: file info, start time and segment duration
-    snprintf(buffer, sizeof(buffer), "File: %s, Start: %.2fs, Duration: %.2fs", filename, startTime, segmentDuration);
-    cairo_move_to(cr, text_x, text_y);
-    cairo_show_text(cr, buffer);
+    // Line 1: file info, start time, duration, FFT and overlap
+    snprintf(line1, sizeof(line1), "File: %s, Start: %.2fs, Duration: %.2fs, FFT: %d, Overlap: %.2f", 
+             filename, startTime, segmentDuration, s->fftSize, s->overlap);
     
-    // Second line: FFT and overlap
-    text_y += line_height;
-    snprintf(buffer, sizeof(buffer), "FFT: %d, Overlap: %.2f", s->fftSize, s->overlap);
-    cairo_move_to(cr, text_x, text_y);
-    cairo_show_text(cr, buffer);
-    
-    // Third line: frequency, sample rate and dynamic range
-    text_y += line_height;
-    snprintf(buffer, sizeof(buffer), "Freq: %.0f-%.0f Hz, SR: %d Hz, DR: %.1f dB",
-             s->minFreq, s->maxFreq, s->sampleRate, s->dynamicRangeDB);
-    cairo_move_to(cr, text_x, text_y);
-    cairo_show_text(cr, buffer);
-    
-    // Fourth line: gamma, contrast, high boost and writing speed
-    text_y += line_height;
-    snprintf(buffer, sizeof(buffer), "Gamma: %.1f, Contrast: %.1f, HB: %s (%.2f), WS: %.1f cm/s",
+    // Line 2: frequency, sample rate, dynamic range, gamma, contrast, high boost and writing speed
+    snprintf(line2, sizeof(line2), "Freq: %.0f-%.0f Hz, SR: %d Hz, DR: %.1f dB, Gamma: %.1f, Contrast: %.1f, HB: %s (%.2f), WS: %.1f cm/s",
+             s->minFreq, s->maxFreq, s->sampleRate, s->dynamicRangeDB, 
              s->gammaCorrection, s->contrastFactor,
              s->enableHighBoost ? "On" : "Off", s->highBoostAlpha, s->writingSpeed);
+    
+    // Calculate text dimensions for the cartouche
+    cairo_text_extents_t extents1, extents2;
+    cairo_set_font_size(cr, fontSize);
+    cairo_text_extents(cr, line1, &extents1);
+    cairo_text_extents(cr, line2, &extents2);
+    
+    // Calculate cartouche dimensions
+    double max_width = fmax(extents1.width, extents2.width);
+    double cartouche_width = max_width + margin * 2;
+    double cartouche_height = line_height * 2 + margin;
+    double cartouche_x = (page_width - cartouche_width) / 2;  // Center horizontally
+    double cartouche_y = text_y - line_height - margin/2;
+    
+    // Draw cartouche background with slight transparency
+    cairo_set_source_rgba(cr, 1.0, 1.0, 1.0, 0.85);  // White with 85% opacity
+    cairo_rectangle(cr, cartouche_x, cartouche_y, cartouche_width, cartouche_height);
+    cairo_fill(cr);
+    
+    // Draw cartouche border
+    cairo_set_source_rgb(cr, 0.0, 0.0, 0.0);  // Black
+    cairo_set_line_width(cr, 1.0 * s->lineThicknessFactor);
+    cairo_rectangle(cr, cartouche_x, cartouche_y, cartouche_width, cartouche_height);
+    cairo_stroke(cr);
+    
+    // Reset text position for centered text
+    text_x = cartouche_x + margin;
+    text_y = cartouche_y + line_height;
+    
+    // Draw the two lines of text
+    cairo_set_source_rgb(cr, 0.0, 0.0, 0.0);  // Black text
+    
+    // First line
     cairo_move_to(cr, text_x, text_y);
-    cairo_show_text(cr, buffer);
+    cairo_show_text(cr, line1);
+    
+    // Second line
+    text_y += line_height;
+    cairo_move_to(cr, text_x, text_y);
+    cairo_show_text(cr, line2);
 }
 
 /*---------------------------------------------------------------------

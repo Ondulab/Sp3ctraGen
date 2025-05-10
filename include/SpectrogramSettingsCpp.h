@@ -1,3 +1,11 @@
+/*
+ * Copyright (C) 2025 - present Ondulab
+ * All rights reserved.
+ *
+ * This software is licensed under terms that can be found in the LICENSE file
+ * in the root directory of this software component.
+ */
+
 #ifndef SPECTROGRAMSETTINGSCPP_H
 #define SPECTROGRAMSETTINGSCPP_H
 
@@ -5,25 +13,25 @@
 #include "spectral_generator.h"
 
 /**
- * @brief Classe C++ unifiée pour les paramètres de spectrogramme
- * 
- * Cette classe encapsule tous les paramètres nécessaires pour générer un spectrogramme
- * et fournit des méthodes pour convertir entre cette classe et la structure C.
+ * @brief Unified C++ class for spectrogram settings
+ *
+ * This class encapsulates all parameters needed to generate a spectrogram
+ * and provides methods to convert between this class and the C structure.
  */
 class SpectrogramSettingsCpp {
 public:
     // Constructeur par défaut
     SpectrogramSettingsCpp();
     
-    // Factory methods pour les préréglages communs
+    // Factory methods for common presets
     static SpectrogramSettingsCpp defaultSettings();
     static SpectrogramSettingsCpp highResolutionSettings();
     
-    // Méthodes de conversion
+    // Conversion methods
     SpectrogramSettings toCStruct() const;
     static SpectrogramSettingsCpp fromCStruct(const SpectrogramSettings& cSettings);
     
-    // Getters et setters
+    // Getters and setters
     int getFftSize() const { return m_fftSize; }
     void setFftSize(int value) { m_fftSize = value; }
     
@@ -84,7 +92,32 @@ public:
     bool getEnableNormalization() const { return m_enableNormalization; }
     void setEnableNormalization(bool value) { m_enableNormalization = value; }
     
-    // Méthode pour initialiser à partir des paramètres QML
+    // Output Format options
+    bool getEnableVerticalScale() const { return m_enableVerticalScale; }
+    void setEnableVerticalScale(bool value) { m_enableVerticalScale = value; }
+    
+    bool getEnableBottomReferenceLine() const { return m_enableBottomReferenceLine; }
+    void setEnableBottomReferenceLine(bool value) { m_enableBottomReferenceLine = value; }
+    
+    double getBottomReferenceLineOffset() const { return m_bottomReferenceLineOffset; }
+    void setBottomReferenceLineOffset(double value) { m_bottomReferenceLineOffset = value; }
+    
+    bool getEnableTopReferenceLine() const { return m_enableTopReferenceLine; }
+    void setEnableTopReferenceLine(bool value) { m_enableTopReferenceLine = value; }
+    
+    double getTopReferenceLineOffset() const { return m_topReferenceLineOffset; }
+    void setTopReferenceLineOffset(double value) { m_topReferenceLineOffset = value; }
+    
+    bool getDisplayParameters() const { return m_displayParameters; }
+    void setDisplayParameters(bool value) { m_displayParameters = value; }
+    
+    double getTextScaleFactor() const { return m_textScaleFactor; }
+    void setTextScaleFactor(double value) { m_textScaleFactor = value; }
+    
+    double getLineThicknessFactor() const { return m_lineThicknessFactor; }
+    void setLineThicknessFactor(double value) { m_lineThicknessFactor = value; }
+    
+    // Method to initialize from QML parameters
     void initFromQmlParameters(
         int fftSize,
         double overlap,
@@ -105,7 +138,15 @@ public:
         double bottomMarginMM,
         double spectroHeightMM,
         double writingSpeed,
-        bool enableNormalization = true
+        bool enableNormalization = true,
+        bool enableVerticalScale = true,
+        bool enableBottomReferenceLine = false,
+        double bottomReferenceLineOffset = -34.75,
+        bool enableTopReferenceLine = false,
+        double topReferenceLineOffset = 12.55,
+        bool displayParameters = false,
+        double textScaleFactor = 2.0,
+        double lineThicknessFactor = 2.0
     );
     
 private:
@@ -129,6 +170,14 @@ private:
     double m_spectroHeightMM;
     double m_writingSpeed;
     bool m_enableNormalization;
+    bool m_enableVerticalScale;
+    bool m_enableBottomReferenceLine;
+    double m_bottomReferenceLineOffset;
+    bool m_enableTopReferenceLine;
+    double m_topReferenceLineOffset;
+    bool m_displayParameters;
+    double m_textScaleFactor;
+    double m_lineThicknessFactor;
 };
 
 #endif // SPECTROGRAMSETTINGSCPP_H

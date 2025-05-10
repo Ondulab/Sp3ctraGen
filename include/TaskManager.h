@@ -1,3 +1,11 @@
+/*
+ * Copyright (C) 2025 - present Ondulab
+ * All rights reserved.
+ *
+ * This software is licensed under terms that can be found in the LICENSE file
+ * in the root directory of this software component.
+ */
+
 #ifndef TASKMANAGER_H
 #define TASKMANAGER_H
 
@@ -10,10 +18,10 @@
 #include <functional>
 
 /**
- * @brief Gestionnaire de tâches en arrière-plan
- * 
- * Cette classe fournit une interface unifiée pour exécuter des tâches
- * en arrière-plan et suivre leur progression.
+ * @brief Background task manager
+ *
+ * This class provides a unified interface for executing tasks
+ * in the background and tracking their progress.
  */
 class TaskManager : public QObject
 {
@@ -21,109 +29,109 @@ class TaskManager : public QObject
     
 public:
     /**
-     * @brief Type de fonction de rappel pour les tâches
+     * @brief Callback function type for tasks
      */
     using TaskCallback = std::function<void(bool success, const QString& message)>;
     
     /**
-     * @brief Type de fonction de progression pour les tâches
+     * @brief Progress function type for tasks
      */
     using ProgressCallback = std::function<void(int progress, const QString& message)>;
     
     /**
-     * @brief Obtient l'instance unique du gestionnaire de tâches (Singleton)
-     * 
-     * @return Instance du gestionnaire de tâches
+     * @brief Gets the unique instance of the task manager (Singleton)
+     *
+     * @return Task manager instance
      */
     static TaskManager* getInstance();
     
     /**
-     * @brief Exécute une tâche en arrière-plan
-     * 
-     * @param task Fonction à exécuter
-     * @param callback Fonction de rappel à appeler lorsque la tâche est terminée
-     * @param progressCallback Fonction de rappel pour la progression (optionnelle)
-     * @return Identifiant unique de la tâche
+     * @brief Runs a task in the background
+     *
+     * @param task Function to execute
+     * @param callback Callback function to call when the task is completed
+     * @param progressCallback Callback function for progress (optional)
+     * @return Unique task identifier
      */
     QUuid runTask(std::function<void(ProgressCallback)> task, 
                  TaskCallback callback);
     
     /**
-     * @brief Annule une tâche en cours
-     * 
-     * @param taskId Identifiant de la tâche à annuler
-     * @return true si la tâche a été annulée
+     * @brief Cancels a running task
+     *
+     * @param taskId Identifier of the task to cancel
+     * @return true if the task was cancelled
      */
     bool cancelTask(const QUuid& taskId);
     
     /**
-     * @brief Annule toutes les tâches en cours
+     * @brief Cancels all running tasks
      */
     void cancelAllTasks();
     
     /**
-     * @brief Vérifie si une tâche est en cours
-     * 
-     * @param taskId Identifiant de la tâche
-     * @return true si la tâche est en cours
+     * @brief Checks if a task is running
+     *
+     * @param taskId Task identifier
+     * @return true if the task is running
      */
     bool isTaskRunning(const QUuid& taskId) const;
     
     /**
-     * @brief Obtient le nombre de tâches en cours
-     * 
-     * @return Nombre de tâches en cours
+     * @brief Gets the number of running tasks
+     *
+     * @return Number of running tasks
      */
     int runningTaskCount() const;
     
 signals:
     /**
-     * @brief Signal émis lorsqu'une tâche est démarrée
-     * 
-     * @param taskId Identifiant de la tâche
+     * @brief Signal emitted when a task is started
+     *
+     * @param taskId Task identifier
      */
     void taskStarted(const QUuid& taskId);
     
     /**
-     * @brief Signal émis lorsqu'une tâche est terminée
-     * 
-     * @param taskId Identifiant de la tâche
-     * @param success Succès de la tâche
-     * @param message Message de résultat
+     * @brief Signal emitted when a task is completed
+     *
+     * @param taskId Task identifier
+     * @param success Task success
+     * @param message Result message
      */
     void taskCompleted(const QUuid& taskId, bool success, const QString& message);
     
     /**
-     * @brief Signal émis lorsqu'une tâche est annulée
-     * 
-     * @param taskId Identifiant de la tâche
+     * @brief Signal emitted when a task is cancelled
+     *
+     * @param taskId Task identifier
      */
     void taskCancelled(const QUuid& taskId);
     
     /**
-     * @brief Signal émis lorsque la progression d'une tâche est mise à jour
-     * 
-     * @param taskId Identifiant de la tâche
-     * @param progress Progression (0-100)
-     * @param message Message de progression
+     * @brief Signal emitted when task progress is updated
+     *
+     * @param taskId Task identifier
+     * @param progress Progress (0-100)
+     * @param message Progress message
      */
     void taskProgressUpdated(const QUuid& taskId, int progress, const QString& message);
     
 private:
     /**
-     * @brief Constructeur privé (Singleton)
-     * 
-     * @param parent Objet parent
+     * @brief Private constructor (Singleton)
+     *
+     * @param parent Parent object
      */
     explicit TaskManager(QObject *parent = nullptr);
     
     /**
-     * @brief Destructeur
+     * @brief Destructor
      */
     ~TaskManager();
     
     /**
-     * @brief Structure pour stocker les informations d'une tâche
+     * @brief Structure to store task information
      */
     struct TaskInfo {
         QFutureWatcher<void>* watcher;
@@ -131,8 +139,8 @@ private:
         ProgressCallback progressCallback;
     };
     
-    static TaskManager* s_instance; // Instance unique (Singleton)
-    QMap<QUuid, TaskInfo> m_tasks; // Tâches en cours
+    static TaskManager* s_instance; // Unique instance (Singleton)
+    QMap<QUuid, TaskInfo> m_tasks; // Running tasks
 };
 
 #endif // TASKMANAGER_H

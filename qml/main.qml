@@ -909,6 +909,281 @@ ApplicationWindow {
                                     return parseFloat(text.replace(',', '.'));
                                 }
                             }
+                            
+                            // Nouvelles fonctionnalités d'affichage
+                            Label {
+                                text: "Vertical Scale:"
+                                font.family: orbitronFont.name
+                                color: primaryTextColor
+                            }
+                            Item {
+                                id: verticalScaleToggle
+                                Layout.preferredWidth: window.isSmall ? 120 : 80
+                                Layout.preferredHeight: 30
+                                Layout.fillWidth: window.isSmall
+                                
+                                property bool checked: true
+                                
+                                Rectangle {
+                                    id: verticalScaleBackground
+                                    anchors.fill: parent
+                                    radius: height / 2
+                                    color: "transparent"
+                                    border.width: 1
+                                    border.color: toggleBorderColor
+                                    
+                                    Rectangle {
+                                        id: verticalScaleIndicator
+                                        width: parent.width / 2
+                                        height: parent.height - 4
+                                        radius: height / 2
+                                        x: verticalScaleToggle.checked ? parent.width - width - 2 : 2
+                                        y: 2
+                                        color: verticalScaleToggle.checked ? toggleActiveColor : toggleInactiveColor
+                                        
+                                        Behavior on x {
+                                            NumberAnimation {
+                                                duration: animationDuration
+                                                easing.type: Easing.InOutQuad
+                                            }
+                                        }
+                                        
+                                        Behavior on color {
+                                            ColorAnimation {
+                                                duration: animationDuration
+                                            }
+                                        }
+                                    }
+                                }
+                                
+                                MouseArea {
+                                    anchors.fill: parent
+                                    onClicked: {
+                                        verticalScaleToggle.checked = !verticalScaleToggle.checked
+                                    }
+                                }
+                            }
+                            
+                            Label {
+                                text: "Bottom Reference Line:"
+                                font.family: orbitronFont.name
+                                color: primaryTextColor
+                            }
+                            Item {
+                                id: bottomReferenceLineToggle
+                                Layout.preferredWidth: window.isSmall ? 120 : 80
+                                Layout.preferredHeight: 30
+                                Layout.fillWidth: window.isSmall
+                                
+                                property bool checked: false
+                                
+                                Rectangle {
+                                    id: bottomReferenceLineBackground
+                                    anchors.fill: parent
+                                    radius: height / 2
+                                    color: "transparent"
+                                    border.width: 1
+                                    border.color: toggleBorderColor
+                                    
+                                    Rectangle {
+                                        id: bottomReferenceLineIndicator
+                                        width: parent.width / 2
+                                        height: parent.height - 4
+                                        radius: height / 2
+                                        x: bottomReferenceLineToggle.checked ? parent.width - width - 2 : 2
+                                        y: 2
+                                        color: bottomReferenceLineToggle.checked ? toggleActiveColor : toggleInactiveColor
+                                        
+                                        Behavior on x {
+                                            NumberAnimation {
+                                                duration: animationDuration
+                                                easing.type: Easing.InOutQuad
+                                            }
+                                        }
+                                        
+                                        Behavior on color {
+                                            ColorAnimation {
+                                                duration: animationDuration
+                                            }
+                                        }
+                                    }
+                                }
+                                
+                                MouseArea {
+                                    anchors.fill: parent
+                                    onClicked: {
+                                        bottomReferenceLineToggle.checked = !bottomReferenceLineToggle.checked
+                                    }
+                                }
+                            }
+                            
+                            Label {
+                                text: "Bottom Offset (mm):"
+                                font.family: orbitronFont.name
+                                color: primaryTextColor
+                                enabled: bottomReferenceLineToggle.checked
+                            }
+                            TextField {
+                                id: bottomReferenceLineOffsetField
+                                text: "34,75"
+                                Layout.preferredWidth: window.isSmall ? 120 : 80
+                                Layout.fillWidth: window.isSmall
+                                validator: DoubleValidator {
+                                    bottom: 0
+                                    top: 100
+                                    decimals: 2
+                                    notation: DoubleValidator.StandardNotation
+                                    locale: "en_US" // Use English locale to accept decimal point
+                                }
+                                color: fieldText
+                                font.family: orbitronFont.name
+                                background: Rectangle {
+                                    color: fieldBackground
+                                    radius: borderRadius / 2
+                                }
+                                horizontalAlignment: Text.AlignHCenter
+                                enabled: bottomReferenceLineToggle.checked
+                                
+                                function getValue() {
+                                    return parseFloat(text.replace(',', '.'));
+                                }
+                            }
+                            
+                            Label {
+                                text: "Top Reference Line:"
+                                font.family: orbitronFont.name
+                                color: primaryTextColor
+                            }
+                            Item {
+                                id: topReferenceLineToggle
+                                Layout.preferredWidth: window.isSmall ? 120 : 80
+                                Layout.preferredHeight: 30
+                                Layout.fillWidth: window.isSmall
+                                
+                                property bool checked: false
+                                
+                                Rectangle {
+                                    id: topReferenceLineBackground
+                                    anchors.fill: parent
+                                    radius: height / 2
+                                    color: "transparent"
+                                    border.width: 1
+                                    border.color: toggleBorderColor
+                                    
+                                    Rectangle {
+                                        id: topReferenceLineIndicator
+                                        width: parent.width / 2
+                                        height: parent.height - 4
+                                        radius: height / 2
+                                        x: topReferenceLineToggle.checked ? parent.width - width - 2 : 2
+                                        y: 2
+                                        color: topReferenceLineToggle.checked ? toggleActiveColor : toggleInactiveColor
+                                        
+                                        Behavior on x {
+                                            NumberAnimation {
+                                                duration: animationDuration
+                                                easing.type: Easing.InOutQuad
+                                            }
+                                        }
+                                        
+                                        Behavior on color {
+                                            ColorAnimation {
+                                                duration: animationDuration
+                                            }
+                                        }
+                                    }
+                                }
+                                
+                                MouseArea {
+                                    anchors.fill: parent
+                                    onClicked: {
+                                        topReferenceLineToggle.checked = !topReferenceLineToggle.checked
+                                    }
+                                }
+                            }
+                            
+                            Label {
+                                text: "Top Offset (mm):"
+                                font.family: orbitronFont.name
+                                color: primaryTextColor
+                                enabled: topReferenceLineToggle.checked
+                            }
+                            TextField {
+                                id: topReferenceLineOffsetField
+                                text: "12,55"
+                                Layout.preferredWidth: window.isSmall ? 120 : 80
+                                Layout.fillWidth: window.isSmall
+                                validator: DoubleValidator {
+                                    decimals: 2
+                                    notation: DoubleValidator.StandardNotation
+                                    locale: "en_US" // Use English locale to accept decimal point
+                                }
+                                color: fieldText
+                                font.family: orbitronFont.name
+                                background: Rectangle {
+                                    color: fieldBackground
+                                    radius: borderRadius / 2
+                                }
+                                horizontalAlignment: Text.AlignHCenter
+                                enabled: topReferenceLineToggle.checked
+                                
+                                function getValue() {
+                                    return parseFloat(text.replace(',', '.'));
+                                }
+                            }
+                            
+                            Label {
+                                text: "Show Parameters:"
+                                font.family: orbitronFont.name
+                                color: primaryTextColor
+                            }
+                            Item {
+                                id: displayParametersToggle
+                                Layout.preferredWidth: window.isSmall ? 120 : 80
+                                Layout.preferredHeight: 30
+                                Layout.fillWidth: window.isSmall
+                                
+                                property bool checked: false
+                                
+                                Rectangle {
+                                    id: displayParametersBackground
+                                    anchors.fill: parent
+                                    radius: height / 2
+                                    color: "transparent"
+                                    border.width: 1
+                                    border.color: toggleBorderColor
+                                    
+                                    Rectangle {
+                                        id: displayParametersIndicator
+                                        width: parent.width / 2
+                                        height: parent.height - 4
+                                        radius: height / 2
+                                        x: displayParametersToggle.checked ? parent.width - width - 2 : 2
+                                        y: 2
+                                        color: displayParametersToggle.checked ? toggleActiveColor : toggleInactiveColor
+                                        
+                                        Behavior on x {
+                                            NumberAnimation {
+                                                duration: animationDuration
+                                                easing.type: Easing.InOutQuad
+                                            }
+                                        }
+                                        
+                                        Behavior on color {
+                                            ColorAnimation {
+                                                duration: animationDuration
+                                            }
+                                        }
+                                    }
+                                }
+                                
+                                MouseArea {
+                                    anchors.fill: parent
+                                    onClicked: {
+                                        displayParametersToggle.checked = !displayParametersToggle.checked
+                                    }
+                                }
+                            }
                         }
                     }
                 }
@@ -1136,6 +1411,10 @@ ApplicationWindow {
                                         segment.duration
                                     );
                                     
+                                    // Obtenir le nom du fichier audio d'origine
+                                    var audioFileName = waveformProvider.getFilePath();
+                                    var originalFileName = audioFileName.split('/').pop(); // Extraire juste le nom du fichier
+                                    
                                     // Générer la prévisualisation
                                     generator.generateSpectrogramFromSegment(
                                         parseInt(fftSizeField.text),
@@ -1157,7 +1436,17 @@ ApplicationWindow {
                                         bottomMarginField.getValue(),
                                         spectroHeightField.getValue(),
                                         writingSpeedField.getValue(),
-                                        audioSegment
+                                        verticalScaleToggle.checked,
+                                        bottomReferenceLineToggle.checked,
+                                        bottomReferenceLineToggle.checked ? bottomReferenceLineOffsetField.getValue() : 34.75,
+                                        topReferenceLineToggle.checked,
+                                        topReferenceLineToggle.checked ? topReferenceLineOffsetField.getValue() : 12.55,
+                                        displayParametersToggle.checked,
+                                        2.0, // textScaleFactor
+                                        2.0, // lineThicknessFactor
+                                        audioSegment,
+                                        originalFileName, // Nom du fichier audio original
+                                        segment.startPosition // Position de départ en secondes
                                     );
                                     
                                     audioWaveformStatusText.text = "Generating segment preview...";
@@ -1413,7 +1702,7 @@ ApplicationWindow {
                     // Bouton pour imprimer la prévisualisation
                     Button {
                         id: printButton
-                        text: "Imprimer"
+                        text: "Print"
                         font.family: orbitronFont.name
                         enabled: generator.previewCounter > 0
                         

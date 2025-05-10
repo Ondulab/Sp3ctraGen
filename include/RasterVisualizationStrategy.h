@@ -1,13 +1,21 @@
+/*
+ * Copyright (C) 2025 - present Ondulab
+ * All rights reserved.
+ *
+ * This software is licensed under terms that can be found in the LICENSE file
+ * in the root directory of this software component.
+ */
+
 #ifndef RASTERVISUALIZATIONSTRATEGY_H
 #define RASTERVISUALIZATIONSTRATEGY_H
 
 #include "VisualizationStrategy.h"
 
 /**
- * @brief Stratégie de visualisation pour les spectrogrammes raster (PNG)
+ * @brief Visualization strategy for raster spectrograms (PNG)
  *
- * Cette classe implémente la génération de spectrogrammes au format raster (PNG)
- * en utilisant la fonction spectral_generator_impl.
+ * This class implements the generation of spectrograms in raster format (PNG)
+ * using the spectral_generator_impl function.
  */
 class RasterVisualizationStrategy : public VisualizationStrategy
 {
@@ -18,34 +26,34 @@ public:
     virtual ~RasterVisualizationStrategy() = default;
     
     /**
-     * @brief Obtient le nom de la stratégie
+     * @brief Gets the strategy name
      *
-     * @return Nom de la stratégie
+     * @return Strategy name
      */
     QString getName() const override;
     
     /**
-     * @brief Obtient la description de la stratégie
+     * @brief Gets the strategy description
      *
-     * @return Description de la stratégie
+     * @return Strategy description
      */
     QString getDescription() const override;
     
     /**
-     * @brief Obtient les extensions de fichier supportées
+     * @brief Gets the supported file extensions
      *
-     * @return Liste des extensions supportées (sans le point)
+     * @return List of supported extensions (without the dot)
      */
     QStringList getSupportedExtensions() const override;
     
 protected:
     /**
-     * @brief Implémentation spécifique de la génération pour le format raster
+     * @brief Specific implementation of generation for raster format
      *
-     * @param settings Paramètres du spectrogramme
-     * @param inputFile Fichier audio d'entrée
-     * @param outputFile Fichier de sortie
-     * @return Code de retour (EXIT_SUCCESS ou EXIT_FAILURE)
+     * @param settings Spectrogram settings
+     * @param inputFile Input audio file
+     * @param outputFile Output file
+     * @return Return code (EXIT_SUCCESS or EXIT_FAILURE)
      */
     int callGeneratorFunction(const SpectrogramSettings& settings,
                              const char* inputFile,

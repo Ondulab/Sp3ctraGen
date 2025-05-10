@@ -1,3 +1,11 @@
+/*
+ * Copyright (C) 2025 - present Ondulab
+ * All rights reserved.
+ *
+ * This software is licensed under terms that can be found in the LICENSE file
+ * in the root directory of this software component.
+ */
+
 #ifndef QMLCONSTANTS_H
 #define QMLCONSTANTS_H
 
@@ -6,17 +14,17 @@
 #include "Constants.h"
 
 /**
- * @brief Classe pour exposer les constantes à QML
- * 
- * Cette classe expose les constantes C++ à QML via des propriétés.
- * Elle est enregistrée comme un singleton QML pour être accessible
- * depuis n'importe quel fichier QML.
+ * @brief Class to expose constants to QML
+ *
+ * This class exposes C++ constants to QML via properties.
+ * It is registered as a QML singleton to be accessible
+ * from any QML file.
  */
 class QmlConstants : public QObject
 {
     Q_OBJECT
     
-    // Paramètres audio
+    // Audio parameters
     Q_PROPERTY(int defaultFftSize READ defaultFftSize CONSTANT)
     Q_PROPERTY(double defaultOverlap READ defaultOverlap CONSTANT)
     Q_PROPERTY(double defaultMinFreq READ defaultMinFreq CONSTANT)
@@ -30,7 +38,7 @@ class QmlConstants : public QObject
     Q_PROPERTY(bool defaultEnableHighBoost READ defaultEnableHighBoost CONSTANT)
     Q_PROPERTY(double defaultHighBoostAlpha READ defaultHighBoostAlpha CONSTANT)
     
-    // Couleurs
+    // Colors
     Q_PROPERTY(QColor primaryTextColor READ primaryTextColor CONSTANT)
     Q_PROPERTY(QColor backgroundColor READ backgroundColor CONSTANT)
     Q_PROPERTY(QColor fieldBackground READ fieldBackground CONSTANT)
@@ -61,7 +69,7 @@ class QmlConstants : public QObject
 public:
     explicit QmlConstants(QObject *parent = nullptr);
     
-    // Getters pour les paramètres audio
+    // Getters for audio parameters
     int defaultFftSize() const { return Constants::FFT_SIZE; }
     double defaultOverlap() const { return Constants::OVERLAP; }
     double defaultMinFreq() const { return Constants::MIN_FREQ; }
@@ -75,7 +83,7 @@ public:
     bool defaultEnableHighBoost() const { return Constants::HIGH_BOOST; }
     double defaultHighBoostAlpha() const { return Constants::HIGH_BOOST_ALPHA_VAL; }
     
-    // Getters pour les couleurs
+    // Getters for colors
     QColor primaryTextColor() const { return QColor(Constants::PRIMARY_COLOR); }
     QColor backgroundColor() const { return QColor(Constants::BACKGROUND_COLOR); }
     QColor fieldBackground() const { return QColor(Constants::FIELD_BACKGROUND_COLOR); }
@@ -92,7 +100,7 @@ public:
     QColor successColor() const { return QColor(Constants::SUCCESS_COLOR); }
     QColor errorColor() const { return QColor(Constants::ERROR_COLOR); }
     
-    // Getters pour les dimensions
+    // Getters for dimensions
     int spacing() const { return 10; }
     int margin() const { return 20; }
     int padding() const { return 10; }

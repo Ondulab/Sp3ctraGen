@@ -58,9 +58,9 @@ ApplicationWindow {
             console.log("Signal previewGenerated received: success=" + success + ", errorMessage=" + errorMessage);
             
             if (success) {
-                // Forcer le rechargement de l'image en utilisant un timestamp
-                previewImage.source = ""  // Effacer l'image précédente
-                previewImage.source = "image://preview/" + Date.now()  // Utiliser un timestamp pour éviter le cache
+                // Force image reload using a timestamp
+                previewImage.source = ""  // Clear previous image
+                previewImage.source = "image://preview/" + Date.now()  // Use timestamp to avoid cache
                 previewStatusText.text = "Preview updated"
                 previewStatusText.color = successColor
             } else {
@@ -70,13 +70,13 @@ ApplicationWindow {
         }
     }
 
-    // Layout principal avec division horizontale
+    // Main layout with horizontal division
     RowLayout {
         anchors.fill: parent
         anchors.margins: margin
         spacing: window.spacing
         
-        // Partie gauche - Paramètres
+        // Left side - Parameters
         Rectangle {
             Layout.fillHeight: true
             Layout.preferredWidth: parent.width * 0.5
@@ -95,7 +95,7 @@ ApplicationWindow {
                     Layout.alignment: Qt.AlignHCenter
                 }
                 
-                // Bouton Refresh Preview
+                // Refresh Preview button
                 Button {
                     id: refreshPreviewButton
                     text: "Refresh Preview"
@@ -120,7 +120,7 @@ ApplicationWindow {
                     }
                     
                     onClicked: {
-                        // Appeler la fonction de génération de prévisualisation avec des valeurs par défaut
+                        // Call the preview generation function with default values
                         generator.generatePreview(
                             8192,    // fftSize
                             0.85,    // overlap
@@ -134,16 +134,257 @@ ApplicationWindow {
                             1.9,     // contrastFactor
                             true,    // enableHighBoost
                             0.99,    // highBoostAlpha
+                            false,   // enableHighPassFilter
+                            100.0,   // highPassCutoffFreq
+                            2,       // highPassFilterOrder
                             0,       // pageFormat
-                            50.0,    // bottomMarginMM - 50mm est correct en tant que valeur physique
-                            169.5,   // spectroHeightMM - ajusté pour mieux s'adapter à l'écran avec 800 DPI
+                            50.0,    // bottomMarginMM - 50mm is correct as a physical value
+                            169.5,   // spectroHeightMM - adjusted to better fit the screen at 800 DPI
                             8.0,     // writingSpeed
-                            ""       // inputFile (utilise le chemin par défaut)
+                            "",      // inputFile (uses default path)
+                            verticalScaleToggle.checked,
+                            bottomLineToggle.checked,
+                            parseFloat(bottomLineOffsetField.text),
+                            topLineToggle.checked,
+                            parseFloat(topLineOffsetField.text),
+                            showParamsToggle.checked,
+                            2.0,     // textScaleFactor - to increase text size
+                            2.0      // lineThicknessFactor - to increase line thickness
                         )
                     }
                 }
                 
-                // Bouton Save Preview
+                // Controls for new features
+                Rectangle {
+                    Layout.fillWidth: true
+                    Layout.preferredHeight: outputOptionsLayout.implicitHeight + 2 * padding
+                    color: "transparent"
+                    border.width: borderWidth
+                    border.color: borderColor
+                    radius: borderRadius
+                    Layout.topMargin: 10
+                    
+                    ColumnLayout {
+                        id: outputOptionsLayout
+                        anchors.fill: parent
+                        anchors.margins: padding
+                        spacing: window.spacing
+                        
+                        Label {
+                            text: "Output Format Options"
+                            font.bold: true
+                            font.pixelSize: labelFontSize
+                            font.family: orbitronFont.name
+                            color: primaryTextColor
+                        }
+                        
+                        // Vertical scale
+                        RowLayout {
+                            Layout.fillWidth: true
+                            spacing: window.spacing
+                            
+                            Label {
+                                text: "Vertical Scale:"
+                                font.family: orbitronFont.name
+                                color: primaryTextColor
+                                Layout.preferredWidth: 120
+                            }
+                            
+                            Switch {
+                                id: verticalScaleToggle
+                                checked: true
+                                
+                                indicator: Rectangle {
+                                    implicitWidth: 40
+                                    implicitHeight: 20
+                                    radius: 10
+                                    color: parent.checked ? toggleActiveColor : toggleInactiveColor
+                                    border.color: toggleBorderColor
+                                    border.width: 1
+                                    
+                                    Rectangle {
+                                        x: parent.parent.checked ? parent.width - width - 2 : 2
+                                        y: 2
+                                        width: 16
+                                        height: 16
+                                        radius: 8
+                                        color: "white"
+                                        
+                                        Behavior on x {
+                                            NumberAnimation { duration: 200 }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        
+                        // Bottom reference line
+                        RowLayout {
+                            Layout.fillWidth: true
+                            spacing: window.spacing
+                            
+                            Label {
+                                text: "Bottom Line:"
+                                font.family: orbitronFont.name
+                                color: primaryTextColor
+                                Layout.preferredWidth: 120
+                            }
+                            
+                            Switch {
+                                id: bottomLineToggle
+                                checked: false
+                                
+                                indicator: Rectangle {
+                                    implicitWidth: 40
+                                    implicitHeight: 20
+                                    radius: 10
+                                    color: parent.checked ? toggleActiveColor : toggleInactiveColor
+                                    border.color: toggleBorderColor
+                                    border.width: 1
+                                    
+                                    Rectangle {
+                                        x: parent.parent.checked ? parent.width - width - 2 : 2
+                                        y: 2
+                                        width: 16
+                                        height: 16
+                                        radius: 8
+                                        color: "white"
+                                        
+                                        Behavior on x {
+                                            NumberAnimation { duration: 200 }
+                                        }
+                                    }
+                                }
+                            }
+                            
+                            Label {
+                                text: "Offset (mm):"
+                                font.family: orbitronFont.name
+                                color: primaryTextColor
+                                visible: bottomLineToggle.checked
+                            }
+                            
+                            TextField {
+                                id: bottomLineOffsetField
+                                text: "34.75"
+                                Layout.preferredWidth: 60
+                                visible: bottomLineToggle.checked
+                                color: fieldText
+                                font.family: orbitronFont.name
+                                validator: DoubleValidator { bottom: 0; top: 100 }
+                                background: Rectangle {
+                                    color: fieldBackground
+                                    radius: borderRadius / 2
+                                }
+                                horizontalAlignment: Text.AlignHCenter
+                            }
+                        }
+                        
+                        // Top reference line
+                        RowLayout {
+                            Layout.fillWidth: true
+                            spacing: window.spacing
+                            
+                            Label {
+                                text: "Top Line:"
+                                font.family: orbitronFont.name
+                                color: primaryTextColor
+                                Layout.preferredWidth: 120
+                            }
+                            
+                            Switch {
+                                id: topLineToggle
+                                checked: false
+                                
+                                indicator: Rectangle {
+                                    implicitWidth: 40
+                                    implicitHeight: 20
+                                    radius: 10
+                                    color: parent.checked ? toggleActiveColor : toggleInactiveColor
+                                    border.color: toggleBorderColor
+                                    border.width: 1
+                                    
+                                    Rectangle {
+                                        x: parent.parent.checked ? parent.width - width - 2 : 2
+                                        y: 2
+                                        width: 16
+                                        height: 16
+                                        radius: 8
+                                        color: "white"
+                                        
+                                        Behavior on x {
+                                            NumberAnimation { duration: 200 }
+                                        }
+                                    }
+                                }
+                            }
+                            
+                            Label {
+                                text: "Offset (mm):"
+                                font.family: orbitronFont.name
+                                color: primaryTextColor
+                                visible: topLineToggle.checked
+                            }
+                            
+                            TextField {
+                                id: topLineOffsetField
+                                text: "12.55"
+                                Layout.preferredWidth: 60
+                                visible: topLineToggle.checked
+                                color: fieldText
+                                font.family: orbitronFont.name
+                                validator: DoubleValidator { bottom: 0; top: 100 }
+                                background: Rectangle {
+                                    color: fieldBackground
+                                    radius: borderRadius / 2
+                                }
+                                horizontalAlignment: Text.AlignHCenter
+                            }
+                        }
+                        
+                        // Parameters display
+                        RowLayout {
+                            Layout.fillWidth: true
+                            spacing: window.spacing
+                            
+                            Label {
+                                text: "Show Parameters:"
+                                font.family: orbitronFont.name
+                                color: primaryTextColor
+                                Layout.preferredWidth: 120
+                            }
+                            
+                            Switch {
+                                id: showParamsToggle
+                                checked: false
+                                
+                                indicator: Rectangle {
+                                    implicitWidth: 40
+                                    implicitHeight: 20
+                                    radius: 10
+                                    color: parent.checked ? toggleActiveColor : toggleInactiveColor
+                                    border.color: toggleBorderColor
+                                    border.width: 1
+                                    
+                                    Rectangle {
+                                        x: parent.parent.checked ? parent.width - width - 2 : 2
+                                        y: 2
+                                        width: 16
+                                        height: 16
+                                        radius: 8
+                                        color: "white"
+                                        
+                                        Behavior on x {
+                                            NumberAnimation { duration: 200 }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                
+                // Save Preview button
                 Button {
                     id: savePreviewButton
                     text: "Save Preview"
@@ -169,7 +410,7 @@ ApplicationWindow {
                     }
                     
                     onClicked: {
-                        // Sauvegarder la prévisualisation
+                        // Save the preview
                         generator.saveCurrentPreview("", "png");
                     }
                 }
@@ -189,7 +430,7 @@ ApplicationWindow {
             }
         }
         
-        // Partie droite - Prévisualisation
+        // Right side - Preview
         Rectangle {
             id: previewContainer
             Layout.fillHeight: true
@@ -204,7 +445,7 @@ ApplicationWindow {
                 anchors.margins: padding
                 spacing: window.spacing
                 
-                // Titre de la prévisualisation
+                // Preview title
                 Label {
                     text: "Preview"
                     font.bold: true
@@ -214,12 +455,12 @@ ApplicationWindow {
                     Layout.alignment: Qt.AlignHCenter
                 }
                 
-                // Zone de prévisualisation avec ScrollView pour permettre le défilement
+                // Preview area with ScrollView to allow scrolling
                 ScrollView {
                     Layout.fillWidth: true
                     Layout.fillHeight: true
                     
-                    // Image de prévisualisation
+                    // Preview image
                     Image {
                         id: previewImage
                         anchors.centerIn: parent
@@ -229,7 +470,7 @@ ApplicationWindow {
                         cache: false
                         asynchronous: true
                         
-                        // Afficher un message si aucune prévisualisation n'est disponible
+                        // Display a message if no preview is available
                         Text {
                             anchors.centerIn: parent
                             text: "Click 'Refresh Preview' to generate a preview"
@@ -238,7 +479,7 @@ ApplicationWindow {
                             visible: previewImage.status !== Image.Ready || previewImage.source === ""
                         }
                         
-                        // Gérer les erreurs de chargement
+                        // Handle loading errors
                         onStatusChanged: {
                             if (status === Image.Error) {
                                 previewStatusText.text = "Error loading preview image"
@@ -248,7 +489,7 @@ ApplicationWindow {
                     }
                 }
                 
-                // Texte de statut pour la prévisualisation
+                // Status text for preview
                 Label {
                     id: previewStatusText
                     text: "No preview generated yet"

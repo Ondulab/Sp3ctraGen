@@ -1,3 +1,11 @@
+/*
+ * Copyright (C) 2025 - present Ondulab
+ * All rights reserved.
+ *
+ * This software is licensed under terms that can be found in the LICENSE file
+ * in the root directory of this software component.
+ */
+
 #ifndef PATHMANAGER_H
 #define PATHMANAGER_H
 
@@ -5,61 +13,61 @@
 #include <QDir>
 
 /**
- * @brief Classe de gestion des chemins de fichiers
- * 
- * Cette classe fournit des méthodes pour gérer les chemins de fichiers
- * de manière cohérente et éliminer les chemins codés en dur.
+ * @brief File path management class
+ *
+ * This class provides methods to manage file paths
+ * consistently and eliminate hardcoded paths.
  */
 class PathManager
 {
 public:
     /**
-     * @brief Obtient le chemin par défaut du fichier d'entrée
-     * 
-     * @return Chemin par défaut du fichier d'entrée
+     * @brief Gets the default input file path
+     *
+     * @return Default input file path
      */
     static QString getDefaultInputPath();
     
     /**
-     * @brief Obtient le dossier de sortie par défaut
-     * 
-     * @return Dossier de sortie par défaut
+     * @brief Gets the default output folder
+     *
+     * @return Default output folder
      */
     static QString getDefaultOutputFolder();
     
     /**
-     * @brief Obtient le chemin par défaut du fichier de sortie
-     * 
-     * @return Chemin par défaut du fichier de sortie
+     * @brief Gets the default output file path
+     *
+     * @return Default output file path
      */
     static QString getDefaultOutputPath();
     
     /**
-     * @brief Obtient le chemin par défaut du fichier PDF
-     * 
-     * @return Chemin par défaut du fichier PDF
+     * @brief Gets the default PDF file path
+     *
+     * @return Default PDF file path
      */
     static QString getDefaultPdfPath();
     
     /**
-     * @brief Résout un chemin relatif en chemin absolu
-     * 
-     * @param relativePath Chemin relatif
-     * @return Chemin absolu
+     * @brief Resolves a relative path to an absolute path
+     *
+     * @param relativePath Relative path
+     * @return Absolute path
      */
     static QString resolveRelativePath(const QString& relativePath);
     
     /**
-     * @brief Obtient le répertoire de l'application
-     * 
-     * @return Répertoire de l'application
+     * @brief Gets the application directory
+     *
+     * @return Application directory
      */
     static QString getApplicationDir();
     
     /**
-     * @brief Obtient le répertoire des ressources
-     * 
-     * @return Répertoire des ressources
+     * @brief Gets the resources directory
+     *
+     * @return Resources directory
      */
     static QString getResourcesDir();
 };

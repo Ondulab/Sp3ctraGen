@@ -1,3 +1,11 @@
+/*
+ * Copyright (C) 2025 - present Ondulab
+ * All rights reserved.
+ *
+ * This software is licensed under terms that can be found in the LICENSE file
+ * in the root directory of this software component.
+ */
+
 #ifndef VECTORPRINTPROVIDER_H
 #define VECTORPRINTPROVIDER_H
 
@@ -9,11 +17,11 @@
 
 /**
  * @brief The VectorPrintProvider class
- * 
- * Cette classe fournit des fonctionnalités d'impression vectorielle 1:1
- * en utilisant Cairo directement pour le rendu sans dépendre du système
- * d'impression de Qt. Elle permet d'exporter des spectrogrammes en PDF
- * vectoriel à haute résolution (800 DPI) avec des dimensions physiques précises.
+ *
+ * This class provides 1:1 vector printing capabilities
+ * using Cairo directly for rendering without depending on the Qt
+ * printing system. It allows exporting spectrograms as vector PDF
+ * at high resolution (800 DPI) with precise physical dimensions.
  */
 class VectorPrintProvider : public QObject
 {
@@ -22,7 +30,7 @@ class VectorPrintProvider : public QObject
 
 public:
     /**
-     * @brief Formats de page supportés
+     * @brief Supported page formats
      */
     enum PageFormat {
         A4Portrait = 0,
@@ -34,30 +42,30 @@ public:
     virtual ~VectorPrintProvider();
 
     /**
-     * @brief Génère un PDF vectoriel du spectrogramme
-     * 
-     * @param fftSize Taille de la FFT
-     * @param overlap Chevauchement des fenêtres
-     * @param minFreq Fréquence minimale (Hz)
-     * @param maxFreq Fréquence maximale (Hz)
-     * @param duration Durée (secondes)
-     * @param sampleRate Taux d'échantillonnage
-     * @param dynamicRangeDB Plage dynamique (dB)
-     * @param gammaCorrection Correction gamma
-     * @param enableDithering Activer le dithering
-     * @param contrastFactor Facteur de contraste
-     * @param enableHighBoost Activer l'amplification des hautes fréquences
-     * @param highBoostAlpha Alpha pour l'amplification des hautes fréquences
-     * @param enableHighPassFilter Activer le filtre passe-haut
-     * @param highPassCutoffFreq Fréquence de coupure du filtre passe-haut
-     * @param highPassFilterOrder Ordre du filtre passe-haut
-     * @param pageFormat Format de page (0=A4 portrait, 1=A3 paysage)
-     * @param bottomMarginMM Marge inférieure en millimètres
-     * @param spectroHeightMM Hauteur du spectrogramme en millimètres
-     * @param writingSpeed Vitesse d'écriture en cm/s
-     * @param inputFile Fichier audio d'entrée
-     * @param outputFolder Dossier de sortie
-     * @param dpi Résolution en DPI (par défaut 800)
+     * @brief Generates a vector PDF of the spectrogram
+     *
+     * @param fftSize FFT size
+     * @param overlap Window overlap
+     * @param minFreq Minimum frequency (Hz)
+     * @param maxFreq Maximum frequency (Hz)
+     * @param duration Duration (seconds)
+     * @param sampleRate Sample rate
+     * @param dynamicRangeDB Dynamic range (dB)
+     * @param gammaCorrection Gamma correction
+     * @param enableDithering Enable dithering
+     * @param contrastFactor Contrast factor
+     * @param enableHighBoost Enable high frequency boost
+     * @param highBoostAlpha Alpha for high frequency boost
+     * @param enableHighPassFilter Enable high-pass filter
+     * @param highPassCutoffFreq High-pass filter cutoff frequency
+     * @param highPassFilterOrder High-pass filter order
+     * @param pageFormat Page format (0=A4 portrait, 1=A3 landscape)
+     * @param bottomMarginMM Bottom margin in millimeters
+     * @param spectroHeightMM Spectrogram height in millimeters
+     * @param writingSpeed Writing speed in cm/s
+     * @param inputFile Input audio file
+     * @param outputFolder Output folder
+     * @param dpi Resolution in DPI (default 800)
      */
     Q_INVOKABLE void generateVectorPDF(
         int fftSize,
@@ -86,22 +94,22 @@ public:
 
 signals:
     /**
-     * @brief Signal émis lorsque le PDF vectoriel est généré
-     * 
-     * @param success Succès de la génération
-     * @param outputPath Chemin du fichier de sortie
-     * @param errorMessage Message d'erreur en cas d'échec
+     * @brief Signal emitted when the vector PDF is generated
+     *
+     * @param success Generation success
+     * @param outputPath Output file path
+     * @param errorMessage Error message in case of failure
      */
     void vectorPDFGenerated(bool success, const QString &outputPath, const QString &errorMessage = "");
 
 private:
     /**
-     * @brief Exécute la génération du PDF vectoriel dans un thread séparé
-     * 
-     * @param settings Paramètres du spectrogramme
-     * @param inputFile Fichier audio d'entrée
-     * @param outputFile Fichier PDF de sortie
-     * @param dpi Résolution en DPI
+     * @brief Executes vector PDF generation in a separate thread
+     *
+     * @param settings Spectrogram settings
+     * @param inputFile Input audio file
+     * @param outputFile Output PDF file
+     * @param dpi Resolution in DPI
      */
     void runVectorGeneration(
         const SpectrogramSettings &settings,

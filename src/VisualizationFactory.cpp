@@ -1,9 +1,17 @@
+/*
+ * Copyright (C) 2025 - present Ondulab
+ * All rights reserved.
+ *
+ * This software is licensed under terms that can be found in the LICENSE file
+ * in the root directory of this software component.
+ */
+
 #include "../include/VisualizationFactory.h"
 #include "../include/RasterVisualizationStrategy.h"
 #include "../include/VectorVisualizationStrategy.h"
 #include <QDebug>
 
-// Initialisation de l'instance statique
+// Initialization of the static instance
 VisualizationFactory* VisualizationFactory::s_instance = nullptr;
 
 VisualizationFactory* VisualizationFactory::getInstance()
@@ -22,22 +30,22 @@ VisualizationFactory::VisualizationFactory(QObject *parent)
 
 VisualizationFactory::~VisualizationFactory()
 {
-    // Nettoyer les stratégies
+    // Clean up strategies
     qDeleteAll(m_strategies);
     m_strategies.clear();
 }
 
 void VisualizationFactory::initializeStrategies()
 {
-    // Créer et enregistrer les stratégies disponibles
+    // Create and register available strategies
     RasterVisualizationStrategy* rasterStrategy = new RasterVisualizationStrategy(this);
     VectorVisualizationStrategy* vectorStrategy = new VectorVisualizationStrategy(this);
     
-    // Enregistrer les stratégies par nom
+    // Register strategies by name
     m_strategies[rasterStrategy->getName()] = rasterStrategy;
     m_strategies[vectorStrategy->getName()] = vectorStrategy;
     
-    qDebug() << "Stratégies de visualisation initialisées:" << m_strategies.keys();
+    qDebug() << "Visualization strategies initialized:" << m_strategies.keys();
 }
 
 VisualizationStrategy* VisualizationFactory::getStrategy(const QString& name)
@@ -46,7 +54,7 @@ VisualizationStrategy* VisualizationFactory::getStrategy(const QString& name)
         return m_strategies[name];
     }
     
-    qWarning() << "Stratégie de visualisation non trouvée:" << name;
+    qWarning() << "Visualization strategy not found:" << name;
     return nullptr;
 }
 
@@ -54,7 +62,7 @@ VisualizationStrategy* VisualizationFactory::getStrategyForExtension(const QStri
 {
     QString lowerExt = extension.toLower();
     
-    // Parcourir toutes les stratégies pour trouver celle qui supporte cette extension
+    // Go through all strategies to find one that supports this extension
     for (auto it = m_strategies.begin(); it != m_strategies.end(); ++it) {
         VisualizationStrategy* strategy = it.value();
         if (strategy->getSupportedExtensions().contains(lowerExt)) {
@@ -62,7 +70,7 @@ VisualizationStrategy* VisualizationFactory::getStrategyForExtension(const QStri
         }
     }
     
-    qWarning() << "Aucune stratégie trouvée pour l'extension:" << extension;
+    qWarning() << "No strategy found for extension:" << extension;
     return nullptr;
 }
 
@@ -75,13 +83,13 @@ QStringList VisualizationFactory::getSupportedExtensions() const
 {
     QStringList extensions;
     
-    // Collecter toutes les extensions supportées par toutes les stratégies
+    // Collect all extensions supported by all strategies
     for (auto it = m_strategies.begin(); it != m_strategies.end(); ++it) {
         VisualizationStrategy* strategy = it.value();
         extensions.append(strategy->getSupportedExtensions());
     }
     
-    // Éliminer les doublons
+    // Remove duplicates
     extensions.removeDuplicates();
     
     return extensions;
