@@ -164,39 +164,34 @@ void draw_parameters_text(cairo_t *cr, double page_width, double page_height,
     snprintf(line1, sizeof(line1), "File: %s, Start: %.2fs, Duration: %.2fs, FFT: %d, Overlap: %.2f", 
              filename, startTime, segmentDuration, s->fftSize, s->overlap);
     
-    // Line 2: frequency, sample rate, dynamic range, gamma, contrast, high boost and writing speed
-    snprintf(line2, sizeof(line2), "Freq: %.0f-%.0f Hz, SR: %d Hz, DR: %.1f dB, Gamma: %.1f, Contrast: %.1f, HB: %s (%.2f), WS: %.1f cm/s",
-             s->minFreq, s->maxFreq, s->sampleRate, s->dynamicRangeDB, 
-             s->gammaCorrection, s->contrastFactor,
+    // Line 2: frequency, sample rate, high-pass filter, dynamic range, gamma, contrast, high boost and writing speed
+    snprintf(line2, sizeof(line2), "Freq: %.0f-%.0f Hz, SR: %d Hz, HPF: %s (%.0f Hz, %d), DR: %.1f dB, Gamma: %.1f, Contrast: %.1f, HB: %s (%.2f), WS: %.1f cm/s",
+             s->minFreq, s->maxFreq, s->sampleRate, 
+             s->enableHighPassFilter ? "On" : "Off", s->highPassCutoffFreq, s->highPassFilterOrder,
+             s->dynamicRangeDB, s->gammaCorrection, s->contrastFactor,
              s->enableHighBoost ? "On" : "Off", s->highBoostAlpha, s->writingSpeed);
     
-    // Calculate text dimensions for the cartouche
+    // Calculate text dimensions for background
     cairo_text_extents_t extents1, extents2;
     cairo_set_font_size(cr, fontSize);
     cairo_text_extents(cr, line1, &extents1);
     cairo_text_extents(cr, line2, &extents2);
     
-    // Calculate cartouche dimensions
+    // Calculate background dimensions
     double max_width = fmax(extents1.width, extents2.width);
-    double cartouche_width = max_width + margin * 2;
-    double cartouche_height = line_height * 2 + margin;
-    double cartouche_x = (page_width - cartouche_width) / 2;  // Center horizontally
-    double cartouche_y = text_y - line_height - margin/2;
+    double bg_width = max_width + margin * 2;
+    double bg_height = line_height * 2 + margin;
+    double bg_x = margin;  // Aligned to left margin
+    double bg_y = text_y - line_height - margin/2;
     
-    // Draw cartouche background with slight transparency
+    // Draw background with slight transparency
     cairo_set_source_rgba(cr, 1.0, 1.0, 1.0, 0.85);  // White with 85% opacity
-    cairo_rectangle(cr, cartouche_x, cartouche_y, cartouche_width, cartouche_height);
+    cairo_rectangle(cr, bg_x, bg_y, bg_width, bg_height);
     cairo_fill(cr);
     
-    // Draw cartouche border
-    cairo_set_source_rgb(cr, 0.0, 0.0, 0.0);  // Black
-    cairo_set_line_width(cr, 1.0 * s->lineThicknessFactor);
-    cairo_rectangle(cr, cartouche_x, cartouche_y, cartouche_width, cartouche_height);
-    cairo_stroke(cr);
-    
-    // Reset text position for centered text
-    text_x = cartouche_x + margin;
-    text_y = cartouche_y + line_height;
+    // Set text position for left-aligned text
+    text_x = bg_x + margin;
+    text_y = bg_y + line_height;
     
     // Draw the two lines of text
     cairo_set_source_rgb(cr, 0.0, 0.0, 0.0);  // Black text
