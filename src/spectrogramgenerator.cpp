@@ -428,7 +428,7 @@ void SpectrogramGenerator::runSegmentPreviewGeneration(
     qDebug() << "Duration:" << settings.duration << "seconds";
     
     // Create a temporary WAV file with proper header
-    QTemporaryFile audioTempFile(QDir::tempPath() + "/spectrogen_segment_XXXXXX.wav");
+    QTemporaryFile audioTempFile(QDir::tempPath() + "/Sp3ctraGen_segment_XXXXXX.wav");
     audioTempFile.setAutoRemove(false); // Don't auto-remove to allow processing
     
     if (!audioTempFile.open()) {

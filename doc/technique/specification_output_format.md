@@ -1,8 +1,8 @@
-# Spécification des Fonctionnalités d'Output Format pour SpectroGen
+# Spécification des Fonctionnalités d'Output Format pour Sp3ctraGen
 
 ## 1. Introduction
 
-Ce document détaille les spécifications techniques pour l'implémentation de nouvelles fonctionnalités dans la section Output Format de SpectroGen. Ces fonctionnalités visent à améliorer la lisibilité et l'utilité des spectrogrammes générés, en particulier pour les applications d'analyse et de numérisation.
+Ce document détaille les spécifications techniques pour l'implémentation de nouvelles fonctionnalités dans la section Output Format de Sp3ctraGen. Ces fonctionnalités visent à améliorer la lisibilité et l'utilité des spectrogrammes générés, en particulier pour les applications d'analyse et de numérisation.
 
 ## 2. Fonctionnalités à Implémenter
 
@@ -337,4 +337,4 @@ L'architecture proposée permet d'ajouter facilement d'autres options de formata
 
 ## 6. Conclusion
 
-Ces nouvelles fonctionnalités amélioreront significativement l'utilité et la lisibilité des spectrogrammes générés par SpectroGen, en particulier pour les applications d'analyse et de numérisation. L'implémentation proposée s'intègre harmonieusement dans l'architecture existante et maintient la cohérence visuelle de l'application.
+Ces nouvelles fonctionnalités amélioreront significativement l'utilité et la lisibilité des spectrogrammes générés par Sp3ctraGen, en particulier pour les applications d'analyse et de numérisation. L'implémentation proposée s'intègre harmonieusement dans l'architecture existante et maintient la cohérence visuelle de l'application.

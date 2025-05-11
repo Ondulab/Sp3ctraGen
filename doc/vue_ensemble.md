@@ -1,8 +1,8 @@
-# Vue d'ensemble du projet SpectroGen
+# Vue d'ensemble du projet Sp3ctraGen
 
 ## Introduction et objectifs du projet
 
-SpectroGen est une application de génération de spectrogrammes haute qualité basée sur Qt Quick. Ce projet est un portage de l'application CISYNTH_App originale développée en SwiftUI. L'objectif principal est de fournir un outil performant et précis pour la génération de spectrogrammes à partir de fichiers audio, avec une attention particulière portée à la qualité d'impression et à la lisibilité par scanner.
+Sp3ctraGen est une application de génération de spectrogrammes haute qualité basée sur Qt Quick. Ce projet est un portage de l'application CISYNTH_App originale développée en SwiftUI. L'objectif principal est de fournir un outil performant et précis pour la génération de spectrogrammes à partir de fichiers audio, avec une attention particulière portée à la qualité d'impression et à la lisibilité par scanner.
 
 Les objectifs principaux du projet sont:
 
@@ -15,10 +15,10 @@ Les objectifs principaux du projet sont:
 
 ## Structure générale du projet
 
-Le projet SpectroGen est organisé selon une structure claire qui sépare les différentes préoccupations:
+Le projet Sp3ctraGen est organisé selon une structure claire qui sépare les différentes préoccupations:
 
 ```
-SpectroGen/
+Sp3ctraGen/
 ├── include/                  # Fichiers d'en-tête C++
 │   ├── SharedConstants.h     # Constantes partagées entre C et C++
 │   ├── Constants.h           # Constantes C++ (utilise SharedConstants.h)
@@ -49,7 +49,7 @@ SpectroGen/
 
 ## Interactions entre les composants
 
-L'architecture de SpectroGen est basée sur une séparation claire entre trois couches distinctes:
+L'architecture de Sp3ctraGen est basée sur une séparation claire entre trois couches distinctes:
 
 ### 1. Interface utilisateur (QML)
 
@@ -91,7 +91,7 @@ graph TD
 
 ### Prérequis
 
-Pour compiler et exécuter SpectroGen, vous aurez besoin de:
+Pour compiler et exécuter Sp3ctraGen, vous aurez besoin de:
 
 1. **Qt 5.15 ou supérieur**
    ```bash
@@ -128,7 +128,7 @@ scripts/debug.sh
 #### En ligne de commande
 
 ```bash
-cd SpectroGen
+cd Sp3ctraGen
 /opt/homebrew/opt/qt@5/bin/qmake -spec macx-clang CONFIG+=debug CONFIG+=qml_debug
 make -j8
 ```

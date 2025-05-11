@@ -22,16 +22,16 @@ int main(int argc, char *argv[])
     VisualizationFactory::getInstance();
     TaskManager::getInstance();
     
-    qDebug() << "Initialisation de l'application SpectroGen";
+    qDebug() << "Initialisation de l'application Sp3ctraGen";
     qDebug() << "Types de visualisation disponibles:" << VisualizationFactory::getInstance()->getAvailableStrategyNames();
     qDebug() << "Extensions supportées:" << VisualizationFactory::getInstance()->getSupportedExtensions();
 
     // Enregistrer nos types C++ pour QML
-    qmlRegisterType<SpectrogramGenerator>("com.spectrogen.backend", 1, 0, "SpectrogramGenerator");
-    qmlRegisterType<WaveformProvider>("com.spectrogen.backend", 1, 0, "WaveformProvider");
+    qmlRegisterType<SpectrogramGenerator>("com.Sp3ctraGen.backend", 1, 0, "SpectrogramGenerator");
+    qmlRegisterType<WaveformProvider>("com.Sp3ctraGen.backend", 1, 0, "WaveformProvider");
     
     // Enregistrer la classe QmlConstants comme singleton
-    qmlRegisterSingletonType<QmlConstants>("com.spectrogen.constants", 1, 0, "Constants",
+    qmlRegisterSingletonType<QmlConstants>("com.Sp3ctraGen.constants", 1, 0, "Constants",
         [](QQmlEngine *engine, QJSEngine *scriptEngine) -> QObject * {
             Q_UNUSED(engine)
             Q_UNUSED(scriptEngine)

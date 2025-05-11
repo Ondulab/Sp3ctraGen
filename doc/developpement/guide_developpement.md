@@ -2,13 +2,13 @@
 
 ## Introduction
 
-Ce guide fournit des informations détaillées sur la configuration de l'environnement de développement, le processus de compilation, les techniques de débogage et les bonnes pratiques pour le développement de SpectroGen. Il est destiné aux développeurs qui souhaitent contribuer au projet ou le modifier pour leurs propres besoins.
+Ce guide fournit des informations détaillées sur la configuration de l'environnement de développement, le processus de compilation, les techniques de débogage et les bonnes pratiques pour le développement de Sp3ctraGen. Il est destiné aux développeurs qui souhaitent contribuer au projet ou le modifier pour leurs propres besoins.
 
 ## Configuration de l'environnement de développement
 
 ### Prérequis
 
-Pour développer SpectroGen, vous aurez besoin des éléments suivants:
+Pour développer Sp3ctraGen, vous aurez besoin des éléments suivants:
 
 #### 1. Qt 5.15 ou supérieur
 
@@ -29,7 +29,7 @@ Téléchargez et installez Qt depuis le [site officiel](https://www.qt.io/downlo
 
 #### 2. Bibliothèques de traitement du signal et d'image
 
-SpectroGen utilise plusieurs bibliothèques pour le traitement du signal et la génération d'images.
+Sp3ctraGen utilise plusieurs bibliothèques pour le traitement du signal et la génération d'images.
 
 **Installation sur macOS:**
 ```bash
@@ -64,9 +64,9 @@ Installez Visual Studio ou MinGW.
 
 ### Configuration de VSCode
 
-SpectroGen inclut une configuration VSCode complète pour faciliter le développement:
+Sp3ctraGen inclut une configuration VSCode complète pour faciliter le développement:
 
-1. **Ouvrez le dossier SpectroGen dans VSCode**
+1. **Ouvrez le dossier Sp3ctraGen dans VSCode**
 
 2. **Installez les extensions recommandées:**
    - C/C++ (ms-vscode.cpptools)
@@ -87,7 +87,7 @@ SpectroGen inclut une configuration VSCode complète pour faciliter le développ
 
 ### Compilation avec VSCode
 
-1. Ouvrez le dossier `SpectroGen` dans VSCode
+1. Ouvrez le dossier `Sp3ctraGen` dans VSCode
 2. Appuyez sur `Ctrl+Shift+B` ou sélectionnez `Terminal > Run Build Task...` pour lancer la compilation
 3. La tâche par défaut exécutera `qmake` puis `make`
 
@@ -96,7 +96,7 @@ SpectroGen inclut une configuration VSCode complète pour faciliter le développ
 #### macOS
 
 ```bash
-cd SpectroGen
+cd Sp3ctraGen
 /opt/homebrew/opt/qt@5/bin/qmake -spec macx-clang CONFIG+=debug CONFIG+=qml_debug
 make -j8
 ```
@@ -104,7 +104,7 @@ make -j8
 #### Linux
 
 ```bash
-cd SpectroGen
+cd Sp3ctraGen
 qmake CONFIG+=debug CONFIG+=qml_debug
 make -j8
 ```
@@ -112,7 +112,7 @@ make -j8
 #### Windows
 
 ```bash
-cd SpectroGen
+cd Sp3ctraGen
 C:\Qt\5.15.2\msvc2019_64\bin\qmake.exe CONFIG+=debug CONFIG+=qml_debug
 nmake
 ```
@@ -137,7 +137,7 @@ scripts/debug.sh
 Pour une meilleure intégration avec les outils d'analyse de code, vous pouvez générer un fichier `compile_commands.json`:
 
 ```bash
-cd SpectroGen
+cd Sp3ctraGen
 bear -- make clean all
 ```
 
@@ -161,8 +161,8 @@ Ce fichier sera utilisé par les outils comme clangd pour fournir une meilleure 
 #### LLDB (macOS)
 
 ```bash
-cd SpectroGen
-lldb ./SpectroGen.app/Contents/MacOS/SpectroGen
+cd Sp3ctraGen
+lldb ./Sp3ctraGen.app/Contents/MacOS/Sp3ctraGen
 ```
 
 Commandes LLDB utiles:
@@ -178,8 +178,8 @@ Commandes LLDB utiles:
 #### GDB (Linux)
 
 ```bash
-cd SpectroGen
-gdb ./SpectroGen
+cd Sp3ctraGen
+gdb ./Sp3ctraGen
 ```
 
 Commandes GDB utiles:
@@ -221,8 +221,8 @@ Vous pouvez également utiliser `console.log()` dans votre code QML pour affiche
 Pour déboguer les problèmes de mémoire, vous pouvez utiliser Valgrind:
 
 ```bash
-cd SpectroGen
-valgrind --leak-check=full ./SpectroGen.app/Contents/MacOS/SpectroGen
+cd Sp3ctraGen
+valgrind --leak-check=full ./Sp3ctraGen.app/Contents/MacOS/Sp3ctraGen
 ```
 
 ### Débogage spécifique pour Apple Silicon (M1, M2, etc.)
@@ -350,6 +350,6 @@ bool generateSpectrogram(const SpectrogramSettingsCpp& settings,
 
 ## Conclusion
 
-Ce guide fournit les informations nécessaires pour configurer l'environnement de développement, compiler, déboguer et contribuer au projet SpectroGen. En suivant les bonnes pratiques et conventions décrites ici, vous pouvez maintenir et faire évoluer le projet de manière efficace et cohérente.
+Ce guide fournit les informations nécessaires pour configurer l'environnement de développement, compiler, déboguer et contribuer au projet Sp3ctraGen. En suivant les bonnes pratiques et conventions décrites ici, vous pouvez maintenir et faire évoluer le projet de manière efficace et cohérente.
 
 Si vous rencontrez des problèmes ou avez des questions, n'hésitez pas à consulter la documentation existante ou à contacter l'équipe de développement.

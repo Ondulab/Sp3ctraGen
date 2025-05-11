@@ -4,7 +4,7 @@ Ce document explique comment implémenter la charte graphique CISYNTH dans votre
 
 ## Fichiers inclus
 
-1. `Charte_Graphique_SpectroGen.md` - Documentation complète de la charte graphique
+1. `Charte_Graphique_Sp3ctraGen.md` - Documentation complète de la charte graphique
 2. `qml/Theme.qml` - Singleton QML contenant toutes les propriétés de style
 3. `qml/qmldir` - Fichier d'enregistrement du module UI et du singleton Theme
 4. `qml/ExempleTheme.qml` - Exemple d'application utilisant le thème
@@ -15,7 +15,7 @@ Ce document explique comment implémenter la charte graphique CISYNTH dans votre
 ### 1. Importer le module UI dans votre fichier QML
 
 ```qml
-import com.spectrogen.ui 1.0
+import com.Sp3ctraGen.ui 1.0
 ```
 
 ### 2. Utiliser les propriétés du thème

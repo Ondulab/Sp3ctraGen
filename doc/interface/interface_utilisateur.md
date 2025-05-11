@@ -2,11 +2,11 @@
 
 ## Introduction
 
-L'interface utilisateur de SpectroGen est implémentée en QML (Qt Quick Markup Language), un langage déclaratif basé sur JavaScript qui fait partie du framework Qt. Cette documentation détaille la structure de l'interface utilisateur, les composants QML personnalisés, les interactions utilisateur et les mécanismes de prévisualisation.
+L'interface utilisateur de Sp3ctraGen est implémentée en QML (Qt Quick Markup Language), un langage déclaratif basé sur JavaScript qui fait partie du framework Qt. Cette documentation détaille la structure de l'interface utilisateur, les composants QML personnalisés, les interactions utilisateur et les mécanismes de prévisualisation.
 
 ## Structure de l'interface utilisateur
 
-L'interface utilisateur de SpectroGen est organisée en plusieurs fichiers QML principaux:
+L'interface utilisateur de Sp3ctraGen est organisée en plusieurs fichiers QML principaux:
 
 - `qml/main.qml` - Interface principale sans prévisualisation
 - `qml/main_with_preview.qml` - Interface principale avec prévisualisation
@@ -21,7 +21,7 @@ L'interface principale avec prévisualisation (`main_with_preview.qml`) est divi
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                        SpectroGen                           │
+│                        Sp3ctraGen                           │
 ├───────────────────────────────┬─────────────────────────────┤
 │                               │                             │
 │                               │                             │
@@ -40,7 +40,7 @@ Le code QML définit cette structure comme suit:
 ```qml
 ApplicationWindow {
     id: window
-    title: "SpectroGen"
+    title: "Sp3ctraGen"
     width: 900
     height: 700
     visible: true
@@ -101,7 +101,7 @@ Ces propriétés sont utilisées pour ajuster la mise en page et la taille des c
 
 ## Composants QML personnalisés
 
-SpectroGen utilise plusieurs composants QML personnalisés pour améliorer la réutilisabilité et la cohérence de l'interface utilisateur.
+Sp3ctraGen utilise plusieurs composants QML personnalisés pour améliorer la réutilisabilité et la cohérence de l'interface utilisateur.
 
 ### AnimatedButton
 
@@ -653,7 +653,7 @@ private:
 
 ## Styles et thème
 
-SpectroGen utilise un thème sombre avec des accents dorés pour une interface élégante et professionnelle:
+Sp3ctraGen utilise un thème sombre avec des accents dorés pour une interface élégante et professionnelle:
 
 ```qml
 // Style properties
@@ -694,7 +694,7 @@ FontLoader {
 
 ## Conclusion
 
-L'interface utilisateur de SpectroGen est conçue pour être à la fois esthétique et fonctionnelle. Elle utilise des composants QML personnalisés pour améliorer l'expérience utilisateur et fournir un retour visuel clair. La séparation entre l'interface utilisateur et la logique métier permet une évolution indépendante de chaque couche.
+L'interface utilisateur de Sp3ctraGen est conçue pour être à la fois esthétique et fonctionnelle. Elle utilise des composants QML personnalisés pour améliorer l'expérience utilisateur et fournir un retour visuel clair. La séparation entre l'interface utilisateur et la logique métier permet une évolution indépendante de chaque couche.
 
 Les principales caractéristiques de l'interface utilisateur sont:
 - Une structure claire avec un panneau de paramètres et une zone de prévisualisation

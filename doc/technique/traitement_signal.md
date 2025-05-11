@@ -2,7 +2,7 @@
 
 ## Introduction
 
-Ce document détaille les algorithmes et processus utilisés dans SpectroGen pour le traitement du signal audio et la génération de spectrogrammes haute qualité. Une attention particulière est portée aux optimisations pour l'impression et la numérisation, ainsi qu'aux paramètres qui influencent la qualité du résultat final.
+Ce document détaille les algorithmes et processus utilisés dans Sp3ctraGen pour le traitement du signal audio et la génération de spectrogrammes haute qualité. Une attention particulière est portée aux optimisations pour l'impression et la numérisation, ainsi qu'aux paramètres qui influencent la qualité du résultat final.
 
 ## Principes fondamentaux des spectrogrammes
 
@@ -19,7 +19,7 @@ La génération d'un spectrogramme implique plusieurs étapes clés:
 
 ## Paramètres clés et valeurs par défaut
 
-SpectroGen utilise un ensemble de paramètres soigneusement optimisés pour produire des spectrogrammes de haute qualité:
+Sp3ctraGen utilise un ensemble de paramètres soigneusement optimisés pour produire des spectrogrammes de haute qualité:
 
 | Paramètre | Valeur Par Défaut | Unité | Description |
 |-----------|------------------|-------|-------------|
@@ -108,7 +108,7 @@ int load_wav_file(const char *filename, double **signal, int *num_samples, int *
 ```
 
 **Points clés:**
-- SpectroGen charge toujours l'intégralité du fichier audio, indépendamment de la durée spécifiée
+- Sp3ctraGen charge toujours l'intégralité du fichier audio, indépendamment de la durée spécifiée
 - Les fichiers multi-canaux sont mixés en mono en calculant la moyenne des canaux
 - Le taux d'échantillonnage original du fichier est préservé à ce stade
 
@@ -136,7 +136,7 @@ Cette normalisation assure une utilisation optimale de la plage dynamique dispon
 
 #### 1.3 Amplification des hautes fréquences
 
-Une caractéristique importante de SpectroGen est l'amplification des hautes fréquences, implémentée par la fonction `apply_high_freq_boost_filter()`:
+Une caractéristique importante de Sp3ctraGen est l'amplification des hautes fréquences, implémentée par la fonction `apply_high_freq_boost_filter()`:
 
 ```c
 void apply_high_freq_boost_filter(double *signal, int num_samples, double alpha)
@@ -208,7 +208,7 @@ int fft_init(int fft_size, int *fft_effective_size, fftw_plan *plan, double **in
 ```
 
 **Points clés:**
-- SpectroGen utilise la bibliothèque FFTW3 pour les calculs de FFT
+- Sp3ctraGen utilise la bibliothèque FFTW3 pour les calculs de FFT
 - Une extension à 65535 échantillons (zero-padding) est systématiquement appliquée pour améliorer la résolution fréquentielle
 - Le nombre de bins fréquentiels est `fft_effective_size / 2 + 1` en raison de la symétrie du spectre pour les signaux réels
 
@@ -440,7 +440,7 @@ Une valeur de 1.9 donne un bon équilibre entre visibilité des détails et lisi
 
 ## Génération des images de spectrogramme
 
-SpectroGen supporte deux formats de sortie principaux: raster (PNG) et vectoriel (PDF). Chaque format est géré par une stratégie de visualisation spécifique.
+Sp3ctraGen supporte deux formats de sortie principaux: raster (PNG) et vectoriel (PDF). Chaque format est géré par une stratégie de visualisation spécifique.
 
 ### 1. Génération d'images raster (PNG)
 
@@ -473,7 +473,7 @@ Le contraste élevé est obtenu grâce à plusieurs mécanismes:
 
 ### 2. Maintien strict de l'échelle temporelle
 
-SpectroGen maintient strictement l'échelle temporelle spécifiée (cm/s):
+Sp3ctraGen maintient strictement l'échelle temporelle spécifiée (cm/s):
 
 ```c
 // Si toutes les fenêtres ne peuvent pas tenir sur la page, on limite le nombre affiché
@@ -564,9 +564,9 @@ Pour une page A4 (21 cm de large) et une vitesse d'écriture de 8 cm/s, la duré
 
 ## Conclusion
 
-Le système de génération de spectrogrammes de SpectroGen est basé sur des algorithmes de traitement du signal sophistiqués et des optimisations spécifiques pour l'impression et la numérisation. Les paramètres par défaut ont été soigneusement choisis pour offrir un équilibre optimal entre résolution fréquentielle, résolution temporelle et qualité visuelle.
+Le système de génération de spectrogrammes de Sp3ctraGen est basé sur des algorithmes de traitement du signal sophistiqués et des optimisations spécifiques pour l'impression et la numérisation. Les paramètres par défaut ont été soigneusement choisis pour offrir un équilibre optimal entre résolution fréquentielle, résolution temporelle et qualité visuelle.
 
-Les principales caractéristiques qui distinguent SpectroGen sont:
+Les principales caractéristiques qui distinguent Sp3ctraGen sont:
 1. Un taux d'échantillonnage élevé (192 kHz) pour une excellente résolution fréquentielle
 2. Une taille FFT adaptée (8192) pour un bon compromis entre résolution temps-fréquence
 3. Un zero-padding important (65535) pour améliorer la précision de l'analyse spectrale
@@ -576,4 +576,4 @@ Les principales caractéristiques qui distinguent SpectroGen sont:
 7. Le maintien strict de l'échelle temporelle même si cela implique la troncature de l'audio
 8. Un traitement optimisé du contraste pour la numérisation
 
-Ces caractéristiques font de SpectroGen un outil puissant pour la génération de spectrogrammes de haute qualité adaptés à l'impression et à la numérisation.
+Ces caractéristiques font de Sp3ctraGen un outil puissant pour la génération de spectrogrammes de haute qualité adaptés à l'impression et à la numérisation.

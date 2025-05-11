@@ -2,10 +2,10 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Debug SpectroGen (LLDB)",
+            "name": "Debug Sp3ctraGen (LLDB)",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/SpectroGen.app/Contents/MacOS/SpectroGen",
+            "program": "${workspaceFolder}/Sp3ctraGen.app/Contents/MacOS/Sp3ctraGen",
             "args": ["--verbose"],
             "stopAtEntry": true,
             "cwd": "${workspaceFolder}",
@@ -51,10 +51,10 @@
             ]
         },
         {
-            "name": "Run SpectroGen (No Debug)",
+            "name": "Run Sp3ctraGen (No Debug)",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/SpectroGen.app/Contents/MacOS/SpectroGen",
+            "program": "${workspaceFolder}/Sp3ctraGen.app/Contents/MacOS/Sp3ctraGen",
             "args": ["--verbose"],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",

@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Script pour compiler le projet SpectroGen
+# Script pour compiler le projet Sp3ctraGen
 # Mis à jour pour la nouvelle structure de dossiers
 
 # Aller au répertoire racine du projet
@@ -51,4 +51,4 @@ if [ $? -ne 0 ]; then
 fi
 
 echo "Compilation réussie!"
-echo "L'exécutable se trouve dans: SpectroGen.app/Contents/MacOS/SpectroGen"
+echo "L'exécutable se trouve dans: Sp3ctraGen.app/Contents/MacOS/Sp3ctraGen"

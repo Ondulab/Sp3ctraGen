@@ -7,7 +7,7 @@
 cd "$(dirname "$0")/.." || exit 1
 
 # Vérifier si l'exécutable existe
-if [ ! -f "SpectroGen.app/Contents/MacOS/SpectroGen" ]; then
+if [ ! -f "Sp3ctraGen.app/Contents/MacOS/Sp3ctraGen" ]; then
     echo "Erreur: L'exécutable n'existe pas."
     echo "Veuillez d'abord compiler le projet avec scripts/build.sh"
     exit 1
@@ -15,7 +15,7 @@ fi
 
 # Créer un fichier de configuration LLDB
 cat > .lldbinit << EOF
-# Configuration LLDB pour SpectroGen
+# Configuration LLDB pour Sp3ctraGen
 
 # Définir l'architecture cible
 settings set target.process.target-architecture arm64
@@ -57,14 +57,14 @@ echo ""
 cat > scripts/debug_enhanced.sh << EOF
 #!/bin/bash
 
-# Script pour déboguer l'application SpectroGen avec LLDB et configuration améliorée
+# Script pour déboguer l'application Sp3ctraGen avec LLDB et configuration améliorée
 # Mis à jour pour la nouvelle structure de dossiers
 
 # Aller au répertoire racine du projet
 cd "\$(dirname "\$0")/.." || exit 1
 
 # Vérifier si l'exécutable existe
-if [ ! -f "SpectroGen.app/Contents/MacOS/SpectroGen" ]; then
+if [ ! -f "Sp3ctraGen.app/Contents/MacOS/Sp3ctraGen" ]; then
     echo "Erreur: L'exécutable n'existe pas."
     echo "Veuillez d'abord compiler le projet avec scripts/build.sh"
     exit 1
@@ -109,7 +109,7 @@ echo "Pour plus d'informations, consultez doc/dev/DEBUGGING.md"
 echo ""
 
 # Lancer LLDB avec le fichier de commandes
-lldb -s /tmp/lldb_commands.txt SpectroGen.app/Contents/MacOS/SpectroGen
+lldb -s /tmp/lldb_commands.txt Sp3ctraGen.app/Contents/MacOS/Sp3ctraGen
 
 # Nettoyer le fichier temporaire
 rm /tmp/lldb_commands.txt

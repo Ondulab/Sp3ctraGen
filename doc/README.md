@@ -1,4 +1,4 @@
-# SpectroGen
+# Sp3ctraGen
 
 Application de génération de spectrogrammes basée sur Qt Quick. Cette application est un portage de l'application CISYNTH_App originale développée en SwiftUI.
 
@@ -35,14 +35,14 @@ Vous pouvez compiler l'application de plusieurs façons:
 
 ### Avec VSCode
 
-1. Ouvrez le dossier `SpectroGen` dans VSCode
+1. Ouvrez le dossier `Sp3ctraGen` dans VSCode
 2. Appuyez sur `Ctrl+Shift+B` ou sélectionnez `Terminal > Run Build Task...` pour lancer la compilation
 3. La tâche par défaut exécutera `qmake` puis `make`
 
 ### En ligne de commande
 
 ```bash
-cd SpectroGen
+cd Sp3ctraGen
 /opt/homebrew/opt/qt@5/bin/qmake -spec macx-clang CONFIG+=debug CONFIG+=qml_debug
 make -j8
 ```
@@ -78,7 +78,7 @@ Pour des instructions détaillées sur le débogage, consultez le fichier [doc/d
 
 ## Structure du projet
 
-- `SpectroGen.pro`: Fichier de projet Qt
+- `Sp3ctraGen.pro`: Fichier de projet Qt
 - `src/`: Fichiers source C/C++
 - `include/`: Fichiers d'en-tête C/C++
 - `qml/`: Fichiers QML pour l'interface utilisateur
@@ -197,4 +197,4 @@ Si vous rencontrez des problèmes avec le débogage pas à pas:
 - [STRUCTURE_PROJET.md](STRUCTURE_PROJET.md): Description de la structure du projet
 - [dev/ARCHITECTURE.md](dev/ARCHITECTURE.md): Description de l'architecture du projet
 - [dev/DEBUGGING.md](dev/DEBUGGING.md): Guide de débogage
-- [dev/Charte_Graphique_SpectroGen.md](dev/Charte_Graphique_SpectroGen.md): Charte graphique de l'application
+- [dev/Charte_Graphique_Sp3ctraGen.md](dev/Charte_Graphique_Sp3ctraGen.md): Charte graphique de l'application

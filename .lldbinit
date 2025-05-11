@@ -1,4 +1,4 @@
-# Configuration LLDB pour SpectroGen
+# Configuration LLDB pour Sp3ctraGen
 
 # Définir l'architecture cible
 settings set target.process.target-architecture arm64

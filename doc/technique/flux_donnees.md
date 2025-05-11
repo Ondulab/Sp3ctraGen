@@ -2,11 +2,11 @@
 
 ## Introduction
 
-SpectroGen est structuré selon une architecture en trois couches distinctes: l'interface utilisateur (QML), la logique métier (C++) et le moteur de traitement (C). Cette documentation détaille les mécanismes de communication entre ces couches et le flux de données à travers l'application.
+Sp3ctraGen est structuré selon une architecture en trois couches distinctes: l'interface utilisateur (QML), la logique métier (C++) et le moteur de traitement (C). Cette documentation détaille les mécanismes de communication entre ces couches et le flux de données à travers l'application.
 
 ## Vue d'ensemble du flux de données
 
-Le flux de données dans SpectroGen suit généralement le chemin suivant:
+Le flux de données dans Sp3ctraGen suit généralement le chemin suivant:
 
 ```mermaid
 graph TD
@@ -311,7 +311,7 @@ SpectrogramSettings SpectrogramSettingsCpp::toCStruct() const
 
 ## Gestion des tâches asynchrones
 
-SpectroGen utilise le `TaskManager` pour gérer les tâches asynchrones et éviter de bloquer l'interface utilisateur pendant les opérations longues:
+Sp3ctraGen utilise le `TaskManager` pour gérer les tâches asynchrones et éviter de bloquer l'interface utilisateur pendant les opérations longues:
 
 ```cpp
 class TaskManager : public QObject
@@ -395,7 +395,7 @@ void VisualizationStrategy::runGeneration(const SpectrogramSettings& settings,
 
 ## Gestion des fichiers et des chemins
 
-SpectroGen utilise le `FileManager` et le `PathManager` pour gérer les opérations de fichiers et les chemins:
+Sp3ctraGen utilise le `FileManager` et le `PathManager` pour gérer les opérations de fichiers et les chemins:
 
 ### FileManager
 
@@ -504,7 +504,7 @@ QString PathManager::getDefaultInputPath()
 
 QString PathManager::getDefaultOutputPath()
 {
-    return QDir(getDocumentsPath()).filePath("SpectroGen");
+    return QDir(getDocumentsPath()).filePath("Sp3ctraGen");
 }
 ```
 
@@ -561,8 +561,8 @@ sequenceDiagram
 
 ## Conclusion
 
-Le flux de données et la communication entre les couches dans SpectroGen sont conçus pour être clairs, efficaces et robustes. La séparation des préoccupations entre les différentes couches permet une évolution indépendante de chaque composant, tout en maintenant une communication fluide entre eux.
+Le flux de données et la communication entre les couches dans Sp3ctraGen sont conçus pour être clairs, efficaces et robustes. La séparation des préoccupations entre les différentes couches permet une évolution indépendante de chaque composant, tout en maintenant une communication fluide entre eux.
 
 Les mécanismes de communication utilisés (appels de méthodes, propriétés liées, signaux, etc.) sont des patterns standard de Qt qui facilitent le développement et la maintenance de l'application. La gestion asynchrone des tâches permet de maintenir une interface utilisateur réactive même pendant les opérations longues.
 
-Cette architecture bien structurée permet à SpectroGen d'être à la fois performant et maintenable, tout en offrant une expérience utilisateur fluide et réactive.
+Cette architecture bien structurée permet à Sp3ctraGen d'être à la fois performant et maintenable, tout en offrant une expérience utilisateur fluide et réactive.

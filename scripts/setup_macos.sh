@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Script de configuration pour SpectroGen sur macOS
+# Script de configuration pour Sp3ctraGen sur macOS
 # Ce script installe les dépendances nécessaires et configure l'environnement
 # Mis à jour pour la nouvelle structure de dossiers
 
@@ -13,7 +13,7 @@ GREEN='\033[0;32m'
 YELLOW='\033[0;33m'
 NC='\033[0m' # No Color
 
-echo -e "${GREEN}=== Configuration de l'environnement pour SpectroGen ===${NC}"
+echo -e "${GREEN}=== Configuration de l'environnement pour Sp3ctraGen ===${NC}"
 
 # Vérifier si Homebrew est installé
 if ! command -v brew &> /dev/null; then

@@ -2,7 +2,7 @@
 
 ## Architecture en trois couches
 
-L'architecture du projet SpectroGen est basée sur une séparation claire entre trois couches distinctes, chacune ayant des responsabilités spécifiques. Cette séparation permet une meilleure maintenabilité et une évolution indépendante de chaque couche.
+L'architecture du projet Sp3ctraGen est basée sur une séparation claire entre trois couches distinctes, chacune ayant des responsabilités spécifiques. Cette séparation permet une meilleure maintenabilité et une évolution indépendante de chaque couche.
 
 ```
 ┌─────────────────┐
@@ -66,7 +66,7 @@ Le moteur de traitement est implémenté en C et est responsable des opérations
 
 ## Patterns de conception utilisés
 
-SpectroGen utilise plusieurs patterns de conception pour améliorer la modularité, la maintenabilité et l'extensibilité du code.
+Sp3ctraGen utilise plusieurs patterns de conception pour améliorer la modularité, la maintenabilité et l'extensibilité du code.
 
 ### 1. Pattern Strategy
 
@@ -309,4 +309,4 @@ classDiagram
 
 ## Conclusion
 
-L'architecture de SpectroGen est basée sur des principes de conception solides et des patterns éprouvés. Elle offre une séparation claire des préoccupations, une réutilisation maximale du code et une extensibilité pour les évolutions futures. Les patterns de conception utilisés permettent d'ajouter facilement de nouvelles fonctionnalités sans modifier le code existant, ce qui facilite la maintenance et l'évolution du projet.
+L'architecture de Sp3ctraGen est basée sur des principes de conception solides et des patterns éprouvés. Elle offre une séparation claire des préoccupations, une réutilisation maximale du code et une extensibilité pour les évolutions futures. Les patterns de conception utilisés permettent d'ajouter facilement de nouvelles fonctionnalités sans modifier le code existant, ce qui facilite la maintenance et l'évolution du projet.

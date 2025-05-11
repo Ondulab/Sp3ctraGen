@@ -2,11 +2,11 @@ import QtQuick 2.15
 import QtQuick.Controls 2.15
 import QtQuick.Layouts 1.15
 import QtQuick.Dialogs 1.3
-import com.spectrogen.backend 1.0
+import com.Sp3ctraGen.backend 1.0
 
 ApplicationWindow {
     id: window
-    title: "SpectroGen"
+    title: "Sp3ctraGen"
     width: 900
     height: 700
     visible: true

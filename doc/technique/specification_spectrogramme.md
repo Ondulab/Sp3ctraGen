@@ -2,7 +2,7 @@
 
 ## 1. Introduction
 
-À partir de l'analyse approfondie du code existant, ce document détaille le fonctionnement exact du générateur de spectrogramme de la version QT de SpectroGen, en mettant l'accent sur les paramètres par défaut, les processus de traitement du signal et les optimisations pour l'impression et la lecture par scanner.
+À partir de l'analyse approfondie du code existant, ce document détaille le fonctionnement exact du générateur de spectrogramme de la version QT de Sp3ctraGen, en mettant l'accent sur les paramètres par défaut, les processus de traitement du signal et les optimisations pour l'impression et la lecture par scanner.
 
 ## 2. Architecture du Système de Génération de Spectrogramme
 

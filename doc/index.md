@@ -1,8 +1,8 @@
-# Documentation technique de SpectroGen
+# Documentation technique de Sp3ctraGen
 
 ## Introduction
 
-Bienvenue dans la documentation technique de SpectroGen, une application de génération de spectrogrammes haute qualité basée sur Qt Quick. Cette documentation est destinée aux développeurs qui souhaitent comprendre, maintenir ou étendre le projet.
+Bienvenue dans la documentation technique de Sp3ctraGen, une application de génération de spectrogrammes haute qualité basée sur Qt Quick. Cette documentation est destinée aux développeurs qui souhaitent comprendre, maintenir ou étendre le projet.
 
 ## Structure de la documentation
 
@@ -87,4 +87,4 @@ graph TD
 
 ## Contribution
 
-Si vous souhaitez contribuer à cette documentation ou au projet SpectroGen, veuillez suivre les bonnes pratiques et conventions décrites dans le [Guide de développement](developpement/guide_developpement.md) et le [Guide de style de développement](developpement/guide_style_developpement.md).
+Si vous souhaitez contribuer à cette documentation ou au projet Sp3ctraGen, veuillez suivre les bonnes pratiques et conventions décrites dans le [Guide de développement](developpement/guide_developpement.md) et le [Guide de style de développement](developpement/guide_style_developpement.md).
