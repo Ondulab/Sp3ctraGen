@@ -33,15 +33,19 @@ SectionContainer {
         GridLayout {
             columns: 2
             Layout.fillWidth: true
+            columnSpacing: AppStyles.Theme.spacing
+            rowSpacing: AppStyles.Theme.spacing
             
-            Label { 
+            ThemedLabel { 
                 text: "Output Folder:" 
-                color: AppStyles.Theme.primaryTextColor
             }
             
             Button {
                 id: browseButton
                 text: "Browse..."
+                Layout.preferredWidth: AppStyles.Theme.rightColumnWidth
+                Layout.preferredHeight: AppStyles.Theme.fieldHeight
+                Layout.alignment: Qt.AlignVCenter
                 
                 onClicked: {
                     if (fileSettingsSection.outputFolderDialog) {
@@ -85,10 +89,6 @@ SectionContainer {
                 fileSettingsSection.folderPathChanged(text)
             }
         }
-        
-        // Note: useDefaultOutputToggle dans le fichier original est un élément caché
-        // utilisé pour la compatibilité. Ici, nous utilisons directement une propriété
-        // calculée (useDefaultOutput) basée sur le champ de texte.
     }
     
     // Méthodes

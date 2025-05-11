@@ -8,11 +8,11 @@ import QtQuick 2.15
  * pour assurer une cohérence typographique.
  */
 QtObject {
-    // Orbitron Font
+    // Définition de la police Orbitron
     readonly property FontLoader orbitronFont: FontLoader {
-        source: "qrc:/fonts/Orbitron-Regular.ttf"
+        source: "../styles/fonts/Orbitron-Regular.ttf"
     }
     
     // Propriété pour accéder facilement au nom de la police
-    readonly property string orbitron: orbitronFont.name
+    readonly property string orbitron: "Orbitron"
 }

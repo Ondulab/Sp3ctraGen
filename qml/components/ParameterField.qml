@@ -22,7 +22,7 @@ RowLayout {
     property bool allowDecimals: true
     property double minValue: 0.0
     property double maxValue: Number.MAX_VALUE
-    property int preferredWidth: 80
+    property int preferredWidth: AppStyles.Theme.fieldWidth
     property bool readOnly: false
     
     // Signal émis lorsque la valeur change
@@ -31,21 +31,21 @@ RowLayout {
     
     // Espacement standard
     spacing: AppStyles.Theme.spacing
+    Layout.alignment: Qt.AlignVCenter
     
     // Libellé du paramètre
-    Label {
+    ThemedLabel {
         id: parameterLabel
         text: parameterField.label
-        font.family: AppStyles.Fonts.orbitron
-        color: AppStyles.Theme.primaryTextColor
-        Layout.fillWidth: true
     }
     
     // Champ de saisie
     TextField {
         id: valueField
         text: parameterField.value
-        Layout.preferredWidth: parameterField.preferredWidth
+        Layout.preferredWidth: AppStyles.Theme.rightColumnWidth
+        Layout.preferredHeight: AppStyles.Theme.fieldHeight
+        Layout.alignment: Qt.AlignVCenter
         readOnly: parameterField.readOnly
         
         // Valider selon le type
@@ -67,6 +67,7 @@ RowLayout {
         horizontalAlignment: Text.AlignHCenter
         
         background: Rectangle {
+            anchors.fill: parent
             color: AppStyles.Theme.fieldBackground
             radius: AppStyles.Theme.borderRadius / 2
             border.width: valueField.activeFocus ? 1 : 0

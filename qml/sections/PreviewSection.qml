@@ -89,12 +89,9 @@ Rectangle {
         spacing: AppStyles.Theme.spacing
         
         // Titre de la prévisualisation
-        Label {
+        ThemedLabel {
             text: "Preview"
-            font.bold: true
             font.pixelSize: AppStyles.Theme.labelFontSize
-            color: AppStyles.Theme.primaryTextColor
-            Layout.alignment: Qt.AlignHCenter
         }
         
         // Zone de prévisualisation avec ScrollView pour permettre le défilement

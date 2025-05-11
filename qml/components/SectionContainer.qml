@@ -44,7 +44,7 @@ Rectangle {
             text: container.title
             font.bold: true
             font.pixelSize: AppStyles.Theme.labelFontSize
-            font.family: AppStyles.Fonts.orbitron
+            font.family: "Orbitron"
             color: AppStyles.Theme.primaryTextColor
             visible: container.title !== ""
             Layout.fillWidth: true

@@ -1,13 +1,12 @@
 #!/bin/bash
 
-# Script de build pour Sp3ctraGen
-# - Multithread (12 jobs)
-# - Clean optionnel avec --clean
+# Script pour compiler le projet Sp3ctraGen
+# Mis à jour pour la nouvelle structure de dossiers
 
 # Aller au répertoire racine du projet
 cd "$(dirname "$0")/.." || exit 1
 
-# Détection de qmake
+# Trouver qmake
 QMAKE_PATH=""
 
 if which qmake >/dev/null 2>&1; then
@@ -27,29 +26,29 @@ fi
 
 echo "Utilisation de qmake: $QMAKE_PATH"
 
-# Nettoyage optionnel
-if [ "$1" == "--clean" ]; then
-    echo "Nettoyage complet..."
-    rm -rf build
-    make clean >/dev/null 2>&1
+# Nettoyer les anciens fichiers de build
+echo "Nettoyage des anciens fichiers de build..."
+if [ -d "build" ]; then
+    rm -rf build/obj/* build/moc/* build/rcc/* build/ui/* 2>/dev/null
 fi
 
-# Génération Makefile
+# Exécuter qmake
 $QMAKE_PATH -spec macx-clang CONFIG+=debug CONFIG+=qml_debug
 
+# Vérifier si qmake a réussi
 if [ $? -ne 0 ]; then
     echo "Erreur lors de l'exécution de qmake"
     exit 1
 fi
 
-# Compilation multithread
-echo "Compilation avec 12 threads..."
-make -j12
+# Compiler avec make
+make
 
+# Vérifier si make a réussi
 if [ $? -ne 0 ]; then
     echo "Erreur lors de la compilation"
     exit 1
 fi
 
-echo "✅ Compilation réussie"
-echo "📦 Exécutable : Sp3ctraGen.app/Contents/MacOS/Sp3ctraGen"
+echo "Compilation réussie!"
+echo "L'exécutable se trouve dans: Sp3ctraGen.app/Contents/MacOS/Sp3ctraGen"

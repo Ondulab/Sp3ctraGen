@@ -9,6 +9,8 @@
         <file>components/ParameterField.qml</file>
         <file>components/StatusText.qml</file>
         <file>components/AudioWaveform.qml</file>
+        <file>components/ThemedLabel.qml</file>
+        <file>components/FilterComboBox.qml</file>
         
         <!-- Sections modulaires -->
         <file>sections/SpectrogramParameters.qml</file>
@@ -22,9 +24,8 @@
         <file>styles/Fonts.qml</file>
         <file>styles/qmldir</file>
         
-        <!-- Ressources existantes ont été supprimées car non utilisées -->
-    </qresource>
-    <qresource prefix="/fonts">
-        <file alias="Orbitron-Regular.ttf">../fonts/Orbitron-Regular.ttf</file>
+        <!-- Polices -->
+        <file>styles/fonts/Orbitron-Regular.ttf</file>
+        <file>styles/fonts/orbitron.css</file>
     </qresource>
 </RCC>

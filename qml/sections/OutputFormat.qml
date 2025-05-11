@@ -33,60 +33,22 @@ SectionContainer {
     
     GridLayout {
         id: formatGrid
-        columns: outputFormatSection.width < 500 ? 1 : 2
+        columns: 2
         Layout.fillWidth: true
-        columnSpacing: AppStyles.Theme.spacing * 3 // Espacement plus large entre les colonnes
-        rowSpacing: AppStyles.Theme.spacing / 2
+        columnSpacing: AppStyles.Theme.spacing
+        rowSpacing: AppStyles.Theme.spacing
         
         // Format de page
-        Label { 
-            text: "Page Format:" 
-            color: AppStyles.Theme.primaryTextColor
-            Layout.fillWidth: formatGrid.columns === 1
+        ThemedLabel {
+            text: "Page Format:"
         }
-        ComboBox {
-            id: pageFormatCombo
-            model: ["A4 Portrait", "A3 Landscape"]
-            Layout.preferredWidth: 120
-            
+        FilterComboBox {
+            id:             pageFormatCombo
+            model:          ["A4 Portrait", "A3 Landscape"]
+            currentIndex:   0
+            Layout.preferredWidth: AppStyles.Theme.rightColumnWidth
+            Layout.alignment: Qt.AlignLeft
             onCurrentIndexChanged: formatChanged()
-            
-            background: Rectangle {
-                color: AppStyles.Theme.fieldBackground
-                radius: AppStyles.Theme.borderRadius / 2
-            }
-            
-            contentItem: Text {
-                text: pageFormatCombo.displayText
-                color: AppStyles.Theme.fieldText
-                horizontalAlignment: Text.AlignLeft
-                verticalAlignment: Text.AlignVCenter
-                elide: Text.ElideRight
-                leftPadding: 5
-            }
-            
-            popup: Popup {
-                y: pageFormatCombo.height
-                width: pageFormatCombo.width
-                implicitHeight: contentItem.implicitHeight
-                padding: 1
-                
-                contentItem: ListView {
-                    clip: true
-                    implicitHeight: contentHeight
-                    model: pageFormatCombo.popup.visible ? pageFormatCombo.delegateModel : null
-                    
-                    ScrollBar.vertical: ScrollBar {
-                        active: pageFormatCombo.popup.visible
-                    }
-                }
-                
-                background: Rectangle {
-                    color: AppStyles.Theme.fieldBackground
-                    border.color: AppStyles.Theme.borderColor
-                    radius: AppStyles.Theme.borderRadius / 2
-                }
-            }
         }
         
         // Marge inférieure
@@ -116,29 +78,29 @@ SectionContainer {
         }
         
         // Échelle verticale
-        Label {
+        ThemedLabel {
             text: "Vertical Scale:"
-            color: AppStyles.Theme.primaryTextColor
-            Layout.fillWidth: formatGrid.columns === 1
+            Layout.alignment: Qt.AlignRight
         }
         ToggleSwitch {
             id: verticalScaleToggle
-            Layout.preferredWidth: 80
-            Layout.preferredHeight: 30
+            Layout.preferredWidth: AppStyles.Theme.rightColumnWidth
+            Layout.preferredHeight: AppStyles.Theme.controlHeight
+            Layout.alignment: Qt.AlignLeft
             checked: true
             onToggled: formatChanged()
         }
         
         // Ligne de référence inférieure
-        Label {
+        ThemedLabel {
             text: "Bottom Reference Line:"
-            color: AppStyles.Theme.primaryTextColor
-            Layout.fillWidth: formatGrid.columns === 1
+            Layout.alignment: Qt.AlignRight
         }
         ToggleSwitch {
             id: bottomReferenceLineToggle
-            Layout.preferredWidth: 80
-            Layout.preferredHeight: 30
+            Layout.preferredWidth: AppStyles.Theme.rightColumnWidth
+            Layout.preferredHeight: AppStyles.Theme.controlHeight
+            Layout.alignment: Qt.AlignLeft
             checked: false
             onToggled: formatChanged()
         }
@@ -159,15 +121,15 @@ SectionContainer {
         }
         
         // Ligne de référence supérieure
-        Label {
+        ThemedLabel {
             text: "Top Reference Line:"
-            color: AppStyles.Theme.primaryTextColor
-            Layout.fillWidth: formatGrid.columns === 1
+            Layout.alignment: Qt.AlignRight
         }
         ToggleSwitch {
             id: topReferenceLineToggle
-            Layout.preferredWidth: 80
-            Layout.preferredHeight: 30
+            Layout.preferredWidth: AppStyles.Theme.rightColumnWidth
+            Layout.preferredHeight: AppStyles.Theme.controlHeight
+            Layout.alignment: Qt.AlignLeft
             checked: false
             onToggled: formatChanged()
         }
@@ -187,15 +149,15 @@ SectionContainer {
         }
         
         // Affichage des paramètres
-        Label {
+        ThemedLabel {
             text: "Show Parameters:"
-            color: AppStyles.Theme.primaryTextColor
-            Layout.fillWidth: formatGrid.columns === 1
+            Layout.alignment: Qt.AlignRight
         }
         ToggleSwitch {
             id: displayParametersToggle
-            Layout.preferredWidth: 80
-            Layout.preferredHeight: 30
+            Layout.preferredWidth: AppStyles.Theme.rightColumnWidth
+            Layout.preferredHeight: AppStyles.Theme.controlHeight
+            Layout.alignment: Qt.AlignLeft
             checked: false
             onToggled: formatChanged()
         }

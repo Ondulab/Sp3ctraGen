@@ -13,8 +13,8 @@ Item {
     // Propriétés de configuration
     property bool checked: false
     property bool enabled: true
-    property int preferredWidth: 80
-    property int preferredHeight: 30
+    property int preferredWidth: AppStyles.Theme.controlWidth
+    property int preferredHeight: AppStyles.Theme.controlHeight
     
     // Signal émis lors du changement d'état
     signal toggled(bool checked)
@@ -22,16 +22,21 @@ Item {
     // Dimensions
     implicitWidth: preferredWidth
     implicitHeight: preferredHeight
+    width: preferredWidth
+    height: preferredHeight
     
     // Rectangle de fond
     Rectangle {
         id: background
-        anchors.fill: parent
+        width: parent.width
+        height: parent.height
+        anchors.centerIn: parent
         radius: height / 2
         color: "transparent"
         border.width: 1
         border.color: AppStyles.Theme.toggleBorderColor
         opacity: enabled ? 1.0 : 0.5
+        clip: true
         
         // Indicateur (partie mobile)
         Rectangle {
@@ -39,7 +44,7 @@ Item {
             width: parent.width / 2
             height: parent.height - 4
             radius: height / 2
-            x: toggleSwitch.checked ? parent.width - width - 2 : 2
+            x: toggleSwitch.checked ? background.width - width - 2 : 2
             y: 2
             color: toggleSwitch.checked ? AppStyles.Theme.toggleActiveColor : AppStyles.Theme.toggleInactiveColor
             
@@ -67,17 +72,6 @@ Item {
         onClicked: {
             toggleSwitch.checked = !toggleSwitch.checked
             toggleSwitch.toggled(toggleSwitch.checked)
-        }
-    }
-    
-    // Mise à jour de l'état visuel lorsque l'état change
-    onCheckedChanged: {
-        if (checked) {
-            indicator.x = background.width - indicator.width - 2
-            indicator.color = AppStyles.Theme.toggleActiveColor
-        } else {
-            indicator.x = 2
-            indicator.color = AppStyles.Theme.toggleInactiveColor
         }
     }
     

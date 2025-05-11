@@ -6,6 +6,7 @@ import com.Sp3ctraGen.backend 1.0
 import "components"
 import "sections"
 import "styles" as AppStyles
+import "styles" as Fonts
 
 /**
  * Fenêtre principale de l'application Sp3ctraGen

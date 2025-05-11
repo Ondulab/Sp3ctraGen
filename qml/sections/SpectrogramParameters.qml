@@ -38,10 +38,10 @@ SectionContainer {
     
     GridLayout {
         id: parametersGrid
-        columns: spectrogramParametersSection.width < 500 ? 1 : 2
+        columns: 2
         Layout.fillWidth: true
-        columnSpacing: AppStyles.Theme.spacing * 3 // Espacement plus large entre les colonnes
-        rowSpacing: AppStyles.Theme.spacing / 2
+        columnSpacing: AppStyles.Theme.spacing
+        rowSpacing: AppStyles.Theme.spacing
 
         // FFT Size
         ParameterField {
@@ -136,27 +136,28 @@ SectionContainer {
         }
 
         // Normalization Toggle
-        Label {
+        ThemedLabel {
             text: "Enable Normalization:"
-            color: AppStyles.Theme.primaryTextColor
         }
         ToggleSwitch {
             id: normalizationToggle
-            Layout.preferredWidth: 80
-            Layout.preferredHeight: 30
+            Layout.preferredWidth: AppStyles.Theme.rightColumnWidth
+            Layout.preferredHeight: AppStyles.Theme.controlHeight
+            Layout.alignment: Qt.AlignLeft
             checked: true
             onToggled: parametersChanged()
         }
         
         // Dithering Toggle
-        Label {
+        ThemedLabel {
             text: "Enable Dithering:"
-            color: AppStyles.Theme.primaryTextColor
+            Layout.alignment: Qt.AlignRight
         }
         ToggleSwitch {
             id: ditheringToggle
-            Layout.preferredWidth: 80
-            Layout.preferredHeight: 30
+            Layout.preferredWidth: AppStyles.Theme.rightColumnWidth
+            Layout.preferredHeight: AppStyles.Theme.controlHeight
+            Layout.alignment: Qt.AlignLeft
             checked: false
             onToggled: parametersChanged()
         }
@@ -175,14 +176,15 @@ SectionContainer {
         }
 
         // High Boost Filter
-        Label {
+        ThemedLabel {
             text: "High Boost Filter:"
-            color: AppStyles.Theme.primaryTextColor
+            Layout.alignment: Qt.AlignRight
         }
         ToggleSwitch {
             id: highBoostToggle
-            Layout.preferredWidth: 80
-            Layout.preferredHeight: 30
+            Layout.preferredWidth: AppStyles.Theme.rightColumnWidth
+            Layout.preferredHeight: AppStyles.Theme.controlHeight
+            Layout.alignment: Qt.AlignLeft
             checked: true
             onToggled: parametersChanged()
         }
@@ -202,14 +204,15 @@ SectionContainer {
         }
         
         // High-Pass Filter Toggle
-        Label {
+        ThemedLabel {
             text: "High-Pass Filter:"
-            color: AppStyles.Theme.primaryTextColor
+            Layout.alignment: Qt.AlignRight
         }
         ToggleSwitch {
             id: highPassToggle
-            Layout.preferredWidth: 80
-            Layout.preferredHeight: 30
+            Layout.preferredWidth: AppStyles.Theme.rightColumnWidth
+            Layout.preferredHeight: AppStyles.Theme.controlHeight
+            Layout.alignment: Qt.AlignLeft
             checked: false
             onToggled: parametersChanged()
         }
@@ -229,68 +232,24 @@ SectionContainer {
         }
         
         // High-Pass Filter Order
-        Label {
+        ThemedLabel {
             text: "Filter Order (1-8):"
-            color: AppStyles.Theme.primaryTextColor
             enabled: highPassToggle.checked
+            Layout.alignment: Qt.AlignRight
         }
-        ComboBox {
-            id: highPassOrderCombo
-            model: ["1", "2", "3", "4", "5", "6", "7", "8"]
-            currentIndex: 1  // Ordre 2 par défaut
-            Layout.preferredWidth: 80
-            enabled: highPassToggle.checked
-            
-            onCurrentIndexChanged: parametersChanged()
-            
-            background: Rectangle {
-                color: AppStyles.Theme.fieldBackground
-                radius: AppStyles.Theme.borderRadius / 2
-            }
-            
-            contentItem: Text {
-                text: highPassOrderCombo.displayText
-                color: AppStyles.Theme.fieldText
-                horizontalAlignment: Text.AlignHCenter
-                verticalAlignment: Text.AlignVCenter
-                elide: Text.ElideRight
-            }
-            
-            popup: Popup {
-                y: highPassOrderCombo.height
-                width: highPassOrderCombo.width
-                implicitHeight: contentItem.implicitHeight
-                padding: 1
-                
-                contentItem: ListView {
-                    clip: true
-                    implicitHeight: contentHeight
-                    model: highPassOrderCombo.popup.visible ? highPassOrderCombo.delegateModel : null
-                    
-                    ScrollBar.vertical: ScrollBar {
-                        active: highPassOrderCombo.popup.visible
-                    }
-                }
-                
-                background: Rectangle {
-                    color: AppStyles.Theme.fieldBackground
-                    border.color: AppStyles.Theme.borderColor
-                    radius: AppStyles.Theme.borderRadius / 2
-                }
+        FilterComboBox
+        {
+            id:               highPassOrderCombo
+            model:            [ "1", "2", "3", "4", "5", "6", "7", "8" ]
+            currentIndex:     1                    // "2" par défaut
+            Layout.preferredWidth: AppStyles.Theme.rightColumnWidth
+            Layout.alignment: Qt.AlignLeft
+            enabled:          highPassToggle.checked
+
+            onCurrentIndexChanged:
+            {
+                parametersChanged()
             }
         }
-    }
-    
-    // Champs cachés pour la compatibilité
-    Item {
-        id: durationField
-        visible: false
-        property string text: "4.0"
-    }
-    
-    Item {
-        id: sampleRateField
-        visible: false
-        property string text: "0" // Sera remplacé par la fréquence native du fichier
     }
 }
