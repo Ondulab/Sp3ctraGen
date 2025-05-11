@@ -1,0 +1,9 @@
+<RCC>
+    <qresource prefix="/">
+        <file>main.qml</file>
+        <file>AudioWaveform.qml</file>
+    </qresource>
+    <qresource prefix="/fonts">
+        <file alias="Orbitron-Regular.ttf">../fonts/Orbitron-Regular.ttf</file>
+    </qresource>
+</RCC>

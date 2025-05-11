@@ -1,12 +1,28 @@
 <RCC>
     <qresource prefix="/">
         <file>main.qml</file>
-        <file>minimal_main.qml</file>
-        <file>main_with_preview.qml</file>
-        <file>simple_preview.qml</file>
-        <file>AudioWaveform.qml</file>
-        <file>components/AnimatedButton.qml</file>
-        <file>components/ValidatedTextField.qml</file>
+        <!-- Les anciens fichiers QML ont été supprimés -->
+        
+        <!-- Composants de base -->
+        <file>components/ToggleSwitch.qml</file>
+        <file>components/SectionContainer.qml</file>
+        <file>components/ParameterField.qml</file>
+        <file>components/StatusText.qml</file>
+        <file>components/AudioWaveform.qml</file>
+        
+        <!-- Sections modulaires -->
+        <file>sections/SpectrogramParameters.qml</file>
+        <file>sections/OutputFormat.qml</file>
+        <file>sections/FileSettings.qml</file>
+        <file>sections/AudioWaveformSection.qml</file>
+        <file>sections/PreviewSection.qml</file>
+        
+        <!-- Styles -->
+        <file>styles/Theme.qml</file>
+        <file>styles/Fonts.qml</file>
+        <file>styles/qmldir</file>
+        
+        <!-- Ressources existantes ont été supprimées car non utilisées -->
     </qresource>
     <qresource prefix="/fonts">
         <file alias="Orbitron-Regular.ttf">../fonts/Orbitron-Regular.ttf</file>
