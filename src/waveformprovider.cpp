@@ -152,7 +152,7 @@ void WaveformProvider::resampleForDisplay(int targetWidth, QVariantList &result)
     }
 }
 
-QVariantMap WaveformProvider::calculateExtractionSegment(double cursorPosition, int pageFormat, double writingSpeed)
+QVariantMap WaveformProvider::calculateExtractionSegment(double cursorPosition, int pageFormat, double writingSpeed, int fftSize)
 {
     if (!m_fileLoaded) {
         qWarning() << "No audio file loaded";
@@ -165,8 +165,11 @@ QVariantMap WaveformProvider::calculateExtractionSegment(double cursorPosition, 
     // Convert writing speed from cm/s to mm/s
     double speedMMS = writingSpeed * 10.0;
     
-    // Calculate segment duration in seconds
-    double segmentDuration = paperWidthMM / speedMMS;
+    // Ajustement du calcul pour prendre en compte la taille FFT (WS)
+    double fftAdjustment = static_cast<double>(fftSize) / 8192.0;
+    
+    // Calculate segment duration in seconds, adjusted by FFT size
+    double segmentDuration = (paperWidthMM / speedMMS) * fftAdjustment;
     
     // Start position in seconds (based on relative cursor position)
     double totalDuration = static_cast<double>(m_fileInfo.frames) / m_fileInfo.samplerate;

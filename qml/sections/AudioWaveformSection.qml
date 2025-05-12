@@ -31,10 +31,19 @@ SectionContainer {
     // Propriétés pour les paramètres de génération
     property int pageFormat: 0
     property double writingSpeed: 8.0
+    property int fftSize: 8192
     
     // Observer les changements de vitesse d'écriture pour mettre à jour le segment
     onWritingSpeedChanged: {
         // Recalculer le segment lorsque la vitesse d'écriture change
+        if (waveformProvider && waveformProvider.getTotalDuration() > 0 && audioWaveform) {
+            updateSegmentDisplay(audioWaveform.cursorPosition)
+        }
+    }
+    
+    // Observer les changements de taille FFT pour mettre à jour le segment
+    onFftSizeChanged: {
+        // Recalculer le segment lorsque la taille FFT change
         if (waveformProvider && waveformProvider.getTotalDuration() > 0 && audioWaveform) {
             updateSegmentDisplay(audioWaveform.cursorPosition)
         }
@@ -62,7 +71,8 @@ SectionContainer {
                 var segment = waveformProvider.calculateExtractionSegment(
                     audioWaveform.cursorPosition,
                     pageFormat,
-                    writingSpeed
+                    writingSpeed,
+                    fftSize
                 );
                 
                 // Mettre à jour les indicateurs visuels
@@ -97,6 +107,7 @@ SectionContainer {
             Layout.fillWidth: true
             Layout.fillHeight: true
             waveColor: AppStyles.Theme.primaryTextColor
+            showSegment: true  // S'assurer que l'affichage du segment est activé
             
             onCursorMoved: {
                 // Utiliser la fonction factoriée pour mettre à jour le segment
@@ -211,7 +222,8 @@ SectionContainer {
         var segment = waveformProvider.calculateExtractionSegment(
             audioWaveform.cursorPosition,
             pageFormat,
-            writingSpeed
+            writingSpeed,
+            fftSize
         )
         
         // Extraire le segment audio
@@ -236,7 +248,8 @@ SectionContainer {
         var segment = waveformProvider.calculateExtractionSegment(
             audioWaveform.cursorPosition,
             pageFormat,
-            writingSpeed
+            writingSpeed,
+            fftSize
         )
         
         return segment.startPosition
@@ -251,12 +264,23 @@ SectionContainer {
         var segment = waveformProvider.calculateExtractionSegment(
             position,
             pageFormat,
-            writingSpeed
+            writingSpeed,
+            fftSize
         )
-        
         // Mettre à jour les indicateurs visuels
-        audioWaveform.segmentStart = segment.startPosition / waveformProvider.getTotalDuration()
-        audioWaveform.segmentDuration = segment.duration / waveformProvider.getTotalDuration()
+        var relativeStart = segment.startPosition / waveformProvider.getTotalDuration()
+        var relativeDuration = segment.duration / waveformProvider.getTotalDuration()
+        
+        console.log("Mise à jour du segment - Valeurs absolues:",
+                    "startPosition =", segment.startPosition.toFixed(2),
+                    "duration =", segment.duration.toFixed(2))
+        console.log("Mise à jour du segment - Valeurs relatives:",
+                    "segmentStart =", relativeStart.toFixed(4),
+                    "segmentDuration =", relativeDuration.toFixed(4))
+        
+        audioWaveform.segmentStart = relativeStart
+        audioWaveform.segmentDuration = relativeDuration
+        
         
         // Mettre à jour le texte d'information
         var startSec = segment.startPosition.toFixed(2)

@@ -37,7 +37,8 @@ public:
     Q_INVOKABLE QVariantMap calculateExtractionSegment(
         double cursorPosition,
         int pageFormat,
-        double writingSpeed
+        double writingSpeed,
+        int fftSize = 8192
     );
     
     // Extracts the audio segment for generation

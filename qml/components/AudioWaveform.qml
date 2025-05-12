@@ -12,7 +12,8 @@ Rectangle {
     property double segmentDuration: 0
     property color waveColor: AppStyles.Theme.primaryTextColor
     property color cursorColor: "#FFFFFF"
-    property color segmentColor: "#80D4AF37"
+    property color segmentColor: "#B04285F4"  // Bleu semi-transparent (augmentation de l'opacité)
+    property color segmentBorderColor: "#FF4285F4"  // Bleu opaque pour la bordure
     property color backgroundColor: "#1A1A1A"
     property bool showSegment: true
     property bool interactive: true
@@ -162,7 +163,11 @@ Rectangle {
         height: parent.height
         color: segmentColor
         visible: showSegment
-        z: -1
+        z: 5  // Valeur positive mais inférieure au curseur (z: 10)
+        
+        // Ajouter une bordure pour mieux délimiter la zone
+        border.width: 1
+        border.color: segmentBorderColor
     }
     
     // Curseur mobile

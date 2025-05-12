@@ -268,6 +268,7 @@ ApplicationWindow {
                     // Liaison bidirectionnelle des paramètres
                     pageFormat: outputFormatSection.pageFormat
                     writingSpeed: spectrogramParametersSection.writingSpeed
+                    fftSize: spectrogramParametersSection.fftSize
                     
                     onRequestGenerateSpectrogram: {
                         generateSpectrogramFromSegment()
