@@ -1,6 +1,7 @@
 #include <QtWidgets/QApplication>
 #include <QQmlApplicationEngine>
 #include <QQmlContext>
+#include <QGuiApplication>
 #include "../include/spectrogramgenerator.h"
 #include "../include/previewimageprovider.h"
 #include "../include/waveformprovider.h"
@@ -9,7 +10,16 @@
 #include "../include/Constants.h"
 #include "../include/QmlConstants.h"
 #include "../include/PathManager.h"
+#include "../include/MacOSBridge.h"
 #include <QDebug>
+
+// Déclaration de la fonction d'initialisation macOS
+#ifdef Q_OS_MAC
+extern "C" void initMacOSSpecific();
+extern "C" void fixFileDialogIssues();
+extern "C" void configureFileOpenPanel();
+extern "C" void configureFolderSelectPanel();
+#endif
 
 int main(int argc, char *argv[])
 {
@@ -17,6 +27,13 @@ int main(int argc, char *argv[])
     QCoreApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
 #endif
     QApplication app(argc, argv);
+    
+#ifdef Q_OS_MAC
+    // Initialiser la prise en charge spécifique de macOS
+    initMacOSSpecific();
+    // Résoudre les problèmes de dialogue de fichiers macOS
+    fixFileDialogIssues();
+#endif
     
     // Initialiser les singletons
     VisualizationFactory::getInstance();
@@ -29,6 +46,7 @@ int main(int argc, char *argv[])
     // Enregistrer nos types C++ pour QML
     qmlRegisterType<SpectrogramGenerator>("com.Sp3ctraGen.backend", 1, 0, "SpectrogramGenerator");
     qmlRegisterType<WaveformProvider>("com.Sp3ctraGen.backend", 1, 0, "WaveformProvider");
+    qmlRegisterType<MacOSBridge>("com.Sp3ctraGen.backend", 1, 0, "MacOSBridge");
     
     // Enregistrer la classe QmlConstants comme singleton
     qmlRegisterSingletonType<QmlConstants>("com.Sp3ctraGen.constants", 1, 0, "Constants",

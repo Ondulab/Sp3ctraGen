@@ -32,6 +32,14 @@ SectionContainer {
     property int pageFormat: 0
     property double writingSpeed: 8.0
     
+    // Observer les changements de vitesse d'écriture pour mettre à jour le segment
+    onWritingSpeedChanged: {
+        // Recalculer le segment lorsque la vitesse d'écriture change
+        if (waveformProvider && waveformProvider.getTotalDuration() > 0 && audioWaveform) {
+            updateSegmentDisplay(audioWaveform.cursorPosition)
+        }
+    }
+    
     // Signaux
     signal audioFileLoaded(bool success, real duration, int sampleRate)
     signal segmentSelected(double startPosition, double duration)
@@ -39,28 +47,41 @@ SectionContainer {
     
     // Handler pour le chargement de fichier
     function onFileLoaded(success, durationSeconds, sampleRate) {
+        console.log("AudioWaveformSection: onFileLoaded callback called with success=" + success);
+        
         if (success) {
-            // Obtenir les données de forme d'onde pour l'affichage
-            var waveformWidth = audioWaveform.width
-            audioWaveform.waveformData = waveformProvider.getWaveformData(waveformWidth)
+            // Vérifier que audioWaveform est correctement initialisé
+            if (audioWaveform) {
+                console.log("AudioWaveformSection: audioWaveform is correctly initialized");
+                
+                // Obtenir les données de forme d'onde pour l'affichage
+                var waveformWidth = audioWaveform.width;
+                audioWaveform.waveformData = waveformProvider.getWaveformData(waveformWidth);
+                
+                // Calculer le segment initial
+                var segment = waveformProvider.calculateExtractionSegment(
+                    audioWaveform.cursorPosition,
+                    pageFormat,
+                    writingSpeed
+                );
+                
+                // Mettre à jour les indicateurs visuels
+                audioWaveform.segmentStart = segment.startPosition / waveformProvider.getTotalDuration();
+                audioWaveform.segmentDuration = segment.duration / waveformProvider.getTotalDuration();
+            } else {
+                console.log("AudioWaveformSection: WARNING - audioWaveform is not initialized!");
+            }
             
-            // Calculer le segment initial
-            var segment = waveformProvider.calculateExtractionSegment(
-                audioWaveform.cursorPosition,
-                pageFormat,
-                writingSpeed
-            )
-            
-            // Mettre à jour les indicateurs visuels
-            audioWaveform.segmentStart = segment.startPosition / waveformProvider.getTotalDuration()
-            audioWaveform.segmentDuration = segment.duration / waveformProvider.getTotalDuration()
-            
-            statusText.showSuccess("Audio file loaded: " + durationSeconds.toFixed(2) + " seconds at " + sampleRate + " Hz")
+            if (statusText) {
+                statusText.showSuccess("Audio file loaded: " + durationSeconds.toFixed(2) + " seconds at " + sampleRate + " Hz");
+            }
             
             // Émettre le signal avec les informations
-            audioFileLoaded(success, durationSeconds, sampleRate)
+            audioFileLoaded(success, durationSeconds, sampleRate);
         } else {
-            statusText.showError("Error loading audio file")
+            if (statusText) {
+                statusText.showError("Error loading audio file");
+            }
         }
     }
     
@@ -78,25 +99,9 @@ SectionContainer {
             waveColor: AppStyles.Theme.primaryTextColor
             
             onCursorMoved: {
-                // Calculer le segment à extraire
+                // Utiliser la fonction factoriée pour mettre à jour le segment
                 if (waveformProvider && waveformProvider.getTotalDuration() > 0) {
-                    var segment = waveformProvider.calculateExtractionSegment(
-                        position,
-                        pageFormat,
-                        writingSpeed
-                    )
-                    
-                    // Mettre à jour les indicateurs visuels
-                    audioWaveform.segmentStart = segment.startPosition / waveformProvider.getTotalDuration()
-                    audioWaveform.segmentDuration = segment.duration / waveformProvider.getTotalDuration()
-                    
-                    // Mettre à jour le texte d'information
-                    var startSec = segment.startPosition.toFixed(2)
-                    var durationSec = segment.duration.toFixed(2)
-                    statusText.text = "Position: " + startSec + "s, Segment duration: " + durationSec + "s"
-                    
-                    // Émettre le signal avec les informations du segment
-                    segmentSelected(segment.startPosition, segment.duration)
+                    updateSegmentDisplay(position)
                 }
             }
         }
@@ -111,22 +116,12 @@ SectionContainer {
                 text: "Load Audio"
                 
                 onClicked: {
-                    if (inputFileDialog) {
+                    if (typeof openInputFileDialog === "function") {
+                        // Utiliser la fonction d'ouverture sécurisée définie dans main.qml
+                        openInputFileDialog()
+                    } else if (inputFileDialog) {
+                        // Fallback au cas où openInputFileDialog n'est pas disponible
                         inputFileDialog.open()
-                        
-                        // Connecter temporairement au signal accepted
-                        var connection = function() {
-                            var filePath = inputFileDialog.fileUrl.toString().replace("file://", "")
-                            audioWaveformSection.audioFilePath = filePath
-                            
-                            if (waveformProvider) {
-                                waveformProvider.loadFile(filePath)
-                            }
-                            
-                            inputFileDialog.accepted.disconnect(connection)
-                        }
-                        
-                        inputFileDialog.accepted.connect(connection)
                     }
                 }
                 
@@ -245,5 +240,30 @@ SectionContainer {
         )
         
         return segment.startPosition
+    }
+    
+    // Fonction factorisée pour mettre à jour l'affichage du segment
+    function updateSegmentDisplay(position) {
+        if (!waveformProvider || waveformProvider.getTotalDuration() <= 0) {
+            return
+        }
+        
+        var segment = waveformProvider.calculateExtractionSegment(
+            position,
+            pageFormat,
+            writingSpeed
+        )
+        
+        // Mettre à jour les indicateurs visuels
+        audioWaveform.segmentStart = segment.startPosition / waveformProvider.getTotalDuration()
+        audioWaveform.segmentDuration = segment.duration / waveformProvider.getTotalDuration()
+        
+        // Mettre à jour le texte d'information
+        var startSec = segment.startPosition.toFixed(2)
+        var durationSec = segment.duration.toFixed(2)
+        statusText.text = "Position: " + startSec + "s, Segment duration: " + durationSec + "s"
+        
+        // Émettre le signal avec les informations du segment
+        segmentSelected(segment.startPosition, segment.duration)
     }
 }

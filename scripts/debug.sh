@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Script pour déboguer l'application Sp3ctraGen avec LLDB
+# Script pour déboguer l'application Sp3ctraGen avec LLDB et configuration améliorée
 # Mis à jour pour la nouvelle structure de dossiers
 
 # Aller au répertoire racine du projet
@@ -18,18 +18,12 @@ export DYLD_LIBRARY_PATH="/opt/homebrew/opt/qt@5/lib:/opt/homebrew/opt/fftw/lib:
 export QT_QPA_PLATFORM="cocoa"
 
 # Créer un fichier temporaire avec les commandes LLDB
-cat > /tmp/lldb_commands.txt << EOF
-# Définir l'architecture cible
-settings set target.process.target-architecture arm64
-
-# Activer les points d'arrêt en ligne
-settings set target.inline-breakpoint-strategy always
+cat > /tmp/lldb_commands.txt << EOC
+# Charger la configuration LLDB
+command source .lldbinit
 
 # Définir un point d'arrêt sur la fonction main
 breakpoint set -n main
-
-# Activer tous les points d'arrêt
-breakpoint enable
 
 # Lancer le programme
 process launch --stop-at-entry
@@ -37,11 +31,14 @@ process launch --stop-at-entry
 # Afficher les informations sur les points d'arrêt
 breakpoint list
 
+# Afficher les informations sur les fichiers source
+target modules dump symfile
+
 # Continuer l'exécution jusqu'au premier point d'arrêt
 continue
-EOF
+EOC
 
-echo "Lancement du débogueur LLDB..."
+echo "Lancement du débogueur LLDB avec configuration améliorée..."
 echo "Utilisez les commandes suivantes pour naviguer:"
 echo "  n ou next       - Pas à pas principal (sans entrer dans les fonctions)"
 echo "  s ou step       - Pas à pas détaillé (entre dans les fonctions)"
@@ -51,7 +48,7 @@ echo "  bt              - Afficher la pile d'appels"
 echo "  frame variable  - Afficher les variables locales"
 echo "  q ou quit       - Quitter le débogueur"
 echo ""
-echo "Pour plus d'informations consultez doc/dev/DEBUGGING.md"
+echo "Pour plus d'informations, consultez doc/dev/DEBUGGING.md"
 echo ""
 
 # Lancer LLDB avec le fichier de commandes

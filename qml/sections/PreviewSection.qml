@@ -21,6 +21,7 @@ Rectangle {
     property var generator: null
     property alias savePreviewButton: savePreviewButton
     property alias statusText: statusText
+    property alias previewImageLoader: previewImageLoader
     
     // Signaux
     signal saveRequested(string format)

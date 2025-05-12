@@ -8,6 +8,7 @@
 
 #include "../include/SpectrogramSettingsCpp.h"
 #include "../include/Constants.h"
+#include <QDebug>
 
 SpectrogramSettingsCpp::SpectrogramSettingsCpp()
     : m_fftSize(Constants::FFT_SIZE)
@@ -155,6 +156,14 @@ void SpectrogramSettingsCpp::initFromQmlParameters(
     double textScaleFactor,
     double lineThicknessFactor)
 {
+    // Log des valeurs avant mise à jour
+    qDebug() << "DEBUG - initFromQmlParameters - Avant mise à jour:";
+    qDebug() << "DEBUG -   m_minFreq (actuel) = " << m_minFreq;
+    qDebug() << "DEBUG -   minFreq (reçu) = " << minFreq;
+    qDebug() << "DEBUG -   m_maxFreq (actuel) = " << m_maxFreq;
+    qDebug() << "DEBUG -   maxFreq (reçu) = " << maxFreq;
+    qDebug() << "DEBUG -   Constants::MIN_FREQ = " << Constants::MIN_FREQ;
+    
     m_fftSize = fftSize;
     m_overlap = overlap;
     m_minFreq = minFreq;
@@ -183,4 +192,9 @@ void SpectrogramSettingsCpp::initFromQmlParameters(
     m_displayParameters = displayParameters;
     m_textScaleFactor = textScaleFactor;
     m_lineThicknessFactor = lineThicknessFactor;
+    
+    // Log des valeurs après mise à jour
+    qDebug() << "DEBUG - initFromQmlParameters - Après mise à jour:";
+    qDebug() << "DEBUG -   m_minFreq = " << m_minFreq;
+    qDebug() << "DEBUG -   m_maxFreq = " << m_maxFreq;
 }

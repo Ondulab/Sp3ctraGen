@@ -282,6 +282,13 @@ void SpectrogramGenerator::generateSpectrogramFromSegment(
         return;
     }
     
+    // Log des valeurs d'entrée
+    qDebug() << "DEBUG - generateSpectrogramFromSegment - Valeurs d'entrée:";
+    qDebug() << "DEBUG -   minFreq = " << minFreq;
+    qDebug() << "DEBUG -   maxFreq = " << maxFreq;
+    qDebug() << "DEBUG -   fftSize = " << fftSize;
+    qDebug() << "DEBUG -   sampleRate = " << sampleRate;
+    
     // Créer la structure de paramètres en utilisant la méthode createSettings
     SpectrogramSettingsCpp settingsCpp = createSettings(
         fftSize, overlap, minFreq, maxFreq, segmentDuration, sampleRate,
@@ -300,8 +307,18 @@ void SpectrogramGenerator::generateSpectrogramFromSegment(
         lineThicknessFactor
     );
     
+    // Log après createSettings
+    qDebug() << "DEBUG - Après createSettings:";
+    qDebug() << "DEBUG -   settingsCpp.m_minFreq = " << settingsCpp.getMinFreq();
+    qDebug() << "DEBUG -   settingsCpp.m_maxFreq = " << settingsCpp.getMaxFreq();
+    
     // Convertir en structure C
     SpectrogramSettings settings = settingsCpp.toCStruct();
+    
+    // Log après conversion en structure C
+    qDebug() << "DEBUG - Après conversion en structure C:";
+    qDebug() << "DEBUG -   settings.minFreq = " << settings.minFreq;
+    qDebug() << "DEBUG -   settings.maxFreq = " << settings.maxFreq;
     
     // Exécuter la génération de prévisualisation dans un thread séparé via TaskManager
     QUuid taskId = TaskManager::getInstance()->runTask(
@@ -396,7 +413,20 @@ SpectrogramSettingsCpp SpectrogramGenerator::createSettings(
     double textScaleFactor,
     double lineThicknessFactor)
 {
+    // Log des paramètres d'entrée
+    qDebug() << "DEBUG - createSettings - Paramètres d'entrée:";
+    qDebug() << "DEBUG -   minFreq = " << minFreq;
+    qDebug() << "DEBUG -   maxFreq = " << maxFreq;
+    qDebug() << "DEBUG -   fftSize = " << fftSize;
+    qDebug() << "DEBUG -   overlap = " << overlap;
+    
     SpectrogramSettingsCpp settings;
+    
+    // Vérification de la structure avant initialisation
+    qDebug() << "DEBUG - Avant initFromQmlParameters:";
+    qDebug() << "DEBUG -   settings.m_minFreq = " << settings.getMinFreq();
+    qDebug() << "DEBUG -   settings.m_maxFreq = " << settings.getMaxFreq();
+    
     settings.initFromQmlParameters(
         fftSize, overlap, minFreq, maxFreq, duration, sampleRate,
         dynamicRangeDB, gammaCorrection, enableDithering, contrastFactor,
@@ -411,6 +441,11 @@ SpectrogramSettingsCpp SpectrogramGenerator::createSettings(
         topReferenceLineOffset,
         displayParameters
     );
+    
+    // Vérification de la structure après initialisation
+    qDebug() << "DEBUG - Après initFromQmlParameters:";
+    qDebug() << "DEBUG -   settings.m_minFreq = " << settings.getMinFreq();
+    qDebug() << "DEBUG -   settings.m_maxFreq = " << settings.getMaxFreq();
     
     return settings;
 }

@@ -25,9 +25,13 @@ RowLayout {
     property int preferredWidth: AppStyles.Theme.fieldWidth
     property bool readOnly: false
     
+    // Propriété exposant la valeur numérique
+    property double numericValue: getValue()
+    
     // Signal émis lorsque la valeur change
     signal fieldValueChanged(string newValue)  // Renommé pour éviter le conflit avec la propriété value
     signal valueEdited(string newValue)
+    // Note: numericValueChanged est généré automatiquement par la propriété numericValue
     
     // Espacement standard
     spacing: AppStyles.Theme.spacing
@@ -58,6 +62,28 @@ RowLayout {
                 }
             } else {
                 null
+            }
+        }
+        
+        // Intercepter les touches pour standardiser sur les points décimaux uniquement
+        Keys.onPressed: function(event) {
+            if (parameterField.isNumeric && parameterField.allowDecimals) {
+                // Accepter uniquement le point décimal
+                if (event.key === Qt.Key_Period) {
+                    // Ne pas ajouter si déjà un séparateur
+                    if (text.indexOf('.') === -1) {
+                        var pos = cursorPosition;
+                        var beforeText = text.substring(0, cursorPosition);
+                        var afterText = text.substring(cursorPosition);
+                        text = beforeText + '.' + afterText;
+                        cursorPosition = pos + 1;
+                    }
+                    event.accepted = true;
+                }
+                // Ignorer les virgules pour standardiser sur le point
+                else if (event.key === Qt.Key_Comma) {
+                    event.accepted = true;
+                }
             }
         }
         
@@ -113,12 +139,32 @@ RowLayout {
                 }
             }
             
+            // Mettre à jour la propriété value pour qu'elle reflète le texte actuel
+            parameterField.value = text
+            
             parameterField.valueEdited(text)
         }
         
-        // Signaler les changements de valeur
+        // Signaler les changements de valeur et appliquer immédiatement
         onTextChanged: {
+            // Émettre le signal de changement
             parameterField.fieldValueChanged(text)
+            
+            // Mettre à jour immédiatement la valeur numérique
+            if (parameterField.isNumeric) {
+                parameterField.numericValue = parameterField.getValue()
+                
+                // Appliquer immédiatement les contraintes min/max sans attendre la fin d'édition
+                var value = parameterField.getValue()
+                if (value < parameterField.minValue || value > parameterField.maxValue) {
+                    // Ne pas corriger pendant la saisie, uniquement à la fin pour éviter les interruptions
+                    // La correction se fera dans onEditingFinished
+                }
+                else {
+                    // Si la valeur est valide, émettre également valueEdited
+                    parameterField.valueEdited(text)
+                }
+            }
         }
     }
     
@@ -133,35 +179,45 @@ RowLayout {
         id: doubleValidator
         bottom: parameterField.minValue
         top: parameterField.maxValue
-        decimals: 2
+        decimals: 6  // Augmenter la précision pour plus de flexibilité
         notation: DoubleValidator.StandardNotation
-        locale: "fr_FR" // Locale française pour accepter la virgule comme séparateur décimal
+        locale: "en_US" // Locale américaine pour utiliser le point comme séparateur décimal
     }
     
     // Fonction pour obtenir la valeur numérique
     function getValue() {
         if (isNumeric) {
             if (allowDecimals) {
-                // Accepte à la fois la virgule et le point comme séparateur décimal
-                return parseFloat(valueField.text.replace(',', '.'))
+                // Ne pas faire de conversion, utiliser directement le texte
+                // (qui doit maintenant contenir des points)
+                return parseFloat(valueField.text);
             } else {
-                return parseInt(valueField.text)
+                return parseInt(valueField.text);
             }
         }
-        return valueField.text
+        return valueField.text;
     }
     
     // Fonction publique pour obtenir une valeur compatible avec l'interface
     function getDisplayValue() {
-        if (isNumeric && allowDecimals) {
-            // Retourne la valeur avec virgule pour l'affichage
-            return valueField.text.replace('.', ',')
-        }
-        return valueField.text
+        // Retourne la valeur avec la convention utilisée par l'interface
+        return valueField.text;
     }
     
     // Fonction pour définir la valeur
     function setValue(newValue) {
         valueField.text = newValue.toString()
+        
+        // Mettre à jour la valeur numérique
+        if (isNumeric) {
+            numericValue = getValue()
+        }
+    }
+    
+    // Mettre à jour la valeur numérique lorsque l'édition est terminée
+    onValueEdited: {
+        if (isNumeric) {
+            numericValue = getValue()
+        }
     }
 }

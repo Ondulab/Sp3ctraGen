@@ -48,7 +48,8 @@ SOURCES += \
     src/TaskManager.cpp \
     src/VisualizationStrategy.cpp \
     src/QmlConstants.cpp \
-    src/PathManager.cpp
+    src/PathManager.cpp \
+    src/MacOSBridge.cpp
 
 # Fichiers d'en-tête
 HEADERS += \
@@ -70,7 +71,8 @@ HEADERS += \
     include/VisualizationFactory.h \
     include/TaskManager.h \
     include/QmlConstants.h \
-    include/PathManager.h
+    include/PathManager.h \
+    include/MacOSBridge.h
 
 # Chemins d'inclusion
 INCLUDEPATH += $$PWD/include
@@ -96,6 +98,10 @@ macx {
     # Configuration macOS
     LIBS += -L/opt/homebrew/lib -lfftw3 -lcairo -lsndfile
     INCLUDEPATH += /opt/homebrew/include
+    
+    # Objectif-C++ pour la prise en charge spécifique à macOS
+    OBJECTIVE_SOURCES += src/macos_utils.mm
+    LIBS += -framework Cocoa
 }
 win32 {
     # Configuration Windows
