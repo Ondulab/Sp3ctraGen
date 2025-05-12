@@ -16,6 +16,17 @@ SectionContainer {
     
     property bool isSmall: false
     
+    // Exposer directement les composants pour accès
+    property alias fftSizeField: fftSizeField
+    property alias overlapField: overlapField
+    property alias minFreqField: minFreqField
+    property alias maxFreqField: maxFreqField
+    property alias writingSpeedField: writingSpeedField
+    property alias dynamicRangeField: dynamicRangeField
+    property alias gammaCorrectionField: gammaCorrectionField
+    property alias highBoostAlphaField: highBoostAlphaField
+    property alias highPassCutoffField: highPassCutoffField
+    
     // Propriétés exposées qui peuvent être liées au modèle
     property alias fftSize: fftSizeField.value
     property alias overlap: overlapField.value

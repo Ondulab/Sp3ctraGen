@@ -38,6 +38,11 @@ ApplicationWindow {
     
     // ===== Backend objects =====
     
+    // Utilitaires spécifiques à macOS
+    MacOSBridge {
+        id: macOSBridge
+    }
+    
     // Générateur de spectrogrammes
     SpectrogramGenerator {
         id: generator
@@ -61,20 +66,14 @@ ApplicationWindow {
             console.log("Signal previewGenerated received: success=" + success + ", errorMessage=" + errorMessage);
             
             if (success) {
-                // Incrémenter le compteur pour forcer un nouveau chargement
-                previewCounter++;
+                // Mise à jour de l'interface audio
+                audioWaveformSection.statusText.text = "Preview generated successfully";
+                audioWaveformSection.statusText.color = AppStyles.Theme.successColor;
                 
-                // Forcer le rechargement de l'image
-                previewSection.previewImageLoader.active = false;
-                
-                // Utiliser un timer pour laisser le temps au loader de se désactiver
-                previewResetTimer.start();
-                
-                previewSection.statusText.text = "Preview updated";
-                previewSection.statusText.color = AppStyles.Theme.successColor;
+                // Le reste de la gestion est délégué à PreviewSection
             } else {
-                previewSection.statusText.text = "Error generating preview: " + errorMessage;
-                previewSection.statusText.color = AppStyles.Theme.errorColor;
+                audioWaveformSection.statusText.text = "Error generating preview: " + errorMessage;
+                audioWaveformSection.statusText.color = AppStyles.Theme.errorColor;
             }
         }
         
@@ -82,22 +81,12 @@ ApplicationWindow {
             console.log("Signal segmentPreviewGenerated received: success=" + success + ", errorMessage=" + errorMessage);
             
             if (success) {
-                // Incrémenter le compteur pour forcer un nouveau chargement
-                previewCounter++;
-                
-                // Forcer le rechargement de l'image
-                previewSection.previewImageLoader.active = false;
-                
-                // Utiliser un timer pour laisser le temps au loader de se désactiver
-                previewResetTimer.start();
-                
-                previewSection.statusText.text = "Segment preview updated";
-                previewSection.statusText.color = AppStyles.Theme.successColor;
+                // Mise à jour uniquement de l'interface audio
                 audioWaveformSection.statusText.text = "Segment preview generated successfully";
                 audioWaveformSection.statusText.color = AppStyles.Theme.successColor;
+                
+                // Le reste de la gestion est délégué à PreviewSection
             } else {
-                previewSection.statusText.text = "Error generating segment preview: " + errorMessage;
-                previewSection.statusText.color = AppStyles.Theme.errorColor;
                 audioWaveformSection.statusText.text = "Error generating segment preview: " + errorMessage;
                 audioWaveformSection.statusText.color = AppStyles.Theme.errorColor;
             }
@@ -123,49 +112,18 @@ ApplicationWindow {
     // Fournisseur de données de forme d'onde
     WaveformProvider {
         id: waveformProvider
-        
-        onFileLoaded: {
-            console.log("Audio file loaded: success=" + success + ", duration=" + durationSeconds + "s, sampleRate=" + sampleRate);
-            
-            if (success) {
-                // Get waveform data for display
-                var waveformWidth = audioWaveformSection.audioWaveform.width;
-                audioWaveformSection.audioWaveform.waveformData = waveformProvider.getWaveformData(waveformWidth);
-                
-                // Calculate initial segment
-                var segment = waveformProvider.calculateExtractionSegment(
-                    audioWaveformSection.audioWaveform.cursorPosition,
-                    outputFormatSection.pageFormat,
-                    spectrogramParametersSection.writingSpeed
-                );
-                
-                // Update visual indicators
-                audioWaveformSection.audioWaveform.segmentStart = segment.startPosition / waveformProvider.getTotalDuration();
-                audioWaveformSection.audioWaveform.segmentDuration = segment.duration / waveformProvider.getTotalDuration();
-                
-                audioWaveformSection.statusText.text = "Audio file loaded: " + durationSeconds.toFixed(2) + " seconds at " + sampleRate + " Hz";
-                audioWaveformSection.statusText.color = AppStyles.Theme.successColor;
-            } else {
-                audioWaveformSection.statusText.text = "Error loading audio file";
-                audioWaveformSection.statusText.color = AppStyles.Theme.errorColor;
-            }
-        }
+        // Le gestionnaire onFileLoaded a été supprimé pour éviter la duplication
+        // avec le gestionnaire déjà présent dans AudioWaveformSection.qml
     }
     
-    // Timer pour réactiver le loader après un court délai
-    Timer {
-        id: previewResetTimer
-        interval: 50
-        onTriggered: {
-            previewSection.previewImageLoader.active = true;  // Réactiver le loader pour recréer l'image
-        }
-    }
+    // Nota: Le timer pour réactiver le loader a été déplacé dans PreviewSection
     
     // ===== Dialogues =====
     FileDialog {
         id: inputFileDialog
         title: "Select WAV File"
         nameFilters: ["Audio files (*.wav)"]
+        
         onAccepted: {
             var filePath = fileUrl.toString().replace("file://", "")
             console.log("Input file selected: " + filePath)
@@ -173,15 +131,32 @@ ApplicationWindow {
         }
     }
     
+    // Fonction d'ouverture sécurisée pour le dialogue d'entrée audio
+    function safeOpenInputFileDialog() {
+        // Préparer le dialogue natif macOS
+        macOSBridge.prepareFileOpenDialog()
+        // Ouvrir le dialogue
+        inputFileDialog.open()
+    }
+    
     FileDialog {
         id: outputFolderDialog
         title: "Select Output Folder"
         selectFolder: true
+        
         onAccepted: {
             var folderPath = fileUrl.toString().replace("file://", "")
             console.log("Output folder selected: " + folderPath)
             fileSettingsSection.setOutputFolder(folderPath)
         }
+    }
+    
+    // Fonction d'ouverture sécurisée pour le dialogue de dossier de sortie
+    function safeOpenOutputFolderDialog() {
+        // Préparer le dialogue natif macOS
+        macOSBridge.prepareFolderSelectDialog()
+        // Ouvrir le dialogue
+        outputFolderDialog.open()
     }
     
     // ===== Layout principal =====
@@ -254,10 +229,12 @@ ApplicationWindow {
                 FileSettings {
                     id: fileSettingsSection
                     Layout.fillWidth: true
-                    outputFolderDialog: outputFolderDialog
+                    
+                    // Modification pour utiliser notre fonction d'ouverture sécurisée
+                    property var outputFolderDialog: null
                     
                     onRequestSelectOutputFolder: {
-                        outputFolderDialog.open()
+                        safeOpenOutputFolderDialog()
                     }
                 }
                 
@@ -279,7 +256,14 @@ ApplicationWindow {
                     // Liaison des dépendances
                     waveformProvider: waveformProvider
                     generator: generator
-                    inputFileDialog: inputFileDialog
+                    
+                    // Modification pour utiliser notre fonction d'ouverture sécurisée
+                    property var inputFileDialog: null
+                    
+                    // Remplacer la référence au dialogue par notre fonction personnalisée
+                    function openInputFileDialog() {
+                        safeOpenInputFileDialog()
+                    }
                     
                     // Liaison bidirectionnelle des paramètres
                     pageFormat: outputFormatSection.pageFormat
@@ -333,31 +317,60 @@ ApplicationWindow {
         var startPosition = audioWaveformSection.getStartPosition()
         
         // Générer le spectrogramme
+        // Récupération directe des valeurs numériques des composants ParameterField
+        // Utilisation de la propriété numericValue pour éviter les conversions manuelles
+        var fftSize = spectrogramParametersSection.fftSizeField.numericValue;
+        var overlap = spectrogramParametersSection.overlapField.numericValue;
+        var minFreq = spectrogramParametersSection.minFreqField.numericValue;
+        var maxFreq = spectrogramParametersSection.maxFreqField.numericValue;
+        var segmentDur = audioWaveformSection.segmentDuration * waveformProvider.getTotalDuration();
+        var sampleRate = waveformProvider.getSampleRate();
+        var dynamicRange = spectrogramParametersSection.dynamicRangeField.numericValue;
+        var gammaCorrection = spectrogramParametersSection.gammaCorrectionField.numericValue;
+        var contrastFactor = parseFloat(spectrogramParametersSection.contrastFactor);
+        var highBoostAlpha = spectrogramParametersSection.highBoostAlphaField.numericValue;
+        var highPassCutoff = spectrogramParametersSection.highPassCutoffField.numericValue;
+        var highPassOrder = spectrogramParametersSection.highPassOrder + 1; // +1 car highPassOrder est un index, pas la valeur
+        
+        // Log des valeurs brutes extraites des composants QML
+        console.log("[qml] DEBUG - Valeurs brutes extraites de l'interface:");
+        console.log("[qml] DEBUG -   minFreq brut (getDisplayValue): '" + spectrogramParametersSection.minFreqField.getDisplayValue() + "'");
+        console.log("[qml] DEBUG -   minFreq brut (value property): '" + spectrogramParametersSection.minFreq + "'");
+        console.log("[qml] DEBUG -   minFreq après conversion: " + minFreq);
+        console.log("[qml] DEBUG -   maxFreq brut (getDisplayValue): '" + spectrogramParametersSection.maxFreqField.getDisplayValue() + "'");
+        console.log("[qml] DEBUG -   maxFreq après conversion: " + maxFreq);
+        
+        console.log("[qml] Paramètres spectrogram: FFT=" + fftSize + ", overlap=" + overlap +
+                    ", minFreq=" + minFreq + ", maxFreq=" + maxFreq +
+                    ", dynamicRange=" + dynamicRange + ", gamma=" + gammaCorrection);
+                    
         generator.generateSpectrogramFromSegment(
-            parseInt(spectrogramParametersSection.fftSize),
-            parseFloat(spectrogramParametersSection.overlap),
-            parseFloat(spectrogramParametersSection.minFreq),
-            parseFloat(spectrogramParametersSection.maxFreq),
-            parseFloat(audioWaveformSection.segmentDuration * waveformProvider.getTotalDuration()),
-            parseInt(waveformProvider.getSampleRate()),
-            parseFloat(spectrogramParametersSection.dynamicRange),
-            parseFloat(spectrogramParametersSection.gammaCorrection),
+            fftSize,
+            overlap,
+            minFreq,
+            maxFreq,
+            segmentDur,
+            sampleRate,
+            dynamicRange,
+            gammaCorrection,
             spectrogramParametersSection.ditheringEnabled,
-            parseFloat(spectrogramParametersSection.contrastFactor),
+            contrastFactor,
             spectrogramParametersSection.highBoostEnabled,
-            parseFloat(spectrogramParametersSection.highBoostAlpha),
+            highBoostAlpha,
             spectrogramParametersSection.highPassEnabled,
-            parseFloat(spectrogramParametersSection.highPassCutoff),
-            parseInt(spectrogramParametersSection.highPassOrder) + 1, // +1 car highPassOrder est un index, pas la valeur
+            highPassCutoff,
+            highPassOrder,
             outputFormatSection.pageFormat,
             parseFloat(outputFormatSection.bottomMargin),
             parseFloat(outputFormatSection.spectroHeight),
-            parseFloat(spectrogramParametersSection.writingSpeed),
+            spectrogramParametersSection.writingSpeedField.numericValue,
             outputFormatSection.verticalScaleEnabled,
             outputFormatSection.bottomReferenceLineEnabled,
-            outputFormatSection.bottomReferenceLineEnabled ? parseFloat(outputFormatSection.bottomReferenceLineOffset) : 34.75,
+            outputFormatSection.bottomReferenceLineEnabled ?
+                parseFloat(outputFormatSection.bottomReferenceLineOffset) : 34.75,
             outputFormatSection.topReferenceLineEnabled,
-            outputFormatSection.topReferenceLineEnabled ? parseFloat(outputFormatSection.topReferenceLineOffset) : 12.55,
+            outputFormatSection.topReferenceLineEnabled ?
+                parseFloat(outputFormatSection.topReferenceLineOffset) : 12.55,
             outputFormatSection.displayParametersEnabled,
             2.0, // textScaleFactor
             2.0, // lineThicknessFactor
