@@ -267,8 +267,11 @@ ApplicationWindow {
                     
                     // Liaison bidirectionnelle des paramètres
                     pageFormat: outputFormatSection.pageFormat
-                    writingSpeed: spectrogramParametersSection.writingSpeed
-                    fftSize: spectrogramParametersSection.fftSize
+                    // Utiliser la valeur numérique au lieu de la chaîne de caractères
+                    writingSpeed: spectrogramParametersSection.writingSpeedNumeric
+                    fftSize: spectrogramParametersSection.fftSizeNumeric
+                    
+                    // Nous allons intégrer la connexion à writingSpeedField directement dans AudioWaveformSection.qml
                     
                     onRequestGenerateSpectrogram: {
                         generateSpectrogramFromSegment()

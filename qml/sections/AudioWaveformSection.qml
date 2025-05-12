@@ -30,15 +30,30 @@ SectionContainer {
     
     // Propriétés pour les paramètres de génération
     property int pageFormat: 0
-    property double writingSpeed: 8.0
-    property int fftSize: 8192
+    property var writingSpeed: 8.0  // Utiliser 'var' au lieu de 'double' pour une meilleure détection des changements
+    property var fftSize: 8192      // Idem pour fftSize
     
     // Observer les changements de vitesse d'écriture pour mettre à jour le segment
     onWritingSpeedChanged: {
+        // Ajouter un logging détaillé pour diagnostiquer le problème
+        console.log("*** onWritingSpeedChanged triggered ***")
+        console.log("  - writingSpeed type:", typeof writingSpeed)
+        console.log("  - writingSpeed value:", writingSpeed)
+        console.log("  - After parseFloat:", parseFloat(writingSpeed))
+        
         // Recalculer le segment lorsque la vitesse d'écriture change
         if (waveformProvider && waveformProvider.getTotalDuration() > 0 && audioWaveform) {
-            updateSegmentDisplay(audioWaveform.cursorPosition)
+            // Convertir explicitement la valeur en nombre pour éviter les problèmes avec les points décimaux
+            var numericSpeed = parseFloat(writingSpeed)
+            console.log("  - Calling _updateSegmentWithNumericSpeed with:", numericSpeed)
+            _updateSegmentWithNumericSpeed(numericSpeed)
         }
+    }
+    
+    // Fonction helper pour mettre à jour avec une valeur numérique
+    function _updateSegmentWithNumericSpeed(speedValue) {
+        console.log("Mise à jour du segment avec vitesse numérique:", speedValue)
+        updateSegmentDisplay(audioWaveform.cursorPosition)
     }
     
     // Observer les changements de taille FFT pour mettre à jour le segment
@@ -290,4 +305,6 @@ SectionContainer {
         // Émettre le signal avec les informations du segment
         segmentSelected(segment.startPosition, segment.duration)
     }
+    
+    // Nous n'utiliserons pas de Connections ici pour éviter les erreurs de structure QML
 }

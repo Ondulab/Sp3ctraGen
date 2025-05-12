@@ -28,13 +28,27 @@ SectionContainer {
     property alias highPassCutoffField: highPassCutoffField
     
     // Propriétés exposées qui peuvent être liées au modèle
+    // Exposer à la fois les valeurs textuelles et numériques
     property alias fftSize: fftSizeField.value
+    property alias fftSizeNumeric: fftSizeField.numericValue
+    
     property alias overlap: overlapField.value
+    property alias overlapNumeric: overlapField.numericValue
+    
     property alias minFreq: minFreqField.value
+    property alias minFreqNumeric: minFreqField.numericValue
+    
     property alias maxFreq: maxFreqField.value
+    property alias maxFreqNumeric: maxFreqField.numericValue
+    
     property alias writingSpeed: writingSpeedField.value
+    property alias writingSpeedNumeric: writingSpeedField.numericValue
+    
     property alias dynamicRange: dynamicRangeField.value
+    property alias dynamicRangeNumeric: dynamicRangeField.numericValue
+    
     property alias gammaCorrection: gammaCorrectionField.value
+    property alias gammaCorrectionNumeric: gammaCorrectionField.numericValue
     property alias normalizationEnabled: normalizationToggle.checked
     property alias ditheringEnabled: ditheringToggle.checked
     property alias contrastFactor: contrastFactorField.value

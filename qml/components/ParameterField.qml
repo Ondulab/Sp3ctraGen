@@ -152,17 +152,29 @@ RowLayout {
             
             // Mettre à jour immédiatement la valeur numérique
             if (parameterField.isNumeric) {
-                parameterField.numericValue = parameterField.getValue()
+                var oldValue = parameterField.numericValue
+                var newValue = parameterField.getValue()
                 
-                // Appliquer immédiatement les contraintes min/max sans attendre la fin d'édition
-                var value = parameterField.getValue()
-                if (value < parameterField.minValue || value > parameterField.maxValue) {
-                    // Ne pas corriger pendant la saisie, uniquement à la fin pour éviter les interruptions
-                    // La correction se fera dans onEditingFinished
+                // Vérifier si la valeur a réellement changé numériquement
+                if (isFinite(newValue) && Math.abs(newValue - oldValue) > 0.0001) {
+                    console.log("Valeur numérique changée: " + oldValue + " -> " + newValue)
+                    parameterField.numericValue = newValue
+                    
+                    // Appliquer immédiatement les contraintes min/max sans attendre la fin d'édition
+                    if (newValue < parameterField.minValue || newValue > parameterField.maxValue) {
+                        // Ne pas corriger pendant la saisie, uniquement à la fin pour éviter les interruptions
+                        // La correction se fera dans onEditingFinished
+                    }
+                    else {
+                        // Si la valeur est valide et a changé numériquement,
+                        // émettre également valueEdited même pendant l'édition
+                        parameterField.valueEdited(text)
+                    }
                 }
-                else {
-                    // Si la valeur est valide, émettre également valueEdited
-                    parameterField.valueEdited(text)
+                else if (!isFinite(newValue)) {
+                    // La conversion a échoué, mais le texte a changé
+                    // Par exemple, si l'utilisateur a saisi un point sans chiffre après
+                    parameterField.fieldValueChanged(text)
                 }
             }
         }
