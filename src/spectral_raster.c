@@ -219,9 +219,31 @@ void draw_parameters_text(cairo_t *cr, double page_width, double page_height,
     char line1[1024];
     char line2[1024];
     
-    // Line 1: file info, start time, duration, FFT and overlap
-    snprintf(line1, sizeof(line1), "File: %s, Start: %.2fs, Duration: %.2fs, FFT: %d, Overlap: %.2f", 
-             filename, startTime, segmentDuration, s->fftSize, s->overlap);
+    // Line 1: file info, start time, duration, bins/s, and overlap preset
+    const char* overlapText;
+    switch(s->overlapPreset) {
+        case 0: overlapText = "Low"; break;
+        case 2: overlapText = "High"; break;
+        default: overlapText = "Medium"; break;
+    }
+    
+    // Calculer la taille FFT pour l'afficher (même formule que dans le code principal)
+    double hopSize = s->sampleRate / s->binsPerSecond;
+    double overlapValue;
+    switch(s->overlapPreset) {
+        case 0: overlapValue = OVERLAP_PRESET_LOW; break;
+        case 2: overlapValue = OVERLAP_PRESET_HIGH; break;
+        default: overlapValue = OVERLAP_PRESET_MEDIUM; break;
+    }
+    double diviseur = 1.0 - overlapValue;
+    double calculatedFftSize = hopSize / diviseur;
+    int fftSize = 1;
+    while (fftSize < calculatedFftSize) {
+        fftSize *= 2;
+    }
+    
+    snprintf(line1, sizeof(line1), "File: %s, Start: %.2fs, Duration: %.2fs, Bins/s: %.1f, Overlap: %s (FFT: %d)",
+             filename, startTime, segmentDuration, s->binsPerSecond, overlapText, fftSize);
     
     // Line 2: frequency, sample rate, high-pass filter, dynamic range, gamma, contrast, high boost and writing speed
     snprintf(line2, sizeof(line2), "Freq: %.0f-%.0f Hz, SR: %d Hz, HPF: %s (%.0f Hz, %d), DR: %.1f dB, Gamma: %.1f, Contrast: %.1f, HB: %s (%.2f), WS: %.1f cm/s",
@@ -281,8 +303,6 @@ int spectral_generator_impl(const SpectrogramSettings *cfg,
 {
     /* Copy configuration and fallback to defaults if necessary */
     SpectrogramSettings s = *cfg;
-    int     fft_size        = DEFAULT_INT(s.fftSize,        DEFAULT_FFT_SIZE);
-    double  overlap         = DEFAULT_DBL(s.overlap,        DEFAULT_OVERLAP);
     double  minFreq         = DEFAULT_DBL(s.minFreq,        DEFAULT_MIN_FREQ);
     double  maxFreq         = DEFAULT_DBL(s.maxFreq,        DEFAULT_MAX_FREQ);
     double  writingSpeed    = DEFAULT_DBL(s.writingSpeed,   0.0);
@@ -294,6 +314,42 @@ int spectral_generator_impl(const SpectrogramSettings *cfg,
     double  contrastFactor  = DEFAULT_DBL(s.contrastFactor, CONTRAST_FACTOR);
     int     enableHighBoost = DEFAULT_BOOL(s.enableHighBoost, ENABLE_HIGH_BOOST);
     double  highBoostAlpha  = DEFAULT_DBL(s.highBoostAlpha, HIGH_BOOST_ALPHA);
+    double  binsPerSecond   = DEFAULT_DBL(s.binsPerSecond,  DEFAULT_BINS_PER_SECOND);
+    int     overlapPreset   = DEFAULT_INT(s.overlapPreset,  DEFAULT_OVERLAP_PRESET);  // Préréglage d'overlap (Medium par défaut)
+    
+    // Détermination de la valeur d'overlap en fonction du préréglage
+    double overlapValue;
+    switch(overlapPreset) {
+        case 0: // Low
+            overlapValue = OVERLAP_PRESET_LOW;
+            printf(" - Using low overlap preset (%.2f)\n", overlapValue);
+            break;
+        case 2: // High
+            overlapValue = OVERLAP_PRESET_HIGH;
+            printf(" - Using high overlap preset (%.2f)\n", overlapValue);
+            break;
+        default: // Medium (default)
+            overlapValue = OVERLAP_PRESET_MEDIUM;
+            printf(" - Using medium overlap preset (%.2f)\n", overlapValue);
+            break;
+    }
+    
+    // Calcul de la taille FFT en fonction du bins/s et du préréglage d'overlap
+    double hopSize = sample_rate / binsPerSecond;
+    double diviseur = 1.0 - overlapValue;
+    double calculatedFftSize = hopSize / diviseur;
+    
+    // Arrondir à la puissance de 2 supérieure
+    int fft_size = 1;
+    while (fft_size < calculatedFftSize) {
+        fft_size *= 2;
+    }
+    
+    // Stockage de la taille FFT pour l'affichage dans les journaux
+    // (Note: s.fftSize a été supprimé de la structure)
+    
+    printf(" - Calculated FFT size: %d (from bins/s=%.1f, overlap=%.2f)\n",
+           fft_size, binsPerSecond, overlapValue);
     
     /* Use default paths if input/output files are not specified */
     const char* inputFilePath = DEFAULT_STR(inputFile, DEFAULT_INPUT_FILENAME);
@@ -322,7 +378,11 @@ int spectral_generator_impl(const SpectrogramSettings *cfg,
 
     printf("Spectrogram generation parameters:\n");
     printf(" - FFT size: %d\n", fft_size);
-    printf(" - Overlap: %f\n", overlap);
+    printf(" - Overlap preset: %d (%s - %.2f)\n", overlapPreset,
+           overlapPreset == 0 ? "Low" :
+           overlapPreset == 2 ? "High" : "Medium",
+           overlapValue);
+    printf(" - Bins per second: %.1f\n", binsPerSecond);
     printf(" - Min frequency: %f\n", minFreq);
     printf(" - Max frequency: %f\n", maxFreq);
     printf(" - Writing speed: %f cm/s\n", writingSpeed);
@@ -391,9 +451,9 @@ int spectral_generator_impl(const SpectrogramSettings *cfg,
     // Create spectrogram data structure
     SpectrogramData spectro_data = {0};
     
-    // Compute spectrogram - use exact overlap specified by user
-    if (compute_spectrogram(signal, total_samples, sample_rate, fft_size, overlap, 
-                         minFreq, maxFreq, &spectro_data) != 0) {
+    // Compute spectrogram with bins per second and overlap preset
+    if (compute_spectrogram(signal, total_samples, sample_rate, fft_size, overlapPreset, binsPerSecond,
+                          minFreq, maxFreq, &spectro_data) != 0) {
         fprintf(stderr, "Error: Failed to compute spectrogram.\n");
         free(signal);
         return EXIT_FAILURE;

@@ -44,8 +44,6 @@ public:
     /**
      * @brief Generates a vector PDF of the spectrogram
      *
-     * @param fftSize FFT size
-     * @param overlap Window overlap
      * @param minFreq Minimum frequency (Hz)
      * @param maxFreq Maximum frequency (Hz)
      * @param duration Duration (seconds)
@@ -63,13 +61,13 @@ public:
      * @param bottomMarginMM Bottom margin in millimeters
      * @param spectroHeightMM Spectrogram height in millimeters
      * @param writingSpeed Writing speed in cm/s
+     * @param binsPerSecond Number of bins per second
+     * @param overlapPreset Overlap preset (0=Low, 1=Medium, 2=High)
      * @param inputFile Input audio file
      * @param outputFolder Output folder
      * @param dpi Resolution in DPI (default 800)
      */
     Q_INVOKABLE void generateVectorPDF(
-        int fftSize,
-        double overlap,
         double minFreq,
         double maxFreq,
         double duration,
@@ -87,6 +85,8 @@ public:
         double bottomMarginMM,
         double spectroHeightMM,
         double writingSpeed,
+        double binsPerSecond,
+        int overlapPreset,
         const QString &inputFile,
         const QString &outputFolder,
         int dpi = 800

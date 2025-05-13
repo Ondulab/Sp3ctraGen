@@ -11,6 +11,7 @@
 
 #include <QString>
 #include "spectral_generator.h"
+#include "SharedConstants.h"
 
 /**
  * @brief Unified C++ class for spectrogram settings
@@ -32,11 +33,11 @@ public:
     static SpectrogramSettingsCpp fromCStruct(const SpectrogramSettings& cSettings);
     
     // Getters and setters
-    int getFftSize() const { return m_fftSize; }
-    void setFftSize(int value) { m_fftSize = value; }
+    int getOverlapPreset() const { return m_overlapPreset; }
+    void setOverlapPreset(int value) { m_overlapPreset = value; }
     
-    double getOverlap() const { return m_overlap; }
-    void setOverlap(double value) { m_overlap = value; }
+    // Méthode pour obtenir la valeur d'overlap en fonction du préréglage
+    double getOverlapValueFromPreset() const;
     
     double getMinFreq() const { return m_minFreq; }
     void setMinFreq(double value) { m_minFreq = value; }
@@ -117,10 +118,15 @@ public:
     double getLineThicknessFactor() const { return m_lineThicknessFactor; }
     void setLineThicknessFactor(double value) { m_lineThicknessFactor = value; }
     
+    // Méthodes pour bins/s
+    double getBinsPerSecond() const { return m_binsPerSecond; }
+    void setBinsPerSecond(double value) { m_binsPerSecond = value; }
+    
+    // Méthode pour calculer la FFT size en fonction du bins/s et du préréglage d'overlap
+    int calculateFftSize(int sampleRate) const;
+    
     // Method to initialize from QML parameters
     void initFromQmlParameters(
-        int fftSize,
-        double overlap,
         double minFreq,
         double maxFreq,
         double duration,
@@ -146,12 +152,12 @@ public:
         double topReferenceLineOffset = 12.55,
         bool displayParameters = false,
         double textScaleFactor = 2.0,
-        double lineThicknessFactor = 2.0
+        double lineThicknessFactor = 2.0,
+        double binsPerSecond = DEFAULT_BINS_PER_SECOND,
+        int overlapPreset = DEFAULT_OVERLAP_PRESET
     );
     
 private:
-    int m_fftSize;
-    double m_overlap;
     double m_minFreq;
     double m_maxFreq;
     double m_duration;
@@ -178,6 +184,8 @@ private:
     bool m_displayParameters;
     double m_textScaleFactor;
     double m_lineThicknessFactor;
+    double m_binsPerSecond;          // Bins par seconde
+    int m_overlapPreset;             // Préréglage d'overlap (0=Low, 1=Medium, 2=High)
 };
 
 #endif // SPECTROGRAMSETTINGSCPP_H

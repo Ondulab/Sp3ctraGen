@@ -53,7 +53,9 @@ void VisualizationStrategy::runGeneration(const SpectrogramSettings& settings,
     qDebug() << "Generating spectrogram with strategy: " << getName();
     qDebug() << "Input file: " << inputFile;
     qDebug() << "Output file: " << outputFile;
-    qDebug() << "FFT size: " << settings.fftSize;
+    qDebug() << "Bins per second: " << settings.binsPerSecond;
+    qDebug() << "Overlap preset: " << (settings.overlapPreset == 0 ? "Low" :
+                                     settings.overlapPreset == 2 ? "High" : "Medium");
     
     emit progressUpdated(10, "Preparing generation...");
     

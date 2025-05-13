@@ -48,8 +48,6 @@ public:
     /**
      * @brief Generates a spectrogram
      *
-     * @param fftSize FFT size
-     * @param overlap Window overlap
      * @param minFreq Minimum frequency (Hz)
      * @param maxFreq Maximum frequency (Hz)
      * @param duration Duration (seconds)
@@ -71,10 +69,10 @@ public:
      * @param outputFolder Output folder
      * @param visualizationType Visualization type (default "Raster (PNG)")
      * @param enableNormalization Enable volume normalization (default true)
+     * @param binsPerSecond Number of bins per second
+     * @param overlapPreset Overlap preset (0=Low, 1=Medium, 2=High)
      */
     Q_INVOKABLE void generateSpectrogram(
-        int fftSize,
-        double overlap,
         double minFreq,
         double maxFreq,
         double duration,
@@ -95,14 +93,14 @@ public:
         const QString &inputFile,
         const QString &outputFolder,
         const QString &visualizationType = "Raster (PNG)",
-        bool enableNormalization = true
+        bool enableNormalization = true,
+        double binsPerSecond = 150.0,
+        int overlapPreset = 1
     );
     
     /**
      * @brief Generates a spectrogram preview
      *
-     * @param fftSize FFT size
-     * @param overlap Window overlap
      * @param minFreq Minimum frequency (Hz)
      * @param maxFreq Maximum frequency (Hz)
      * @param duration Duration (seconds)
@@ -123,8 +121,6 @@ public:
      * @param inputFile Input audio file
      */
     Q_INVOKABLE void generatePreview(
-        int fftSize,
-        double overlap,
         double minFreq,
         double maxFreq,
         double duration,
@@ -150,14 +146,14 @@ public:
         double topReferenceLineOffset = 12.55,
         bool displayParameters = false,
         double textScaleFactor = 2.0,
-        double lineThicknessFactor = 2.0
+        double lineThicknessFactor = 2.0,
+        double binsPerSecond = 150.0,
+        int overlapPreset = 1
     );
     
     /**
      * @brief Generates a spectrogram from an audio segment
      *
-     * @param fftSize FFT size
-     * @param overlap Window overlap
      * @param minFreq Minimum frequency (Hz)
      * @param maxFreq Maximum frequency (Hz)
      * @param segmentDuration Segment duration (seconds)
@@ -178,8 +174,6 @@ public:
      * @param audioSegment Audio segment (QByteArray)
      */
     Q_INVOKABLE void generateSpectrogramFromSegment(
-        int fftSize,
-        double overlap,
         double minFreq,
         double maxFreq,
         double segmentDuration,
@@ -207,7 +201,9 @@ public:
         double lineThicknessFactor,
         const QByteArray &audioSegment,
         const QString &originalAudioFileName = "",
-        double startTime = 0.0
+        double startTime = 0.0,
+        double binsPerSecond = 150.0,
+        int overlapPreset = 1
     );
     
     /**
@@ -240,6 +236,15 @@ public:
     Q_INVOKABLE QStringList getSupportedFileExtensions() const;
 
 signals:
+    /**
+     * @brief Signal emitted when auto FFT parameters are calculated
+     *
+     * @param calculatedFftSize The calculated FFT size
+     * @param effectiveOverlap The effective overlap value
+     * @param binsPerSecond The bins per second value used for calculation
+     */
+    void fftParametersCalculated(int calculatedFftSize, double effectiveOverlap, double binsPerSecond);
+
     /**
      * @brief Signal emitted when a spectrogram is generated
      *
@@ -290,8 +295,6 @@ private:
     /**
      * @brief Creates a SpectrogramSettingsCpp object from QML parameters
      *
-     * @param fftSize FFT size
-     * @param overlap Window overlap
      * @param minFreq Minimum frequency (Hz)
      * @param maxFreq Maximum frequency (Hz)
      * @param duration Duration (seconds)
@@ -313,8 +316,6 @@ private:
      * @param enableNormalization Enable volume normalization
      */
     SpectrogramSettingsCpp createSettings(
-        int fftSize,
-        double overlap,
         double minFreq,
         double maxFreq,
         double duration,
@@ -340,7 +341,9 @@ private:
         double topReferenceLineOffset = 12.55,
         bool displayParameters = false,
         double textScaleFactor = 2.0,
-        double lineThicknessFactor = 2.0
+        double lineThicknessFactor = 2.0,
+        double binsPerSecond = 150.0,
+        int overlapPreset = 1
     );
     
     /**

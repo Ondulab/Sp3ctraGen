@@ -25,8 +25,6 @@ class QmlConstants : public QObject
     Q_OBJECT
     
     // Audio parameters
-    Q_PROPERTY(int defaultFftSize READ defaultFftSize CONSTANT)
-    Q_PROPERTY(double defaultOverlap READ defaultOverlap CONSTANT)
     Q_PROPERTY(double defaultMinFreq READ defaultMinFreq CONSTANT)
     Q_PROPERTY(double defaultMaxFreq READ defaultMaxFreq CONSTANT)
     Q_PROPERTY(double defaultDuration READ defaultDuration CONSTANT)
@@ -70,8 +68,6 @@ public:
     explicit QmlConstants(QObject *parent = nullptr);
     
     // Getters for audio parameters
-    int defaultFftSize() const { return Constants::FFT_SIZE; }
-    double defaultOverlap() const { return Constants::OVERLAP; }
     double defaultMinFreq() const { return Constants::MIN_FREQ; }
     double defaultMaxFreq() const { return Constants::MAX_FREQ; }
     double defaultDuration() const { return Constants::DURATION; }

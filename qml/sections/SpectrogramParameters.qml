@@ -17,23 +17,18 @@ SectionContainer {
     property bool isSmall: false
     
     // Exposer directement les composants pour accès
-    property alias fftSizeField: fftSizeField
-    property alias overlapField: overlapField
     property alias minFreqField: minFreqField
     property alias maxFreqField: maxFreqField
     property alias writingSpeedField: writingSpeedField
+    property alias binsPerSecondField: binsPerSecondField
     property alias dynamicRangeField: dynamicRangeField
     property alias gammaCorrectionField: gammaCorrectionField
     property alias highBoostAlphaField: highBoostAlphaField
     property alias highPassCutoffField: highPassCutoffField
     
     // Propriétés exposées qui peuvent être liées au modèle
-    // Exposer à la fois les valeurs textuelles et numériques
-    property alias fftSize: fftSizeField.value
-    property alias fftSizeNumeric: fftSizeField.numericValue
-    
-    property alias overlap: overlapField.value
-    property alias overlapNumeric: overlapField.numericValue
+    // Nouvelle propriété pour le préréglage d'overlap
+    property alias overlapPreset: overlapPresetCombo.currentIndex
     
     property alias minFreq: minFreqField.value
     property alias minFreqNumeric: minFreqField.numericValue
@@ -43,6 +38,9 @@ SectionContainer {
     
     property alias writingSpeed: writingSpeedField.value
     property alias writingSpeedNumeric: writingSpeedField.numericValue
+    
+    property alias binsPerSecond: binsPerSecondField.value
+    property alias binsPerSecondNumeric: binsPerSecondField.numericValue
     
     property alias dynamicRange: dynamicRangeField.value
     property alias dynamicRangeNumeric: dynamicRangeField.numericValue
@@ -68,31 +66,91 @@ SectionContainer {
         columnSpacing: AppStyles.Theme.spacing
         rowSpacing: AppStyles.Theme.spacing
 
-        // FFT Size
+        // Bins per second (nouveau paramètre)
         ParameterField {
-            id: fftSizeField
-            label: "FFT Size:"
-            value: "8192"
-            isNumeric: true
-            allowDecimals: false
-            minValue: 1
-            Layout.fillWidth: true
-            Layout.columnSpan: parametersGrid.columns
-            onValueEdited: parametersChanged()
-        }
-
-        // Overlap
-        ParameterField {
-            id: overlapField
-            label: "Overlap (0..1):"
-            value: "0.85"
+            id: binsPerSecondField
+            label: "Bins/s:"
+            value: "150.0"
             isNumeric: true
             allowDecimals: true
-            minValue: 0.0
-            maxValue: 1.0
+            minValue: 10.0
+            maxValue: 300.0
             Layout.fillWidth: true
             Layout.columnSpan: parametersGrid.columns
-            onValueEdited: parametersChanged()
+            onValueEdited: {
+                // Calculer dynamiquement la taille FFT en fonction du sample rate, bins/s et préréglage d'overlap
+                var sampleRate = 192000; // Valeur par défaut (sera remplacée par le vrai sample rate)
+                var hopSize = sampleRate / numericValue;
+                
+                // Obtenir la valeur d'overlap selon le préréglage
+                var overlapValue;
+                switch(overlapPresetCombo.currentIndex) {
+                    case 0: overlapValue = 0.75; break; // Low
+                    case 2: overlapValue = 0.95; break; // High
+                    default: overlapValue = 0.85; break; // Medium
+                }
+                
+                var diviseur = 1.0 - overlapValue;
+                var calculatedFft = hopSize / diviseur;
+                
+                // Arrondir à la puissance de 2 supérieure
+                var powerOf2 = 1;
+                while (powerOf2 < calculatedFft) {
+                    powerOf2 *= 2;
+                }
+                
+                // Mettre à jour l'affichage de la FFT calculée
+                fftSizeCalculatedLabel.text = powerOf2.toString();
+                
+                // Calculer l'overlap effectif
+                var effectiveOverlap = 1.0 - (hopSize / powerOf2);
+                overlapEffectifLabel.text = effectiveOverlap.toFixed(4);
+                
+                parametersChanged()
+            }
+        }
+        
+        // Overlap Preset
+        ThemedLabel {
+            text: "Overlap Preset:"
+            Layout.alignment: Qt.AlignRight
+        }
+        FilterComboBox {
+            id: overlapPresetCombo
+            model: ["Low", "Medium", "High"]
+            currentIndex: 1  // Medium par défaut
+            Layout.preferredWidth: AppStyles.Theme.rightColumnWidth
+            Layout.alignment: Qt.AlignLeft
+            
+            onCurrentIndexChanged: {
+                // Recalculer la FFT et l'overlap effectif
+                binsPerSecondField.valueEdited(binsPerSecondField.text);
+                parametersChanged();
+            }
+        }
+        
+        // FFT Size calculée (affichage uniquement)
+        ThemedLabel {
+            text: "FFT Size calculée:"
+            Layout.alignment: Qt.AlignRight
+        }
+        ThemedLabel {
+            id: fftSizeCalculatedLabel
+            text: "8192" // Valeur initiale
+            Layout.preferredWidth: AppStyles.Theme.rightColumnWidth
+            Layout.alignment: Qt.AlignLeft
+        }
+        
+        // Overlap effectif calculé (affichage uniquement)
+        ThemedLabel {
+            text: "Overlap effectif:"
+            Layout.alignment: Qt.AlignRight
+        }
+        ThemedLabel {
+            id: overlapEffectifLabel
+            text: "0.922" // Valeur initiale
+            Layout.preferredWidth: AppStyles.Theme.rightColumnWidth
+            Layout.alignment: Qt.AlignLeft
         }
 
         // Min Frequency
@@ -276,5 +334,21 @@ SectionContainer {
                 parametersChanged()
             }
         }
+    }
+    
+    // Méthode pour mettre à jour les paramètres FFT calculés depuis le backend
+    function updateCalculatedFftParameters(calculatedFftSize, effectiveOverlap) {
+        // Mettre à jour les labels avec les valeurs calculées
+        fftSizeCalculatedLabel.text = calculatedFftSize.toString();
+        overlapEffectifLabel.text = effectiveOverlap.toFixed(4);
+        
+        console.log("Mise à jour des paramètres FFT calculés dans l'interface: FFT=" +
+                    calculatedFftSize + ", Overlap effectif=" + effectiveOverlap.toFixed(4));
+    }
+    
+    // Initialisation des valeurs calculées
+    Component.onCompleted: {
+        // Calculer les valeurs initiales
+        binsPerSecondField.valueEdited(binsPerSecondField.value);
     }
 }

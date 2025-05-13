@@ -33,8 +33,6 @@ SpectrogramGenerator::~SpectrogramGenerator()
 }
 
 void SpectrogramGenerator::generateSpectrogram(
-    int fftSize,
-    double overlap,
     double minFreq,
     double maxFreq,
     double duration,
@@ -55,16 +53,28 @@ void SpectrogramGenerator::generateSpectrogram(
     const QString &inputFile,
     const QString &outputFolder,
     const QString &visualizationType,
-    bool enableNormalization)
+    bool enableNormalization,
+    double binsPerSecond,
+    int overlapPreset)
 {
     // Créer les paramètres
     SpectrogramSettingsCpp settings = createSettings(
-        fftSize, overlap, minFreq, maxFreq, duration, sampleRate,
+        minFreq, maxFreq, duration, sampleRate,
         dynamicRangeDB, gammaCorrection, enableDithering, contrastFactor,
         enableHighBoost, highBoostAlpha, enableHighPassFilter,
         highPassCutoffFreq, highPassFilterOrder, pageFormat,
         bottomMarginMM, spectroHeightMM, writingSpeed,
-        enableNormalization
+        enableNormalization,
+        true, // enableVerticalScale (valeur par défaut)
+        false, // enableBottomReferenceLine (valeur par défaut)
+        -34.75, // bottomReferenceLineOffset (valeur par défaut)
+        false, // enableTopReferenceLine (valeur par défaut)
+        12.55, // topReferenceLineOffset (valeur par défaut)
+        false, // displayParameters (valeur par défaut)
+        2.0, // textScaleFactor (valeur par défaut)
+        2.0, // lineThicknessFactor (valeur par défaut)
+        binsPerSecond,
+        overlapPreset
     );
     
     // Valider le fichier d'entrée
@@ -106,8 +116,6 @@ void SpectrogramGenerator::generateSpectrogram(
 }
 
 void SpectrogramGenerator::generatePreview(
-    int fftSize,
-    double overlap,
     double minFreq,
     double maxFreq,
     double duration,
@@ -133,7 +141,9 @@ void SpectrogramGenerator::generatePreview(
     double topReferenceLineOffset,
     bool displayParameters,
     double textScaleFactor,
-    double lineThicknessFactor)
+    double lineThicknessFactor,
+    double binsPerSecond,
+    int overlapPreset)
 {
     // Vérifier que le fichier d'entrée existe si spécifié
     if (!inputFile.isEmpty() && !QFileInfo::exists(inputFile)) {
@@ -143,7 +153,7 @@ void SpectrogramGenerator::generatePreview(
     
     // Créer la structure de paramètres en utilisant la méthode createSettings
     SpectrogramSettingsCpp settingsCpp = createSettings(
-        fftSize, overlap, minFreq, maxFreq, duration, sampleRate,
+        minFreq, maxFreq, duration, sampleRate,
         dynamicRangeDB, gammaCorrection, enableDithering, contrastFactor,
         enableHighBoost, highBoostAlpha, enableHighPassFilter,
         highPassCutoffFreq, highPassFilterOrder, pageFormat,
@@ -156,7 +166,9 @@ void SpectrogramGenerator::generatePreview(
         topReferenceLineOffset,
         displayParameters,
         textScaleFactor,
-        lineThicknessFactor
+        lineThicknessFactor,
+        binsPerSecond,
+        overlapPreset
     );
     
     // Convertir en structure C
@@ -245,8 +257,6 @@ void SpectrogramGenerator::generatePreview(
 }
 
 void SpectrogramGenerator::generateSpectrogramFromSegment(
-    int fftSize,
-    double overlap,
     double minFreq,
     double maxFreq,
     double segmentDuration,
@@ -274,7 +284,9 @@ void SpectrogramGenerator::generateSpectrogramFromSegment(
     double lineThicknessFactor,
     const QByteArray &audioSegment,
     const QString &originalAudioFileName,
-    double startTime)
+    double startTime,
+    double binsPerSecond,
+    int overlapPreset)
 {
     // Vérifier que le segment audio n'est pas vide
     if (audioSegment.isEmpty()) {
@@ -286,12 +298,11 @@ void SpectrogramGenerator::generateSpectrogramFromSegment(
     qDebug() << "DEBUG - generateSpectrogramFromSegment - Valeurs d'entrée:";
     qDebug() << "DEBUG -   minFreq = " << minFreq;
     qDebug() << "DEBUG -   maxFreq = " << maxFreq;
-    qDebug() << "DEBUG -   fftSize = " << fftSize;
     qDebug() << "DEBUG -   sampleRate = " << sampleRate;
     
     // Créer la structure de paramètres en utilisant la méthode createSettings
     SpectrogramSettingsCpp settingsCpp = createSettings(
-        fftSize, overlap, minFreq, maxFreq, segmentDuration, sampleRate,
+        minFreq, maxFreq, segmentDuration, sampleRate,
         dynamicRangeDB, gammaCorrection, enableDithering, contrastFactor,
         enableHighBoost, highBoostAlpha, enableHighPassFilter,
         highPassCutoffFreq, highPassFilterOrder, pageFormat,
@@ -304,7 +315,9 @@ void SpectrogramGenerator::generateSpectrogramFromSegment(
         topReferenceLineOffset,
         displayParameters,
         textScaleFactor,
-        lineThicknessFactor
+        lineThicknessFactor,
+        binsPerSecond,
+        overlapPreset
     );
     
     // Log après createSettings
@@ -323,7 +336,13 @@ void SpectrogramGenerator::generateSpectrogramFromSegment(
     // Exécuter la génération de prévisualisation dans un thread séparé via TaskManager
     QUuid taskId = TaskManager::getInstance()->runTask(
         [this, settings, audioSegment, originalAudioFileName, startTime](TaskManager::ProgressCallback progressCallback) {
+            // Indiquer le début du traitement
+            progressCallback(10, "Préparation du segment audio...");
+            
             this->runSegmentPreviewGeneration(settings, audioSegment, originalAudioFileName, startTime);
+            
+            // Indiquer la fin du traitement
+            progressCallback(100, "Traitement du segment terminé");
         },
         [this](bool success, const QString& message) {
             // Cette fonction est appelée lorsque la tâche est terminée
@@ -384,8 +403,6 @@ QStringList SpectrogramGenerator::getSupportedFileExtensions() const
 }
 
 SpectrogramSettingsCpp SpectrogramGenerator::createSettings(
-    int fftSize,
-    double overlap,
     double minFreq,
     double maxFreq,
     double duration,
@@ -411,14 +428,15 @@ SpectrogramSettingsCpp SpectrogramGenerator::createSettings(
     double topReferenceLineOffset,
     bool displayParameters,
     double textScaleFactor,
-    double lineThicknessFactor)
+    double lineThicknessFactor,
+    double binsPerSecond,
+    int overlapPreset)
 {
     // Log des paramètres d'entrée
     qDebug() << "DEBUG - createSettings - Paramètres d'entrée:";
     qDebug() << "DEBUG -   minFreq = " << minFreq;
     qDebug() << "DEBUG -   maxFreq = " << maxFreq;
-    qDebug() << "DEBUG -   fftSize = " << fftSize;
-    qDebug() << "DEBUG -   overlap = " << overlap;
+    qDebug() << "DEBUG -   binsPerSecond = " << binsPerSecond;
     
     SpectrogramSettingsCpp settings;
     
@@ -428,19 +446,49 @@ SpectrogramSettingsCpp SpectrogramGenerator::createSettings(
     qDebug() << "DEBUG -   settings.m_maxFreq = " << settings.getMaxFreq();
     
     settings.initFromQmlParameters(
-        fftSize, overlap, minFreq, maxFreq, duration, sampleRate,
-        dynamicRangeDB, gammaCorrection, enableDithering, contrastFactor,
-        enableHighBoost, highBoostAlpha, enableHighPassFilter,
-        highPassCutoffFreq, highPassFilterOrder, pageFormat,
-        bottomMarginMM, spectroHeightMM, writingSpeed,
+        minFreq,
+        maxFreq,
+        duration,
+        sampleRate,
+        dynamicRangeDB,
+        gammaCorrection,
+        enableDithering,
+        contrastFactor,
+        enableHighBoost,
+        highBoostAlpha,
+        enableHighPassFilter,
+        highPassCutoffFreq,
+        highPassFilterOrder,
+        pageFormat,
+        bottomMarginMM,
+        spectroHeightMM,
+        writingSpeed,
         enableNormalization,
         enableVerticalScale,
         enableBottomReferenceLine,
         bottomReferenceLineOffset,
         enableTopReferenceLine,
         topReferenceLineOffset,
-        displayParameters
+        displayParameters,
+        textScaleFactor,
+        lineThicknessFactor,
+        binsPerSecond,
+        overlapPreset
     );
+    
+    // Calculer la FFT size en fonction du taux d'échantillonnage et bins/s
+    int calculatedFftSize = settings.calculateFftSize(sampleRate);
+    qDebug() << " - Calculated FFT size:" << calculatedFftSize << "(from bins/s=" << binsPerSecond << ")";
+    
+    // Calculer l'overlap effectif
+    double hopSize = static_cast<double>(sampleRate) / binsPerSecond;
+    double overlapValue = settings.getOverlapValueFromPreset();
+    double effectiveOverlap = 1.0 - (hopSize / calculatedFftSize);
+    qDebug() << " - Overlap preset: " << overlapPreset << " (value: " << overlapValue << ")";
+    qDebug() << " - Resulting effective overlap:" << effectiveOverlap;
+    
+    // Émettre le signal avec les paramètres calculés
+    emit fftParametersCalculated(calculatedFftSize, effectiveOverlap, binsPerSecond);
     
     // Vérification de la structure après initialisation
     qDebug() << "DEBUG - Après initFromQmlParameters:";
@@ -539,9 +587,9 @@ void SpectrogramGenerator::runSegmentPreviewGeneration(
     qDebug() << "Calling spectral_generator with:";
     qDebug() << "  - Audio file: " << audioTempFilePath;
     qDebug() << "  - Image file: " << imageTempFilePath;
-    qDebug() << "  - FFT size: " << settings.fftSize;
     qDebug() << "  - Sample rate: " << settings.sampleRate;
     qDebug() << "  - Duration: " << settings.duration;
+    qDebug() << "  - Bins/s: " << settings.binsPerSecond;
     
     // Use original audio file name if provided, otherwise use temp file name
     QString audioFileName = !originalAudioFileName.isEmpty() ? 

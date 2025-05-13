@@ -62,18 +62,41 @@ ApplicationWindow {
             }
         }
         
+        // Nouveau gestionnaire pour les paramètres FFT calculés
+        onFftParametersCalculated: {
+            console.log("Signal fftParametersCalculated received: calculatedFftSize=" + calculatedFftSize +
+                        ", effectiveOverlap=" + effectiveOverlap +
+                        ", binsPerSecond=" + binsPerSecond);
+            
+            // Mettre à jour les valeurs dans l'interface, avec vérification de l'objet
+            if (spectrogramParametersSection && typeof spectrogramParametersSection.updateCalculatedFftParameters === "function") {
+                try {
+                    spectrogramParametersSection.updateCalculatedFftParameters(calculatedFftSize, effectiveOverlap);
+                    console.log("Successfully updated FFT parameters in UI");
+                } catch (e) {
+                    console.error("Error updating FFT parameters:", e);
+                }
+            } else {
+                console.warn("spectrogramParametersSection is not available or updateCalculatedFftParameters is not a function");
+            }
+        }
+        
         onPreviewGenerated: {
             console.log("Signal previewGenerated received: success=" + success + ", errorMessage=" + errorMessage);
             
             if (success) {
                 // Mise à jour de l'interface audio
-                audioWaveformSection.statusText.text = "Preview generated successfully";
-                audioWaveformSection.statusText.color = AppStyles.Theme.successColor;
+                if (audioWaveformSection && audioWaveformSection.statusText) {
+                    audioWaveformSection.statusText.text = "Preview generated successfully";
+                    audioWaveformSection.statusText.color = AppStyles.Theme.successColor;
+                }
                 
                 // Le reste de la gestion est délégué à PreviewSection
             } else {
-                audioWaveformSection.statusText.text = "Error generating preview: " + errorMessage;
-                audioWaveformSection.statusText.color = AppStyles.Theme.errorColor;
+                if (audioWaveformSection && audioWaveformSection.statusText) {
+                    audioWaveformSection.statusText.text = "Error generating preview: " + errorMessage;
+                    audioWaveformSection.statusText.color = AppStyles.Theme.errorColor;
+                }
             }
         }
         
@@ -82,29 +105,37 @@ ApplicationWindow {
             
             if (success) {
                 // Mise à jour uniquement de l'interface audio
-                audioWaveformSection.statusText.text = "Segment preview generated successfully";
-                audioWaveformSection.statusText.color = AppStyles.Theme.successColor;
+                if (audioWaveformSection && audioWaveformSection.statusText) {
+                    audioWaveformSection.statusText.text = "Segment preview generated successfully";
+                    audioWaveformSection.statusText.color = AppStyles.Theme.successColor;
+                }
                 
                 // Le reste de la gestion est délégué à PreviewSection
             } else {
-                audioWaveformSection.statusText.text = "Error generating segment preview: " + errorMessage;
-                audioWaveformSection.statusText.color = AppStyles.Theme.errorColor;
+                if (audioWaveformSection && audioWaveformSection.statusText) {
+                    audioWaveformSection.statusText.text = "Error generating segment preview: " + errorMessage;
+                    audioWaveformSection.statusText.color = AppStyles.Theme.errorColor;
+                }
             }
         }
         
         onPreviewSaved: {
-            console.log("Signal previewSaved received: success=" + success + ", outputPath=" + outputPath + ", format=" + format + ", errorMessage=" + errorMessage);
+            console.log("Signal previewSaved received: success=" + success + ", outputPath=" + outputPath + ", format=" + format + ", errorMessage=" + (errorMessage || ""));
             
             // Réinitialiser le bouton de sauvegarde
             previewSection.savePreviewButton.isProcessing = false;
             previewSection.savePreviewButton.text = "Save Preview";
             
             if (success) {
-                previewSection.statusText.text = "Preview saved successfully as " + format.toUpperCase() + ": " + outputPath;
-                previewSection.statusText.color = AppStyles.Theme.successColor;
+                if (previewSection && previewSection.statusText) {
+                    previewSection.statusText.text = "Preview saved successfully as " + format.toUpperCase() + ": " + outputPath;
+                    previewSection.statusText.color = AppStyles.Theme.successColor;
+                }
             } else {
-                previewSection.statusText.text = "Error saving preview in " + format.toUpperCase() + " format: " + errorMessage;
-                previewSection.statusText.color = AppStyles.Theme.errorColor;
+                if (previewSection && previewSection.statusText) {
+                    previewSection.statusText.text = "Error saving preview in " + format.toUpperCase() + " format: " + (errorMessage || "");
+                    previewSection.statusText.color = AppStyles.Theme.errorColor;
+                }
             }
         }
     }
@@ -269,7 +300,9 @@ ApplicationWindow {
                     pageFormat: outputFormatSection.pageFormat
                     // Utiliser la valeur numérique au lieu de la chaîne de caractères
                     writingSpeed: spectrogramParametersSection.writingSpeedNumeric
-                    fftSize: spectrogramParametersSection.fftSizeNumeric
+                    // Nouveaux paramètres qui remplacent fftSize
+                    binsPerSecond: spectrogramParametersSection.binsPerSecondNumeric
+                    overlapPreset: spectrogramParametersSection.overlapPreset
                     
                     // Nous allons intégrer la connexion à writingSpeedField directement dans AudioWaveformSection.qml
                     
@@ -323,8 +356,6 @@ ApplicationWindow {
         // Générer le spectrogramme
         // Récupération directe des valeurs numériques des composants ParameterField
         // Utilisation de la propriété numericValue pour éviter les conversions manuelles
-        var fftSize = spectrogramParametersSection.fftSizeField.numericValue;
-        var overlap = spectrogramParametersSection.overlapField.numericValue;
         var minFreq = spectrogramParametersSection.minFreqField.numericValue;
         var maxFreq = spectrogramParametersSection.maxFreqField.numericValue;
         var segmentDur = audioWaveformSection.segmentDuration * waveformProvider.getTotalDuration();
@@ -344,13 +375,15 @@ ApplicationWindow {
         console.log("[qml] DEBUG -   maxFreq brut (getDisplayValue): '" + spectrogramParametersSection.maxFreqField.getDisplayValue() + "'");
         console.log("[qml] DEBUG -   maxFreq après conversion: " + maxFreq);
         
-        console.log("[qml] Paramètres spectrogram: FFT=" + fftSize + ", overlap=" + overlap +
+        var overlapPreset = spectrogramParametersSection.overlapPreset;
+        var overlapText = ["Low", "Medium", "High"][overlapPreset];
+        
+        console.log("[qml] Paramètres spectrogram: bins/s=" + spectrogramParametersSection.binsPerSecondNumeric +
+                    ", overlapPreset=" + overlapText +
                     ", minFreq=" + minFreq + ", maxFreq=" + maxFreq +
                     ", dynamicRange=" + dynamicRange + ", gamma=" + gammaCorrection);
                     
         generator.generateSpectrogramFromSegment(
-            fftSize,
-            overlap,
             minFreq,
             maxFreq,
             segmentDur,
@@ -380,7 +413,9 @@ ApplicationWindow {
             2.0, // lineThicknessFactor
             audioSegment,
             originalFileName,
-            startPosition
+            startPosition,
+            spectrogramParametersSection.binsPerSecondNumeric, // Paramètre bins/s
+            spectrogramParametersSection.overlapPreset // Préréglage d'overlap (Low, Medium, High)
         )
     }
 }

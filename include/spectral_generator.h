@@ -16,11 +16,9 @@ extern "C" {
 // Structure for spectrogram settings
 typedef struct SpectrogramSettings
 {
-    int     fftSize;
-    double  overlap;
     double  minFreq;
     double  maxFreq;
-    double  duration;        // Used as a fallback if writingSpeed is 0
+    double  duration;                     // Used as a fallback if writingSpeed is 0
     int     sampleRate;
     double  dynamicRangeDB;
     double  gammaCorrection;
@@ -28,15 +26,15 @@ typedef struct SpectrogramSettings
     double  contrastFactor;
     int     enableHighBoost;
     double  highBoostAlpha;
-    int     pageFormat;       // 0 = A4 portrait, 1 = A3 landscape
-    double  bottomMarginMM;   // bottom margin in millimeters
-    double  spectroHeightMM;  // spectrogram height in millimeters
-    double  writingSpeed;     // writing speed in cm/s
-    int     enableHighPassFilter;  // 0 = disabled, 1 = enabled
-    double  highPassCutoffFreq;    // Cutoff frequency in Hz
-    int     highPassFilterOrder;   // Filter order (1-8)
-    int     enableNormalization;   // 0 = disabled, 1 = enabled (preserve original amplitude)
-    int     enableVerticalScale;   // 0 = disabled, 1 = enabled
+    int     pageFormat;                   // 0 = A4 portrait, 1 = A3 landscape
+    double  bottomMarginMM;               // bottom margin in millimeters
+    double  spectroHeightMM;              // spectrogram height in millimeters
+    double  writingSpeed;                 // writing speed in cm/s
+    int     enableHighPassFilter;         // 0 = disabled, 1 = enabled
+    double  highPassCutoffFreq;           // Cutoff frequency in Hz
+    int     highPassFilterOrder;          // Filter order (1-8)
+    int     enableNormalization;          // 0 = disabled, 1 = enabled (preserve original amplitude)
+    int     enableVerticalScale;          // 0 = disabled, 1 = enabled
     int     enableBottomReferenceLine;    // 0 = disabled, 1 = enabled
     double  bottomReferenceLineOffset;    // Offset in mm (negative = downward)
     int     enableTopReferenceLine;       // 0 = disabled, 1 = enabled
@@ -44,6 +42,8 @@ typedef struct SpectrogramSettings
     int     displayParameters;            // 0 = disabled, 1 = enabled
     double  textScaleFactor;              // Scale factor for text size (default = 1.0)
     double  lineThicknessFactor;          // Scale factor for line thickness (default = 1.0)
+    double  binsPerSecond;                // Bins per second (default = 150.0)
+    int     overlapPreset;                // Overlap preset (0 = Low, 1 = Medium, 2 = High)
 } SpectrogramSettings;
 
 // C function we want to call from C++

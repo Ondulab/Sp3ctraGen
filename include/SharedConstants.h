@@ -6,8 +6,6 @@ extern "C" {
 #endif
 
 // Paramètres audio par défaut
-#define DEFAULT_FFT_SIZE        8192
-#define DEFAULT_OVERLAP         0.85
 #define DEFAULT_MIN_FREQ        65.0
 #define DEFAULT_MAX_FREQ        16640.0
 #define DEFAULT_DURATION        4.0
@@ -18,6 +16,13 @@ extern "C" {
 #define CONTRAST_FACTOR         1.9
 #define ENABLE_HIGH_BOOST       1
 #define HIGH_BOOST_ALPHA        0.99
+#define DEFAULT_BINS_PER_SECOND 150.0
+
+// Niveaux d'overlap pour le mode bins/s
+#define OVERLAP_PRESET_LOW      0.75
+#define OVERLAP_PRESET_MEDIUM   0.85
+#define OVERLAP_PRESET_HIGH     0.95
+#define DEFAULT_OVERLAP_PRESET  1     // Medium (0=Low, 1=Medium, 2=High)
 
 // Dimensions de page en millimètres
 #define A4_WIDTH_MM             210.0

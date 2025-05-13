@@ -20,8 +20,6 @@
  */
 namespace Constants {
     // Default audio parameters
-    constexpr int FFT_SIZE = DEFAULT_FFT_SIZE;
-    constexpr double OVERLAP = DEFAULT_OVERLAP;
     constexpr double MIN_FREQ = DEFAULT_MIN_FREQ;
     constexpr double MAX_FREQ = DEFAULT_MAX_FREQ;
     constexpr double DURATION = DEFAULT_DURATION;

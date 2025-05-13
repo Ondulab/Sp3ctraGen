@@ -11,9 +11,7 @@
 #include <QDebug>
 
 SpectrogramSettingsCpp::SpectrogramSettingsCpp()
-    : m_fftSize(Constants::FFT_SIZE)
-    , m_overlap(Constants::OVERLAP)
-    , m_minFreq(Constants::MIN_FREQ)
+    : m_minFreq(Constants::MIN_FREQ)
     , m_maxFreq(Constants::MAX_FREQ)
     , m_duration(Constants::DURATION)
     , m_sampleRate(Constants::SAMPLE_RATE)
@@ -39,6 +37,8 @@ SpectrogramSettingsCpp::SpectrogramSettingsCpp()
     , m_displayParameters(false)
     , m_textScaleFactor(2.0) // Default text scale factor
     , m_lineThicknessFactor(2.0) // Default line thickness factor
+    , m_binsPerSecond(DEFAULT_BINS_PER_SECOND) // Valeur par défaut pour bins/s
+    , m_overlapPreset(DEFAULT_OVERLAP_PRESET) // Préréglage d'overlap (Medium par défaut)
 {
 }
 
@@ -50,19 +50,31 @@ SpectrogramSettingsCpp SpectrogramSettingsCpp::defaultSettings()
 SpectrogramSettingsCpp SpectrogramSettingsCpp::highResolutionSettings()
 {
     SpectrogramSettingsCpp settings;
-    settings.m_fftSize = 16384;
-    settings.m_overlap = 0.9;
+    settings.m_binsPerSecond = 200.0; // Plus de bins par seconde
+    settings.m_overlapPreset = 2; // High overlap
     settings.m_dynamicRangeDB = 70.0;
     settings.m_gammaCorrection = 0.7;
     settings.m_contrastFactor = 2.0;
     return settings;
 }
 
+// Méthode pour obtenir la valeur d'overlap en fonction du préréglage
+double SpectrogramSettingsCpp::getOverlapValueFromPreset() const
+{
+    switch (m_overlapPreset) {
+        case 0:
+            return OVERLAP_PRESET_LOW;
+        case 2:
+            return OVERLAP_PRESET_HIGH;
+        case 1:
+        default:
+            return OVERLAP_PRESET_MEDIUM;
+    }
+}
+
 SpectrogramSettings SpectrogramSettingsCpp::toCStruct() const
 {
     SpectrogramSettings cSettings;
-    cSettings.fftSize = m_fftSize;
-    cSettings.overlap = m_overlap;
     cSettings.minFreq = m_minFreq;
     cSettings.maxFreq = m_maxFreq;
     cSettings.duration = m_duration;
@@ -89,14 +101,15 @@ SpectrogramSettings SpectrogramSettingsCpp::toCStruct() const
     cSettings.displayParameters = m_displayParameters ? 1 : 0;
     cSettings.textScaleFactor = m_textScaleFactor;
     cSettings.lineThicknessFactor = m_lineThicknessFactor;
+    // Paramètres pour le mode bins/s
+    cSettings.binsPerSecond = m_binsPerSecond;
+    cSettings.overlapPreset = m_overlapPreset;
     return cSettings;
 }
 
 SpectrogramSettingsCpp SpectrogramSettingsCpp::fromCStruct(const SpectrogramSettings& cSettings)
 {
     SpectrogramSettingsCpp settings;
-    settings.m_fftSize = cSettings.fftSize;
-    settings.m_overlap = cSettings.overlap;
     settings.m_minFreq = cSettings.minFreq;
     settings.m_maxFreq = cSettings.maxFreq;
     settings.m_duration = cSettings.duration;
@@ -123,12 +136,13 @@ SpectrogramSettingsCpp SpectrogramSettingsCpp::fromCStruct(const SpectrogramSett
     settings.m_displayParameters = cSettings.displayParameters != 0;
     settings.m_textScaleFactor = cSettings.textScaleFactor;
     settings.m_lineThicknessFactor = cSettings.lineThicknessFactor;
+    // Paramètres pour le mode bins/s
+    settings.m_binsPerSecond = cSettings.binsPerSecond;
+    settings.m_overlapPreset = cSettings.overlapPreset;
     return settings;
 }
 
 void SpectrogramSettingsCpp::initFromQmlParameters(
-    int fftSize,
-    double overlap,
     double minFreq,
     double maxFreq,
     double duration,
@@ -154,7 +168,9 @@ void SpectrogramSettingsCpp::initFromQmlParameters(
     double topReferenceLineOffset,
     bool displayParameters,
     double textScaleFactor,
-    double lineThicknessFactor)
+    double lineThicknessFactor,
+    double binsPerSecond,
+    int overlapPreset)
 {
     // Log des valeurs avant mise à jour
     qDebug() << "DEBUG - initFromQmlParameters - Avant mise à jour:";
@@ -164,8 +180,6 @@ void SpectrogramSettingsCpp::initFromQmlParameters(
     qDebug() << "DEBUG -   maxFreq (reçu) = " << maxFreq;
     qDebug() << "DEBUG -   Constants::MIN_FREQ = " << Constants::MIN_FREQ;
     
-    m_fftSize = fftSize;
-    m_overlap = overlap;
     m_minFreq = minFreq;
     m_maxFreq = maxFreq;
     m_duration = duration;
@@ -192,9 +206,60 @@ void SpectrogramSettingsCpp::initFromQmlParameters(
     m_displayParameters = displayParameters;
     m_textScaleFactor = textScaleFactor;
     m_lineThicknessFactor = lineThicknessFactor;
+    m_binsPerSecond = binsPerSecond;
+    m_overlapPreset = overlapPreset;
     
     // Log des valeurs après mise à jour
     qDebug() << "DEBUG - initFromQmlParameters - Après mise à jour:";
     qDebug() << "DEBUG -   m_minFreq = " << m_minFreq;
     qDebug() << "DEBUG -   m_maxFreq = " << m_maxFreq;
+    qDebug() << "DEBUG -   m_binsPerSecond = " << m_binsPerSecond;
+    qDebug() << "DEBUG -   m_overlapPreset = " << m_overlapPreset;
+    qDebug() << "DEBUG -   Overlap value = " << getOverlapValueFromPreset();
+}
+
+/**
+ * @brief Calcule la taille FFT optimale en fonction du taux d'échantillonnage, du nombre de bins/s et du préréglage d'overlap
+ *
+ * Cette méthode implémente le calcul automatique de la FFT size basé sur:
+ * 1. Le taux d'échantillonnage de l'audio
+ * 2. Le nombre de bins par seconde souhaité
+ * 3. Le préréglage d'overlap sélectionné (Low, Medium, High)
+ *
+ * La formule utilisée est:
+ *   FFT size = (Sample Rate / bins/s) / (1 - overlap)
+ *
+ * Le résultat est arrondi à la puissance de 2 supérieure pour optimiser les calculs FFT.
+ *
+ * @param sampleRate Le taux d'échantillonnage du fichier audio en Hz
+ * @return La taille FFT calculée et optimisée
+ */
+int SpectrogramSettingsCpp::calculateFftSize(int sampleRate) const
+{
+    // Obtenir la valeur d'overlap correspondant au préréglage
+    double overlapValue = getOverlapValueFromPreset();
+    
+    // Calculer le diviseur
+    const double diviseur = 1.0 - overlapValue;
+    
+    // Calcul du hop size (pas entre fenêtres FFT) en échantillons
+    double hopSize = sampleRate / m_binsPerSecond;
+    
+    // Calcul de la FFT size initiale
+    int fftSize = static_cast<int>(hopSize / diviseur);
+    
+    // Arrondir à la puissance de 2 supérieure
+    int powerOf2 = 1;
+    while (powerOf2 < fftSize) {
+        powerOf2 *= 2;
+    }
+    
+    qDebug() << "Calculated FFT size:" << powerOf2
+             << "from sample rate:" << sampleRate
+             << "bins/s:" << m_binsPerSecond
+             << "overlap preset:" << m_overlapPreset
+             << "overlap value:" << overlapValue
+             << "hop size:" << hopSize;
+    
+    return powerOf2;
 }

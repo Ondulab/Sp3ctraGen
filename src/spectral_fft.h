@@ -30,10 +30,10 @@ typedef struct {
 // Function prototypes
 int fft_init(int fft_size, int *fft_effective_size, fftw_plan *plan, double **in, fftw_complex **out);
 void fft_cleanup(fftw_plan plan, double *in, fftw_complex *out);
-int compute_spectrogram(double *signal, int total_samples, int sample_rate, 
-                       int fft_size, double overlap, 
-                       double min_freq, double max_freq,
-                       SpectrogramData *spectro_data);
+int compute_spectrogram(double *signal, int total_samples, int sample_rate,
+                         int fft_size, int overlap_preset, double bins_per_second,
+                         double min_freq, double max_freq,
+                         SpectrogramData *spectro_data);
 void apply_image_processing(SpectrogramData *spectro_data, 
                            double dynamic_range_db, double gamma_correction,
                            int enable_dither, double contrast_factor);

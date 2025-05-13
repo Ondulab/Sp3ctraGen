@@ -114,10 +114,19 @@ void draw_parameters_text_vector(cairo_t *cr, double page_width_pt, double page_
                                 const SpectrogramSettings *s) {
     // Formater la chaîne de paramètres
     char params[1024];
+    
+    // Déterminer le texte du préréglage d'overlap
+    const char* overlapText;
+    switch(s->overlapPreset) {
+        case 0: overlapText = "Low"; break;
+        case 2: overlapText = "High"; break;
+        default: overlapText = "Medium"; break;
+    }
+    
     snprintf(params, sizeof(params),
-             "FFT: %d, Overlap: %.2f, Freq: %.0f-%.0f Hz, SR: %d Hz, DR: %.1f dB, "
+             "Bins/s: %.1f, Overlap: %s, Freq: %.0f-%.0f Hz, SR: %d Hz, DR: %.1f dB, "
              "Gamma: %.1f, Contrast: %.1f, HB: %s (%.2f), WS: %.1f cm/s",
-             s->fftSize, s->overlap, s->minFreq, s->maxFreq, s->sampleRate,
+             s->binsPerSecond, overlapText, s->minFreq, s->maxFreq, s->sampleRate,
              s->dynamicRangeDB, s->gammaCorrection, s->contrastFactor,
              s->enableHighBoost ? "On" : "Off", s->highBoostAlpha, s->writingSpeed);
     
@@ -159,8 +168,6 @@ int spectral_generator_vector_pdf_impl(const SpectrogramSettings *cfg,
 {
     /* Copy configuration and fallback to defaults if necessary */
     SpectrogramSettings s = *cfg;
-    int     fft_size      = DEFAULT_INT(s.fftSize,        DEFAULT_FFT_SIZE);
-    double  overlap       = DEFAULT_DBL(s.overlap,        DEFAULT_OVERLAP);
     double  minFreq       = DEFAULT_DBL(s.minFreq,        DEFAULT_MIN_FREQ);
     double  maxFreq       = DEFAULT_DBL(s.maxFreq,        DEFAULT_MAX_FREQ);
     double  writingSpeed  = DEFAULT_DBL(s.writingSpeed,   0.0);
@@ -170,6 +177,39 @@ int spectral_generator_vector_pdf_impl(const SpectrogramSettings *cfg,
     double  gammaCorr     = DEFAULT_DBL(s.gammaCorrection, GAMMA_CORRECTION);
     int     enableDither  = DEFAULT_BOOL(s.enableDithering, ENABLE_DITHERING);
     double  contrastFactor = DEFAULT_DBL(s.contrastFactor, CONTRAST_FACTOR);
+    double  binsPerSecond = DEFAULT_DBL(s.binsPerSecond,  DEFAULT_BINS_PER_SECOND);
+    int     overlapPreset = DEFAULT_INT(s.overlapPreset,  DEFAULT_OVERLAP_PRESET);
+    
+    // Détermination de la valeur d'overlap en fonction du préréglage
+    double overlap;
+    switch(overlapPreset) {
+        case 0: // Low
+            overlap = OVERLAP_PRESET_LOW;
+            printf(" - Using low overlap preset (%.2f)\n", overlap);
+            break;
+        case 2: // High
+            overlap = OVERLAP_PRESET_HIGH;
+            printf(" - Using high overlap preset (%.2f)\n", overlap);
+            break;
+        default: // Medium (default)
+            overlap = OVERLAP_PRESET_MEDIUM;
+            printf(" - Using medium overlap preset (%.2f)\n", overlap);
+            break;
+    }
+    
+    // Calcul de la taille FFT en fonction du bins/s et du préréglage d'overlap
+    double hopSize = sample_rate / binsPerSecond;
+    double diviseur = 1.0 - overlap;
+    double calculatedFftSize = hopSize / diviseur;
+    
+    // Arrondir à la puissance de 2 supérieure
+    int fft_size = 1;
+    while (fft_size < calculatedFftSize) {
+        fft_size *= 2;
+    }
+    
+    printf(" - Calculated FFT size: %d (from bins/s=%.1f, overlap=%.2f)\n",
+           fft_size, binsPerSecond, overlap);
     
     /* Use default paths if input/output files are not specified */
     const char* inputFilePath = DEFAULT_STR(inputFile, DEFAULT_INPUT_FILENAME);
@@ -183,7 +223,11 @@ int spectral_generator_vector_pdf_impl(const SpectrogramSettings *cfg,
     printf("Vector PDF generation parameters:\n");
     printf(" - Resolution: %d DPI\n", dpi);
     printf(" - FFT size: %d\n", fft_size);
-    printf(" - Overlap: %f\n", overlap);
+    printf(" - Overlap preset: %d (%s - %.2f)\n", overlapPreset,
+           overlapPreset == 0 ? "Low" :
+           overlapPreset == 2 ? "High" : "Medium",
+           overlap);
+    printf(" - Bins per second: %.1f\n", binsPerSecond);
     printf(" - Min frequency: %f\n", minFreq);
     printf(" - Max frequency: %f\n", maxFreq);
     printf(" - Writing speed: %f cm/s\n", writingSpeed);
@@ -265,7 +309,7 @@ int spectral_generator_vector_pdf_impl(const SpectrogramSettings *cfg,
     /* ------------------------------ */
     SpectrogramData spectro_data = {0};
     
-    if (compute_spectrogram(signal, total_samples, sample_rate, fft_size, overlap,
+    if (compute_spectrogram(signal, total_samples, sample_rate, fft_size, overlapPreset, binsPerSecond,
                            minFreq, maxFreq, &spectro_data) != 0) {
         fprintf(stderr, "Error: Failed to compute spectrogram.\n");
         free(signal);
@@ -430,7 +474,8 @@ int spectral_generator_vector_pdf_impl(const SpectrogramSettings *cfg,
     /* ------------------------------ */
     // Calculate visible windows based on physical dimensions and writing speed
     int visible_windows = num_windows;
-    double audio_duration = (double)spectro_data.num_windows / ((double)sample_rate / (fft_size * (1.0 - overlap)));
+    // Réutiliser le hopSize déjà calculé précédemment
+    double audio_duration = (double)spectro_data.num_windows * hopSize / sample_rate;
     
     if (writingSpeed > 0.0) {
         double page_width_cm = page_width_mm / 10.0;
@@ -500,9 +545,16 @@ int spectral_generator_vector_pdf_impl(const SpectrogramSettings *cfg,
     cairo_set_font_size(cr, 8);
     
     char info[256];
-    snprintf(info, sizeof(info), 
-             "FFT: %d, Overlap: %.1f%%, Freq: %.0f-%.0f Hz, Resolution: %d DPI",
-             fft_size, overlap * 100, minFreq, maxFreq, dpi);
+    const char* overlapText;
+    switch(overlapPreset) {
+        case 0: overlapText = "Low"; break;
+        case 2: overlapText = "High"; break;
+        default: overlapText = "Medium"; break;
+    }
+    
+    snprintf(info, sizeof(info),
+             "Bins/s: %.1f, Overlap: %s, Freq: %.0f-%.0f Hz, Resolution: %d DPI",
+             binsPerSecond, overlapText, minFreq, maxFreq, dpi);
     
     cairo_text_extents(cr, info, &extents);
     cairo_move_to(cr, (page_width_pt - extents.width) / 2, page_height_pt - margin_pt / 2);

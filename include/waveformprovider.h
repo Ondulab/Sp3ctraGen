@@ -38,7 +38,8 @@ public:
         double cursorPosition,
         int pageFormat,
         double writingSpeed,
-        int fftSize = 8192
+        double binsPerSecond = 150.0,
+        int overlapPreset = 1  // 0=Low, 1=Medium, 2=High
     );
     
     // Extracts the audio segment for generation

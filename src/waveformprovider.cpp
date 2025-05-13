@@ -152,7 +152,7 @@ void WaveformProvider::resampleForDisplay(int targetWidth, QVariantList &result)
     }
 }
 
-QVariantMap WaveformProvider::calculateExtractionSegment(double cursorPosition, int pageFormat, double writingSpeed, int fftSize)
+QVariantMap WaveformProvider::calculateExtractionSegment(double cursorPosition, int pageFormat, double writingSpeed, double binsPerSecond, int overlapPreset)
 {
     if (!m_fileLoaded) {
         qWarning() << "No audio file loaded";
@@ -165,11 +165,26 @@ QVariantMap WaveformProvider::calculateExtractionSegment(double cursorPosition, 
     // Convert writing speed from cm/s to mm/s
     double speedMMS = writingSpeed * 10.0;
     
-    // Ajustement du calcul pour prendre en compte la taille FFT (WS)
-    double fftAdjustment = static_cast<double>(fftSize) / 8192.0;
+    // Déterminer la valeur d'overlap en fonction du préréglage
+    double overlapValue = 0.85; // Medium par défaut
+    switch(overlapPreset) {
+        case 0: overlapValue = 0.75; break; // Low
+        case 2: overlapValue = 0.95; break; // High
+        default: overlapValue = 0.85; break; // Medium
+    }
     
-    // Calculate segment duration in seconds, adjusted by FFT size
-    double segmentDuration = (paperWidthMM / speedMMS) * fftAdjustment;
+    // Calculer un ajustement équivalent à l'ancien système
+    // Plus le nombre de bins par seconde est bas, plus la durée du segment est longue
+    double binsAdjustment = 150.0 / binsPerSecond;
+    
+    // Plus le taux d'overlap est élevé, plus la durée du segment est courte
+    double overlapAdjustment = (1.0 - 0.85) / (1.0 - overlapValue);
+    
+    // Ajustement combiné
+    double combinedAdjustment = binsAdjustment * overlapAdjustment;
+    
+    // Calculate segment duration in seconds, adjusted by bins/s and overlap
+    double segmentDuration = (paperWidthMM / speedMMS) * combinedAdjustment;
     
     // Start position in seconds (based on relative cursor position)
     double totalDuration = static_cast<double>(m_fileInfo.frames) / m_fileInfo.samplerate;

@@ -26,8 +26,6 @@ VectorPrintProvider::~VectorPrintProvider()
 }
 
 void VectorPrintProvider::generateVectorPDF(
-    int fftSize,
-    double overlap,
     double minFreq,
     double maxFreq,
     double duration,
@@ -45,6 +43,8 @@ void VectorPrintProvider::generateVectorPDF(
     double bottomMarginMM,
     double spectroHeightMM,
     double writingSpeed,
+    double binsPerSecond,
+    int overlapPreset,
     const QString &inputFile,
     const QString &outputFolder,
     int dpi)
@@ -68,8 +68,6 @@ void VectorPrintProvider::generateVectorPDF(
 
     // Créer la structure de paramètres
     SpectrogramSettings settings;
-    settings.fftSize = fftSize;
-    settings.overlap = overlap;
     settings.minFreq = minFreq;
     settings.maxFreq = maxFreq;
     settings.duration = duration;
@@ -87,6 +85,8 @@ void VectorPrintProvider::generateVectorPDF(
     settings.bottomMarginMM = bottomMarginMM;
     settings.spectroHeightMM = spectroHeightMM;
     settings.writingSpeed = writingSpeed;
+    settings.binsPerSecond = binsPerSecond;
+    settings.overlapPreset = overlapPreset;
 
     // Définir le chemin du fichier de sortie
     QString outputFile = QDir(outputFolder).filePath("spectrogram_vector.pdf");
@@ -108,7 +108,9 @@ void VectorPrintProvider::runVectorGeneration(
     qDebug() << "Fichier d'entrée: " << inputFile;
     qDebug() << "Fichier de sortie: " << outputFile;
     qDebug() << "Résolution: " << dpi << " DPI";
-    qDebug() << "Taille FFT: " << settings.fftSize;
+    qDebug() << "Bins par seconde: " << settings.binsPerSecond;
+    qDebug() << "Préréglage d'overlap: " << (settings.overlapPreset == 0 ? "Low" :
+                                           settings.overlapPreset == 2 ? "High" : "Medium");
     qDebug() << "Format de page: " << (settings.pageFormat == 0 ? "A4 portrait" : "A3 paysage");
     
     // Convertir les QString en const char* pour l'API C
