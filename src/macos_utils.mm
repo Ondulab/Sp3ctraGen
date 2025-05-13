@@ -68,3 +68,12 @@ extern "C" void configureFolderSelectPanel() {
     
     qDebug() << "macOS folder select panel configured";
 }
+
+// Fonction pour configurer correctement un panneau de sauvegarde de fichier
+extern "C" void configureSavePanel() {
+    NSSavePanel* savePanel = [NSSavePanel savePanel];
+    [savePanel setCanCreateDirectories:YES];
+    [savePanel setShowsTagField:NO];
+    
+    qDebug() << "macOS save panel configured";
+}

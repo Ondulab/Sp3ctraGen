@@ -356,9 +356,9 @@ void SpectrogramGenerator::generateSpectrogramFromSegment(
     m_runningTasks[taskId] = "segment";
 }
 
-void SpectrogramGenerator::saveCurrentPreview(const QString &outputFolder, const QString &format)
+void SpectrogramGenerator::saveCurrentPreview(const QString &outputFilePath, const QString &format)
 {
-    qDebug() << "SpectrogramGenerator::saveCurrentPreview - Sauvegarde de la prévisualisation actuelle dans le dossier:" << outputFolder;
+    qDebug() << "SpectrogramGenerator::saveCurrentPreview - Sauvegarde de la prévisualisation dans:" << outputFilePath;
     
     // Vérifier que le fournisseur d'images est disponible
     if (!s_previewProvider) {
@@ -367,6 +367,10 @@ void SpectrogramGenerator::saveCurrentPreview(const QString &outputFolder, const
         return;
     }
     
+    // Extraction du dossier du chemin complet
+    QFileInfo fileInfo(outputFilePath);
+    QString outputFolder = fileInfo.absolutePath();
+    
     // Vérifier que le dossier de sortie existe
     if (!FileManager::validateOutputDirectory(outputFolder)) {
         qWarning() << "Le dossier de sortie n'existe pas:" << outputFolder;
@@ -374,20 +378,16 @@ void SpectrogramGenerator::saveCurrentPreview(const QString &outputFolder, const
         return;
     }
     
-    // Définir le chemin du fichier de sortie avec l'extension appropriée
-    QString outputFile = FileManager::generateOutputFilename(
-        outputFolder, "spectrogram_preview", format.toLower());
-    
-    qDebug() << "Sauvegarde de la prévisualisation dans:" << outputFile;
+    qDebug() << "Sauvegarde de la prévisualisation dans:" << outputFilePath;
     
     // Sauvegarder l'image originale à haute résolution dans le format spécifié
-    bool success = s_previewProvider->saveOriginalImage(outputFile, format);
+    bool success = s_previewProvider->saveOriginalImage(outputFilePath, format);
     
     if (success) {
-        qDebug() << "Prévisualisation sauvegardée avec succès dans:" << outputFile << "au format:" << format;
-        emit previewSaved(true, outputFile, format);
+        qDebug() << "Prévisualisation sauvegardée avec succès dans:" << outputFilePath << "au format:" << format;
+        emit previewSaved(true, outputFilePath, format);
     } else {
-        qWarning() << "Échec de la sauvegarde de la prévisualisation dans:" << outputFile << "au format:" << format;
+        qWarning() << "Échec de la sauvegarde de la prévisualisation dans:" << outputFilePath << "au format:" << format;
         emit previewSaved(false, "", format, "Échec de la sauvegarde de l'image de prévisualisation");
     }
 }

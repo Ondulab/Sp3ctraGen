@@ -30,6 +30,17 @@ public slots:
      * Configure spécifiquement un dialogue de sélection de dossier avant son affichage
      */
     void prepareFolderSelectDialog();
+    
+    /**
+     * Configure spécifiquement un dialogue de sauvegarde de fichier avant son affichage
+     */
+    void prepareSaveDialog();
+    
+    /**
+     * Récupère le chemin du dossier "Downloads" de l'utilisateur
+     * @return chemin du dossier "Downloads"
+     */
+    QString getDownloadsPath();
 };
 
 #endif // MACOSBRIDGE_H

@@ -209,10 +209,10 @@ public:
     /**
      * @brief Saves the current preview image
      *
-     * @param outputFolder Output folder
+     * @param outputFilePath Complete output file path
      * @param format Image format (png, pdf, etc.)
      */
-    Q_INVOKABLE void saveCurrentPreview(const QString &outputFolder, const QString &format = "png");
+    Q_INVOKABLE void saveCurrentPreview(const QString &outputFilePath, const QString &format = "png");
     
     /**
      * @brief Prints the current preview image

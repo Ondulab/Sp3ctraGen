@@ -170,24 +170,86 @@ ApplicationWindow {
         inputFileDialog.open()
     }
     
+    // Le dialogue de sélection de dossier de sortie a été retiré.
+    // Il est remplacé par le dialogue de sauvegarde qui s'ouvre directement
+    // lorsque l'utilisateur clique sur "Save Preview"
+    
+    // Dialogue de sauvegarde pour les prévisualisations
     FileDialog {
-        id: outputFolderDialog
-        title: "Select Output Folder"
-        selectFolder: true
+        id: savePreviewDialog
+        title: "Enregistrer la prévisualisation"
+        selectExisting: false
+        
+        // Ces propriétés seront définies dynamiquement lors de l'ouverture du dialogue
+        property string selectedFormat: "png"
+        property string initialFileName: "spectrogram.png"
+        
+        // Fonction pour mettre à jour les filtres selon le format
+        function updateFilters(format) {
+            selectedFormat = format.toLowerCase()
+            if (selectedFormat === "png") {
+                nameFilters = ["Images PNG (*.png)"]
+                defaultSuffix = "png"
+            } else if (selectedFormat === "pdf") {
+                nameFilters = ["Documents PDF (*.pdf)"]
+                defaultSuffix = "pdf"
+            } else if (selectedFormat === "jpeg") {
+                nameFilters = ["Images JPEG (*.jpg *.jpeg)"]
+                defaultSuffix = "jpg"
+            }
+        }
+        
+        // Fonction pour générer un nom de fichier basé sur les paramètres audio
+        function generateFileName() {
+            var audioFileName = audioWaveformSection.getAudioFileName()
+            if (!audioFileName) {
+                audioFileName = "spectrogram"
+            } else {
+                // Supprimer l'extension du fichier audio
+                var lastDotIndex = audioFileName.lastIndexOf('.')
+                if (lastDotIndex > 0) {
+                    audioFileName = audioFileName.substring(0, lastDotIndex)
+                }
+            }
+            
+            // Récupérer le timecode et la durée du segment
+            var startPosition = audioWaveformSection.getStartPosition()
+            var segmentDuration = audioWaveformSection.segmentDuration * waveformProvider.getTotalDuration()
+            
+            // Formater les nombres pour le nom de fichier
+            var startTimeFormatted = startPosition.toFixed(1).replace('.', 'm')
+            var durationFormatted = segmentDuration.toFixed(1).replace('.', 'm')
+            
+            // Construire le nom de fichier
+            return audioFileName + "_t" + startTimeFormatted + "s_d" + durationFormatted + "s." + selectedFormat
+        }
         
         onAccepted: {
-            var folderPath = fileUrl.toString().replace("file://", "")
-            console.log("Output folder selected: " + folderPath)
-            fileSettingsSection.setOutputFolder(folderPath)
+            var filePath = fileUrl.toString().replace("file://", "")
+            console.log("Save location selected: " + filePath)
+            generator.saveCurrentPreview(filePath, selectedFormat)
         }
     }
     
-    // Fonction d'ouverture sécurisée pour le dialogue de dossier de sortie
-    function safeOpenOutputFolderDialog() {
+    // Fonction d'ouverture sécurisée pour le dialogue de sauvegarde
+    function safeOpenSavePreviewDialog(format) {
         // Préparer le dialogue natif macOS
-        macOSBridge.prepareFolderSelectDialog()
+        macOSBridge.prepareSaveDialog()
+        
+        // Mettre à jour les filtres selon le format
+        savePreviewDialog.updateFilters(format)
+        
+        // Générer le nom de fichier initial basé sur les données audio
+        var suggestedName = savePreviewDialog.generateFileName()
+        
+        // Définir le dossier par défaut (Downloads)
+        savePreviewDialog.folder = "file://" + macOSBridge.getDownloadsPath()
+        
+        // Afficher le nom suggéré dans le titre pour guider l'utilisateur
+        savePreviewDialog.title = "Enregistrer sous: " + suggestedName
+        
         // Ouvrir le dialogue
-        outputFolderDialog.open()
+        savePreviewDialog.open()
     }
     
     // ===== Layout principal =====
@@ -256,28 +318,6 @@ ApplicationWindow {
                     Layout.bottomMargin: AppStyles.Theme.spacing
                 }
                 
-                // Section 3: Paramètres de fichiers
-                FileSettings {
-                    id: fileSettingsSection
-                    Layout.fillWidth: true
-                    
-                    // Modification pour utiliser notre fonction d'ouverture sécurisée
-                    property var outputFolderDialog: null
-                    
-                    onRequestSelectOutputFolder: {
-                        safeOpenOutputFolderDialog()
-                    }
-                }
-                
-                // Séparateur
-                Rectangle {
-                    height: 1
-                    color: AppStyles.Theme.separatorColor
-                    Layout.fillWidth: true
-                    Layout.topMargin: AppStyles.Theme.spacing
-                    Layout.bottomMargin: AppStyles.Theme.spacing
-                }
-                
                 // Section 4: Forme d'onde audio
                 AudioWaveformSection {
                     id: audioWaveformSection
@@ -322,7 +362,7 @@ ApplicationWindow {
             generator: generator
             
             onSaveRequested: function(format) {
-                generator.saveCurrentPreview(fileSettingsSection.outputFolder, format)
+                safeOpenSavePreviewDialog(format)
             }
             
             onPrintRequested: {
