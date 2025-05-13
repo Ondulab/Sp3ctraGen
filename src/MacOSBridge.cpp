@@ -8,6 +8,7 @@ extern "C" void fixFileDialogIssues();
 extern "C" void configureFileOpenPanel();
 extern "C" void configureFolderSelectPanel();
 extern "C" void configureSavePanel();
+extern "C" void configureSavePanelWithName(const char* fileName);
 #endif
 
 MacOSBridge::MacOSBridge(QObject *parent) : QObject(parent)
@@ -52,6 +53,17 @@ void MacOSBridge::prepareSaveDialog()
     configureSavePanel();
 #else
     qDebug() << "prepareSaveDialog: Not on macOS, no action needed";
+#endif
+}
+
+void MacOSBridge::prepareSaveDialogWithName(const QString &fileName)
+{
+#ifdef Q_OS_MAC
+    // Convertir QString en const char* pour l'interface C
+    QByteArray fileNameUtf8 = fileName.toUtf8();
+    configureSavePanelWithName(fileNameUtf8.constData());
+#else
+    qDebug() << "prepareSaveDialogWithName: Not on macOS, no action needed";
 #endif
 }
 

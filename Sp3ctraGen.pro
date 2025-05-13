@@ -3,7 +3,7 @@
 ###############################################################################
 
 # Configuration Qt
-QT += quick printsupport
+QT += quick printsupport multimedia
 
 # Configuration du projet
 CONFIG += c++17

@@ -34,6 +34,9 @@ SectionContainer {
     property var binsPerSecond: 150.0  // Remplace fftSize
     property int overlapPreset: 1      // 0=Low, 1=Medium, 2=High
     
+    // Propriété pour stocker le chemin d'accès complet au fichier audio
+    property string audioSourceUrl: ""
+    
     // Observer les changements de vitesse d'écriture pour mettre à jour le segment
     onWritingSpeedChanged: {
         // Ajouter un logging détaillé pour diagnostiquer le problème
@@ -77,6 +80,8 @@ SectionContainer {
     signal audioFileLoaded(bool success, real duration, int sampleRate)
     signal segmentSelected(double startPosition, double duration)
     signal requestGenerateSpectrogram()
+    signal audioPlaybackStarted()
+    signal audioPlaybackStopped()
     
     // Handler pour le chargement de fichier
     function onFileLoaded(success, durationSeconds, sampleRate) {
@@ -103,6 +108,9 @@ SectionContainer {
                 // Mettre à jour les indicateurs visuels
                 audioWaveform.segmentStart = segment.startPosition / waveformProvider.getTotalDuration();
                 audioWaveform.segmentDuration = segment.duration / waveformProvider.getTotalDuration();
+                
+                // Configurer la source audio pour la lecture
+                audioWaveform.setAudioSource(audioSourceUrl, durationSeconds);
             } else {
                 console.log("AudioWaveformSection: WARNING - audioWaveform is not initialized!");
             }
@@ -137,8 +145,23 @@ SectionContainer {
             onCursorMoved: {
                 // Utiliser la fonction factoriée pour mettre à jour le segment
                 if (waveformProvider && waveformProvider.getTotalDuration() > 0) {
-                    updateSegmentDisplay(position)
+                    // Arrêter la lecture si elle est en cours lors du déplacement du curseur
+                    if (audioWaveform.isPlaying) {
+                        audioWaveform.stopPlayback();
+                    }
+                    updateSegmentDisplay(position);
                 }
+            }
+            
+            onPlaybackStarted: {
+                audioPlaybackStarted();
+                statusText.showSuccess("Audio playback started");
+            }
+            
+            onPlaybackStopped: {
+                audioPlaybackStopped();
+                statusText.text = "Position: " + getStartPosition().toFixed(2) + "s, Segment duration: " +
+                                 (segmentDuration * waveformProvider.getTotalDuration()).toFixed(2) + "s";
             }
         }
         
@@ -212,6 +235,74 @@ SectionContainer {
                     }
                 }
             }
+            
+            // Nouveau bouton Play/Pause
+            Button {
+                id: playPauseButton
+                text: audioWaveform && audioWaveform.isPlaying ? "Pause" : "Play"
+                enabled: true // Rendre le bouton toujours actif pour diagnostiquer
+                
+                // Ajouter des logs pour diagnostiquer
+                Component.onCompleted: {
+                    console.log("playPauseButton initialized");
+                    console.log("waveformProvider:", waveformProvider ? "exists" : "null");
+                    if (waveformProvider) {
+                        console.log("getTotalDuration:", waveformProvider.getTotalDuration());
+                    }
+                }
+                
+                // Mise à jour de l'état du bouton
+                property bool updating: false
+                
+                // Fonction pour mettre à jour le texte sans boucle infinie
+                function updateText() {
+                    if (updating) return;
+                    updating = true;
+                    text = audioWaveform && audioWaveform.isPlaying ? "Pause" : "Play";
+                    updating = false;
+                }
+                
+                Connections {
+                    target: audioWaveform
+                    function onIsPlayingChanged() {
+                        playPauseButton.updateText();
+                    }
+                }
+                
+                onClicked: {
+                    console.log("Play/Pause button clicked");
+                    console.log("waveformProvider:", waveformProvider ? "exists" : "null");
+                    if (waveformProvider) {
+                        console.log("getTotalDuration:", waveformProvider.getTotalDuration());
+                    }
+                    console.log("audioWaveform:", audioWaveform ? "exists" : "null");
+                    console.log("audioSourceUrl:", audioSourceUrl);
+                    
+                    // Basculer la lecture même si les conditions ne sont pas remplies
+                    if (audioWaveform) {
+                        console.log("Calling togglePlayback()");
+                        audioWaveform.togglePlayback();
+                    }
+                }
+                
+                contentItem: Text {
+                    text: parent.text
+                    color: parent.hovered ? AppStyles.Theme.buttonHoverText : AppStyles.Theme.buttonText
+                    horizontalAlignment: Text.AlignHCenter
+                    verticalAlignment: Text.AlignVCenter
+                }
+                
+                background: Rectangle {
+                    color: parent.hovered ? AppStyles.Theme.buttonHoverBackground : AppStyles.Theme.buttonBackground
+                    radius: AppStyles.Theme.borderRadius / 2
+                    
+                    Behavior on color {
+                        ColorAnimation {
+                            duration: AppStyles.Theme.animationDuration
+                        }
+                    }
+                }
+            }
         }
         
         // Texte de statut pour la forme d'onde
@@ -232,15 +323,47 @@ SectionContainer {
     
     // Méthodes publiques
     function loadAudioFile(filePath) {
+        console.log("loadAudioFile called with:", filePath);
+        
         if (waveformProvider) {
-            audioFilePath = filePath
-            waveformProvider.loadFile(filePath)
+            audioFilePath = filePath;
+            
+            // Convertir le chemin de fichier en URL compatible avec QtMultimedia
+            // Pour macOS, nous assurons que le chemin est correctement formaté
+            // S'il contient déjà file://, ne pas le rajouter
+            if (filePath.startsWith("file://")) {
+                audioSourceUrl = filePath;
+            } else {
+                audioSourceUrl = "file://" + filePath;
+            }
+            
+            console.log("Setting audioSourceUrl to:", audioSourceUrl);
+            
+            // Charger le fichier dans le fournisseur de données
+            waveformProvider.loadFile(filePath);
+            
+            // Afficher un état explicite dans le statut
+            statusText.showSuccess("Audio file loaded. Click Play to listen.");
+            
+            // Arrêter toute lecture en cours
+            if (audioWaveform && audioWaveform.isPlaying) {
+                audioWaveform.stopPlayback();
+            }
+            
+            // Forcer une mise à jour directe de l'audioWaveform
+            if (audioWaveform) {
+                console.log("Updating audio source directly in AudioWaveform");
+                console.log("  Total duration from provider:", waveformProvider.getTotalDuration());
+                audioWaveform.setAudioSource(audioSourceUrl, waveformProvider.getTotalDuration());
+            }
+        } else {
+            console.error("waveformProvider is null in loadAudioFile");
         }
     }
     
     function extractCurrentSegment() {
         if (!waveformProvider || waveformProvider.getTotalDuration() <= 0) {
-            return null
+            return null;
         }
         
         // Calculer le segment à extraire
@@ -250,25 +373,25 @@ SectionContainer {
             writingSpeed,
             binsPerSecond,
             overlapPreset
-        )
+        );
         
         // Extraire le segment audio
         return waveformProvider.extractSegment(
             segment.startPosition,
             segment.duration
-        )
+        );
     }
     
     function getAudioFileName() {
-        if (!audioFilePath) return ""
+        if (!audioFilePath) return "";
         
-        var audioFileName = audioFilePath
-        return audioFileName.split('/').pop() // Extraire juste le nom du fichier
+        var audioFileName = audioFilePath;
+        return audioFileName.split('/').pop(); // Extraire juste le nom du fichier
     }
     
     function getStartPosition() {
         if (!waveformProvider || waveformProvider.getTotalDuration() <= 0) {
-            return 0
+            return 0;
         }
         
         var segment = waveformProvider.calculateExtractionSegment(
@@ -277,15 +400,15 @@ SectionContainer {
             writingSpeed,
             binsPerSecond,
             overlapPreset
-        )
+        );
         
-        return segment.startPosition
+        return segment.startPosition;
     }
     
     // Fonction factorisée pour mettre à jour l'affichage du segment
     function updateSegmentDisplay(position) {
         if (!waveformProvider || waveformProvider.getTotalDuration() <= 0) {
-            return
+            return;
         }
         
         var segment = waveformProvider.calculateExtractionSegment(
@@ -294,30 +417,40 @@ SectionContainer {
             writingSpeed,
             binsPerSecond,
             overlapPreset
-        )
+        );
         // Mettre à jour les indicateurs visuels
-        var relativeStart = segment.startPosition / waveformProvider.getTotalDuration()
-        var relativeDuration = segment.duration / waveformProvider.getTotalDuration()
+        var relativeStart = segment.startPosition / waveformProvider.getTotalDuration();
+        var relativeDuration = segment.duration / waveformProvider.getTotalDuration();
         
         console.log("Mise à jour du segment - Valeurs absolues:",
                     "startPosition =", segment.startPosition.toFixed(2),
-                    "duration =", segment.duration.toFixed(2))
+                    "duration =", segment.duration.toFixed(2));
         console.log("Mise à jour du segment - Valeurs relatives:",
                     "segmentStart =", relativeStart.toFixed(4),
-                    "segmentDuration =", relativeDuration.toFixed(4))
+                    "segmentDuration =", relativeDuration.toFixed(4));
         
-        audioWaveform.segmentStart = relativeStart
-        audioWaveform.segmentDuration = relativeDuration
+        audioWaveform.segmentStart = relativeStart;
+        audioWaveform.segmentDuration = relativeDuration;
         
         
         // Mettre à jour le texte d'information
-        var startSec = segment.startPosition.toFixed(2)
-        var durationSec = segment.duration.toFixed(2)
-        statusText.text = "Position: " + startSec + "s, Segment duration: " + durationSec + "s"
+        var startSec = segment.startPosition.toFixed(2);
+        var durationSec = segment.duration.toFixed(2);
+        statusText.text = "Position: " + startSec + "s, Segment duration: " + durationSec + "s";
         
         // Émettre le signal avec les informations du segment
-        segmentSelected(segment.startPosition, segment.duration)
+        segmentSelected(segment.startPosition, segment.duration);
+        
+        // Si une lecture audio est en cours, l'arrêter car le segment a changé
+        if (audioWaveform && audioWaveform.isPlaying) {
+            audioWaveform.stopPlayback();
+        }
     }
     
-    // Nous n'utiliserons pas de Connections ici pour éviter les erreurs de structure QML
+    // Méthode pour démarrer ou arrêter la lecture audio du segment actuel
+    function toggleAudioPlayback() {
+        if (audioWaveform && waveformProvider && waveformProvider.getTotalDuration() > 0) {
+            audioWaveform.togglePlayback();
+        }
+    }
 }

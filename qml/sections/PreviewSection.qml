@@ -206,21 +206,17 @@ Rectangle {
                 text: "Save Preview"
                 enabled: generator && generator.previewCounter > 0
                 
+                // Plus de tracking d'état local, nous gérons l'état autrement
                 property bool isProcessing: false
                 
                 onClicked: {
-                    if (isProcessing) return
-                    
-                    isProcessing = true
-                    text = "Saving..."
-                    
                     // Récupérer le format sélectionné (en minuscules)
                     var format = exportFormatCombo.currentText.toLowerCase()
                     
-                    if (generator) {
-                        // Sauvegarder la prévisualisation actuelle dans le format sélectionné
-                        previewSection.saveRequested(format)
-                    }
+                    text = "Saving..."
+                    
+                    // Émission du signal pour demander la sauvegarde
+                    previewSection.saveRequested(format)
                 }
             
                 contentItem: Text {

@@ -77,3 +77,36 @@ extern "C" void configureSavePanel() {
     
     qDebug() << "macOS save panel configured";
 }
+
+// Fonction pour configurer correctement un panneau de sauvegarde de fichier avec nom prédéfini
+extern "C" void configureSavePanelWithName(const char* fileName) {
+    @autoreleasepool {
+        // Créer un nouveau NSSavePanel
+        NSSavePanel* savePanel = [NSSavePanel savePanel];
+        
+        // Configuration de base
+        [savePanel setCanCreateDirectories:YES];
+        [savePanel setShowsTagField:NO];
+        
+        // Définir le nom de fichier par défaut
+        if (fileName && strlen(fileName) > 0) {
+            NSString* nsFileName = [NSString stringWithUTF8String:fileName];
+            
+            // Méthode classique
+            [savePanel setNameFieldStringValue:nsFileName];
+            
+            // Méthode alternative parfois nécessaire pour macOS récents
+            // Appliquer dans la file principale pour s'assurer que ça fonctionne
+            dispatch_async(dispatch_get_main_queue(), ^{
+                [savePanel setNameFieldStringValue:nsFileName];
+                
+                // Force le panneau à se mettre à jour
+                [savePanel display];
+            });
+            
+            qDebug() << "macOS save panel configured with filename:" << fileName;
+        } else {
+            qDebug() << "macOS save panel configured (no filename provided)";
+        }
+    }
+}

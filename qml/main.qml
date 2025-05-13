@@ -122,9 +122,16 @@ ApplicationWindow {
         onPreviewSaved: {
             console.log("Signal previewSaved received: success=" + success + ", outputPath=" + outputPath + ", format=" + format + ", errorMessage=" + (errorMessage || ""));
             
-            // Réinitialiser le bouton de sauvegarde
-            previewSection.savePreviewButton.isProcessing = false;
-            previewSection.savePreviewButton.text = "Save Preview";
+            // Réinitialiser le bouton de sauvegarde en s'assurant que le composant existe
+            // Il est important de vérifier que l'objet et sa propriété existent avant de les modifier
+            try {
+                if (previewSection && previewSection.savePreviewButton) {
+                    previewSection.savePreviewButton.isProcessing = false;
+                    previewSection.savePreviewButton.text = "Save Preview";
+                }
+            } catch (e) {
+                console.error("Error resetting save button state:", e);
+            }
             
             if (success) {
                 if (previewSection && previewSection.statusText) {
@@ -136,6 +143,11 @@ ApplicationWindow {
                     previewSection.statusText.text = "Error saving preview in " + format.toUpperCase() + " format: " + (errorMessage || "");
                     previewSection.statusText.color = AppStyles.Theme.errorColor;
                 }
+            }
+            
+            // Force une mise à jour de l'interface pour s'assurer que le bouton est réactivé
+            if (previewSection) {
+                previewSection.forceActiveFocus();
             }
         }
     }
@@ -233,8 +245,11 @@ ApplicationWindow {
     
     // Fonction d'ouverture sécurisée pour le dialogue de sauvegarde
     function safeOpenSavePreviewDialog(format) {
-        // Préparer le dialogue natif macOS
-        macOSBridge.prepareSaveDialog()
+        // Réinitialiser l'état du bouton pour permettre de multiples sauvegardes
+        if (previewSection && previewSection.savePreviewButton) {
+            previewSection.savePreviewButton.isProcessing = false
+            previewSection.savePreviewButton.text = "Save Preview"
+        }
         
         // Mettre à jour les filtres selon le format
         savePreviewDialog.updateFilters(format)
@@ -247,6 +262,11 @@ ApplicationWindow {
         
         // Afficher le nom suggéré dans le titre pour guider l'utilisateur
         savePreviewDialog.title = "Enregistrer sous: " + suggestedName
+        
+        console.log("Dialogue de sauvegarde avec nom prérempli: " + suggestedName)
+        
+        // Configuration du dialogue natif macOS avec le nom préconfiguré
+        macOSBridge.prepareSaveDialogWithName(suggestedName)
         
         // Ouvrir le dialogue
         savePreviewDialog.open()
@@ -262,8 +282,8 @@ ApplicationWindow {
         ScrollView {
             id: parametersScrollView
             Layout.fillHeight: true
-            Layout.preferredWidth: showPreview ? parent.width * 0.5 : parent.width
-            Layout.minimumWidth: 350
+            Layout.preferredWidth: showPreview ? 350 : parent.width
+            Layout.maximumWidth: showPreview ? 350 : parent.width
             contentWidth: parametersColumn.width
             
             ColumnLayout {
@@ -271,10 +291,7 @@ ApplicationWindow {
                 width: parametersScrollView.width - 20  // Marge pour la scrollbar
                 spacing: AppStyles.Theme.spacing
                 
-                // Espace en haut pour l'équilibre visuel
-                Item {
-                    Layout.preferredHeight: AppStyles.Theme.margin / 2
-                }
+                // L'espace en haut a été supprimé pour aligner les bords supérieurs
                 
                 // Section 1: Paramètres du spectrogramme
                 SpectrogramParameters {
@@ -318,55 +335,63 @@ ApplicationWindow {
                     Layout.bottomMargin: AppStyles.Theme.spacing
                 }
                 
-                // Section 4: Forme d'onde audio
-                AudioWaveformSection {
-                    id: audioWaveformSection
-                    Layout.fillWidth: true
-                    Layout.preferredHeight: 200
-                    
-                    // Liaison des dépendances
-                    waveformProvider: waveformProvider
-                    generator: generator
-                    
-                    // Modification pour utiliser notre fonction d'ouverture sécurisée
-                    property var inputFileDialog: null
-                    
-                    // Remplacer la référence au dialogue par notre fonction personnalisée
-                    function openInputFileDialog() {
-                        safeOpenInputFileDialog()
-                    }
-                    
-                    // Liaison bidirectionnelle des paramètres
-                    pageFormat: outputFormatSection.pageFormat
-                    // Utiliser la valeur numérique au lieu de la chaîne de caractères
-                    writingSpeed: spectrogramParametersSection.writingSpeedNumeric
-                    // Nouveaux paramètres qui remplacent fftSize
-                    binsPerSecond: spectrogramParametersSection.binsPerSecondNumeric
-                    overlapPreset: spectrogramParametersSection.overlapPreset
-                    
-                    // Nous allons intégrer la connexion à writingSpeedField directement dans AudioWaveformSection.qml
-                    
-                    onRequestGenerateSpectrogram: {
-                        generateSpectrogramFromSegment()
-                    }
-                }
+                // La section AudioWaveformSection a été déplacée vers la partie droite
             }
         }
         
-        // ----- Partie droite - Prévisualisation -----
-        PreviewSection {
-            id: previewSection
+        // ----- Partie droite - Audio + Prévisualisation -----
+        ColumnLayout {
             Layout.fillHeight: true
             Layout.fillWidth: true
             visible: showPreview
-            generator: generator
+            spacing: AppStyles.Theme.spacing
+            Layout.topMargin: 0
             
-            onSaveRequested: function(format) {
-                safeOpenSavePreviewDialog(format)
+            // Section Audio (25% de la hauteur)
+            AudioWaveformSection {
+                id: audioWaveformSection
+                Layout.fillWidth: true
+                Layout.preferredHeight: parent.height * 0.20
+                
+                // Liaison des dépendances
+                waveformProvider: waveformProvider
+                generator: generator
+                
+                // Modification pour utiliser notre fonction d'ouverture sécurisée
+                property var inputFileDialog: null
+                
+                // Remplacer la référence au dialogue par notre fonction personnalisée
+                function openInputFileDialog() {
+                    safeOpenInputFileDialog()
+                }
+                
+                // Liaison bidirectionnelle des paramètres
+                pageFormat: outputFormatSection.pageFormat
+                // Utiliser la valeur numérique au lieu de la chaîne de caractères
+                writingSpeed: spectrogramParametersSection.writingSpeedNumeric
+                // Nouveaux paramètres qui remplacent fftSize
+                binsPerSecond: spectrogramParametersSection.binsPerSecondNumeric
+                overlapPreset: spectrogramParametersSection.overlapPreset
+                
+                onRequestGenerateSpectrogram: {
+                    generateSpectrogramFromSegment()
+                }
             }
             
-            onPrintRequested: {
-                generator.printPreview()
+            // Section Prévisualisation (75% de la hauteur restante)
+            PreviewSection {
+                id: previewSection
+                Layout.fillHeight: true
+                Layout.fillWidth: true
+                generator: generator
+                
+                onSaveRequested: function(format) {
+                    safeOpenSavePreviewDialog(format)
+                }
+                
+                onPrintRequested: {
+                    generator.printPreview()
+                }
             }
         }
     }

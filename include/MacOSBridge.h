@@ -37,6 +37,12 @@ public slots:
     void prepareSaveDialog();
     
     /**
+     * Configure spécifiquement un dialogue de sauvegarde de fichier avec un nom par défaut
+     * @param fileName Nom de fichier à prédéfinir dans le champ de saisie
+     */
+    void prepareSaveDialogWithName(const QString &fileName);
+    
+    /**
      * Récupère le chemin du dossier "Downloads" de l'utilisateur
      * @return chemin du dossier "Downloads"
      */

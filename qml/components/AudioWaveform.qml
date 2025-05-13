@@ -1,5 +1,6 @@
 import QtQuick 2.15
 import QtQuick.Controls 2.15
+import QtMultimedia 5.15
 import "../styles" as AppStyles
 
 Rectangle {
@@ -17,9 +18,14 @@ Rectangle {
     property color backgroundColor: "#1A1A1A"
     property bool showSegment: true
     property bool interactive: true
+    property string audioSource: ""
+    property real totalDuration: 0
+    property bool isPlaying: false
     
     // Signaux
     signal cursorMoved(double position)
+    signal playbackStarted()
+    signal playbackStopped()
     
     // Propriétés internes
     color: backgroundColor
@@ -235,5 +241,84 @@ Rectangle {
         color: "#AAAAAA"
         font.pixelSize: 14
         visible: waveformData.length === 0
+    }
+    
+    // Composant Audio pour la lecture
+    Audio {
+        id: audioPlayer
+        source: audioSource
+        
+        onPositionChanged: {
+            // Si nous atteignons la fin du segment, arrêter la lecture
+            if (position >= duration) {
+                stop();
+            }
+        }
+        
+        onPlaybackStateChanged: {
+            if (playbackState === Audio.PlayingState) {
+                isPlaying = true;
+                playbackStarted();
+            } else {
+                isPlaying = false;
+                playbackStopped();
+            }
+        }
+    }
+    
+    // Fonction pour basculer entre lecture et pause
+    function togglePlayback() {
+        console.log("togglePlayback() called");
+        console.log("  audioSource:", audioSource);
+        console.log("  totalDuration:", totalDuration);
+        console.log("  segmentStart:", segmentStart);
+        console.log("  segmentDuration:", segmentDuration);
+        
+        // Ne pas vérifier l'audioSource pour l'instant, pour diagnostiquer
+        // Note: en production, il faudrait rétablir cette vérification
+        /*
+        if (!audioSource || audioSource === "") {
+            console.log("No audio source set");
+            return;
+        }
+        */
+        
+        if (isPlaying) {
+            console.log("Stopping playback");
+            audioPlayer.pause();
+            isPlaying = false;
+        } else {
+            console.log("Starting playback");
+            // Définir la position de départ au début du segment
+            var startTime = segmentStart * totalDuration * 1000; // en millisecondes
+            var segmentEndTime = (segmentStart + segmentDuration) * totalDuration * 1000;
+            
+            console.log("  startTime:", startTime);
+            console.log("  segmentEndTime:", segmentEndTime);
+            
+            // Tenter de lire même si les conditions ne sont pas idéales
+            try {
+                audioPlayer.seek(startTime);
+                audioPlayer.play();
+                isPlaying = true;
+                console.log("  Play command sent");
+            } catch (e) {
+                console.error("Error playing audio:", e);
+            }
+        }
+    }
+    
+    // Méthode pour arrêter explicitement la lecture
+    function stopPlayback() {
+        if (isPlaying) {
+            audioPlayer.stop();
+            isPlaying = false;
+        }
+    }
+    
+    // Méthode pour définir la source audio et la durée totale
+    function setAudioSource(source, duration) {
+        audioSource = source;
+        totalDuration = duration;
     }
 }

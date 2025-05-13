@@ -19,6 +19,9 @@
         <file>sections/AudioWaveformSection.qml</file>
         <file>sections/PreviewSection.qml</file>
         
+        <!-- Dialogues -->
+        <file>SavePreviewDialog.qml</file>
+        
         <!-- Styles -->
         <file>styles/Theme.qml</file>
         <file>styles/Fonts.qml</file>
