@@ -298,6 +298,7 @@ ApplicationWindow {
                     id: spectrogramParametersSection
                     Layout.fillWidth: true
                     isSmall: window.isSmall
+                    generator: generator // Passer l'objet generator au composant
                     
                     onParametersChanged: {
                         // Mise à jour en temps réel de la prévisualisation si nécessaire
@@ -314,7 +315,29 @@ ApplicationWindow {
                     Layout.bottomMargin: AppStyles.Theme.spacing
                 }
                 
-                // Section 2: Format de sortie
+                // Section 2: Paramètres de traitement du signal
+                FilterParameters {
+                    id: filterParametersSection
+                    Layout.fillWidth: true
+                    isSmall: window.isSmall
+                    generator: generator // Passer l'objet generator au composant
+                    
+                    onParametersChanged: {
+                        // Mise à jour lorsque les paramètres de filtrage changent
+                        // Mettre à jour la prévisualisation si nécessaire
+                    }
+                }
+                
+                // Séparateur
+                Rectangle {
+                    height: 1
+                    color: AppStyles.Theme.separatorColor
+                    Layout.fillWidth: true
+                    Layout.topMargin: AppStyles.Theme.spacing
+                    Layout.bottomMargin: AppStyles.Theme.spacing
+                }
+                
+                // Section 3: Format de sortie
                 OutputFormat {
                     id: outputFormatSection
                     Layout.fillWidth: true
@@ -425,12 +448,12 @@ ApplicationWindow {
         var maxFreq = spectrogramParametersSection.maxFreqField.numericValue;
         var segmentDur = audioWaveformSection.segmentDuration * waveformProvider.getTotalDuration();
         var sampleRate = waveformProvider.getSampleRate();
-        var dynamicRange = spectrogramParametersSection.dynamicRangeField.numericValue;
-        var gammaCorrection = spectrogramParametersSection.gammaCorrectionField.numericValue;
-        var contrastFactor = parseFloat(spectrogramParametersSection.contrastFactor);
-        var highBoostAlpha = spectrogramParametersSection.highBoostAlphaField.numericValue;
-        var highPassCutoff = spectrogramParametersSection.highPassCutoffField.numericValue;
-        var highPassOrder = spectrogramParametersSection.highPassOrder + 1; // +1 car highPassOrder est un index, pas la valeur
+        var dynamicRange = filterParametersSection.dynamicRangeNumeric;
+        var gammaCorrection = filterParametersSection.gammaCorrectionNumeric;
+        var contrastFactor = parseFloat(filterParametersSection.contrastFactor);
+        var highBoostAlpha = filterParametersSection.highBoostAlpha;
+        var highPassCutoff = filterParametersSection.highPassCutoff;
+        var highPassOrder = filterParametersSection.highPassOrder + 1; // +1 car highPassOrder est un index, pas la valeur
         
         // Log des valeurs brutes extraites des composants QML
         console.log("[qml] DEBUG - Valeurs brutes extraites de l'interface:");
@@ -439,6 +462,7 @@ ApplicationWindow {
         console.log("[qml] DEBUG -   minFreq après conversion: " + minFreq);
         console.log("[qml] DEBUG -   maxFreq brut (getDisplayValue): '" + spectrogramParametersSection.maxFreqField.getDisplayValue() + "'");
         console.log("[qml] DEBUG -   maxFreq après conversion: " + maxFreq);
+        console.log("[qml] DEBUG -   binsPerSecond: '" + spectrogramParametersSection.binsPerSecond + "'");
         
         var overlapPreset = spectrogramParametersSection.overlapPreset;
         var overlapText = ["Low", "Medium", "High"][overlapPreset];
@@ -455,11 +479,11 @@ ApplicationWindow {
             sampleRate,
             dynamicRange,
             gammaCorrection,
-            spectrogramParametersSection.ditheringEnabled,
+            filterParametersSection.ditheringEnabled,
             contrastFactor,
-            spectrogramParametersSection.highBoostEnabled,
+            filterParametersSection.highBoostEnabled,
             highBoostAlpha,
-            spectrogramParametersSection.highPassEnabled,
+            filterParametersSection.highPassEnabled,
             highPassCutoff,
             highPassOrder,
             outputFormatSection.pageFormat,

@@ -18,6 +18,23 @@ extern "C" {
 #define HIGH_BOOST_ALPHA        0.99
 #define DEFAULT_BINS_PER_SECOND 150.0
 
+// Limites pour les bins par seconde
+#define MIN_BINS_PER_SECOND     20.0
+#define MAX_BINS_PER_SECOND     1200.0
+
+// Constantes pour la résolution d'impression
+#define PRINTER_DPI             800.0
+#define INCH_TO_CM              2.54
+
+// Constantes pour les ancres du curseur "Resolution"
+#define RESOLUTION_TEMPORAL_RATIO    0.26
+#define RESOLUTION_BALANCED_RATIO    0.16
+#define RESOLUTION_SPECTRAL_RATIO    0.085
+
+#define RESOLUTION_TEMPORAL_OVERLAP  0.30
+#define RESOLUTION_BALANCED_OVERLAP  0.75
+#define RESOLUTION_SPECTRAL_OVERLAP  0.92
+
 // Niveaux d'overlap pour le mode bins/s
 #define OVERLAP_PRESET_LOW      0.75
 #define OVERLAP_PRESET_MEDIUM   0.85
@@ -29,6 +46,10 @@ extern "C" {
 #define A4_HEIGHT_MM            297.0
 #define A3_WIDTH_MM             420.0
 #define A3_HEIGHT_MM            297.0
+
+// Dimensions de page en centimètres pour les calculs de durée
+#define A4_PORTRAIT_WIDTH_CM    21.0
+#define A3_LANDSCAPE_WIDTH_CM   42.0
 
 // Facteurs de conversion
 #define MM_TO_PIXELS            31.5    // 800 DPI / 25.4 mm/inch

@@ -39,6 +39,8 @@ SpectrogramSettingsCpp::SpectrogramSettingsCpp()
     , m_lineThicknessFactor(2.0) // Default line thickness factor
     , m_binsPerSecond(DEFAULT_BINS_PER_SECOND) // Valeur par défaut pour bins/s
     , m_overlapPreset(DEFAULT_OVERLAP_PRESET) // Préréglage d'overlap (Medium par défaut)
+    , m_resolutionSliderValue(0.5) // Valeur initiale du curseur: Balanced
+    , m_isResolutionLimited(false) // Pas de limitation initialement
 {
 }
 
@@ -262,4 +264,124 @@ int SpectrogramSettingsCpp::calculateFftSize(int sampleRate) const
              << "hop size:" << hopSize;
     
     return powerOf2;
+}
+
+/**
+ * @brief Calcule le plafond physique maxBps en fonction de la vitesse d'écriture
+ *
+ * Cette méthode calcule le nombre maximum de bins par seconde qui peuvent être imprimés
+ * en fonction de la vitesse d'écriture et de la résolution d'impression.
+ *
+ * Formule: maxBps = ⌊(800/2.54) × writeSpeed⌋
+ *
+ * @param writingSpeed Vitesse d'écriture en cm/s
+ * @return Nombre maximum de bins par seconde possible
+ */
+double SpectrogramSettingsCpp::calculateMaxBps(double writingSpeed) const
+{
+    // maxBps = ⌊(800/2.54) × writeSpeed⌋
+    return floor((PRINTER_DPI / INCH_TO_CM) * writingSpeed);
+}
+
+/**
+ * @brief Obtient la largeur du papier en cm en fonction du format sélectionné
+ *
+ * @return Largeur du papier en cm
+ */
+double SpectrogramSettingsCpp::getPaperWidthCm() const
+{
+    if (m_pageFormat == Constants::PAGE_FORMAT_A4_PORTRAIT) {
+        return A4_PORTRAIT_WIDTH_CM;
+    } else {
+        return A3_LANDSCAPE_WIDTH_CM;
+    }
+}
+
+/**
+ * @brief Calcule la durée audio représentée en fonction du format papier et de la vitesse d'écriture
+ *
+ * Formule: durée (s) = largeur papier (cm) / writeSpeed (cm/s)
+ *
+ * @return Durée audio en secondes
+ */
+double SpectrogramSettingsCpp::calculateAudioDuration() const
+{
+    // durée (s) = largeur papier (cm) / writeSpeed (cm/s)
+    return getPaperWidthCm() / m_writingSpeed;
+}
+
+/**
+ * @brief Calcule le bins/s en fonction de la position du curseur et de la vitesse d'écriture
+ *
+ * Cette méthode implémente une interpolation linéaire entre les trois ancres du curseur:
+ * - Temporal (0): Privilégie la résolution temporelle
+ * - Balanced (0.5): Équilibre entre résolution temporelle et fréquentielle
+ * - Spectral (1.0): Privilégie la résolution fréquentielle
+ *
+ * La valeur de bps est limitée entre MIN_BINS_PER_SECOND et MAX_BINS_PER_SECOND
+ * et ne peut pas dépasser le plafond physique maxBps.
+ *
+ * @param sliderValue Position du curseur (0.0 à 1.0)
+ * @param writingSpeed Vitesse d'écriture en cm/s
+ * @return Valeur de bps calculée
+ */
+double SpectrogramSettingsCpp::calculateBpsFromSlider(double sliderValue, double writingSpeed) const
+{
+    double maxBps = calculateMaxBps(writingSpeed);
+    double ratio;
+    
+    if (sliderValue <= 0.5) {
+        // Interpolation linéaire entre Temporal (0) et Balanced (0.5)
+        ratio = RESOLUTION_TEMPORAL_RATIO +
+                (sliderValue / 0.5) * (RESOLUTION_BALANCED_RATIO - RESOLUTION_TEMPORAL_RATIO);
+    } else {
+        // Interpolation linéaire entre Balanced (0.5) et Spectral (1.0)
+        ratio = RESOLUTION_BALANCED_RATIO +
+                ((sliderValue - 0.5) / 0.5) * (RESOLUTION_SPECTRAL_RATIO - RESOLUTION_BALANCED_RATIO);
+    }
+    
+    // Calculer le bps initial
+    double bps = ratio * maxBps;
+    
+    // Vérifier si la limitation est atteinte
+    m_isResolutionLimited = (bps <= MIN_BINS_PER_SECOND || bps >= MAX_BINS_PER_SECOND);
+    
+    // Appliquer les limites (clamp)
+    if (bps < MIN_BINS_PER_SECOND) {
+        bps = MIN_BINS_PER_SECOND;
+    } else if (bps > MAX_BINS_PER_SECOND) {
+        bps = MAX_BINS_PER_SECOND;
+    }
+    
+    qDebug() << "Resolution slider value:" << sliderValue
+             << "maxBps:" << maxBps
+             << "ratio:" << ratio
+             << "calculated bps:" << bps
+             << "limited:" << m_isResolutionLimited;
+    
+    return bps;
+}
+
+/**
+ * @brief Calcule la valeur d'overlap en fonction de la position du curseur
+ *
+ * Cette méthode implémente une interpolation linéaire entre les trois ancres du curseur:
+ * - Temporal (0): Faible chevauchement
+ * - Balanced (0.5): Chevauchement moyen
+ * - Spectral (1.0): Fort chevauchement
+ *
+ * @param sliderValue Position du curseur (0.0 à 1.0)
+ * @return Valeur d'overlap calculée
+ */
+double SpectrogramSettingsCpp::calculateOverlapFromSlider(double sliderValue) const
+{
+    if (sliderValue <= 0.5) {
+        // Interpolation linéaire entre Temporal (0) et Balanced (0.5)
+        return RESOLUTION_TEMPORAL_OVERLAP +
+               (sliderValue / 0.5) * (RESOLUTION_BALANCED_OVERLAP - RESOLUTION_TEMPORAL_OVERLAP);
+    } else {
+        // Interpolation linéaire entre Balanced (0.5) et Spectral (1.0)
+        return RESOLUTION_BALANCED_OVERLAP +
+               ((sliderValue - 0.5) / 0.5) * (RESOLUTION_SPECTRAL_OVERLAP - RESOLUTION_BALANCED_OVERLAP);
+    }
 }

@@ -122,6 +122,20 @@ public:
     double getBinsPerSecond() const { return m_binsPerSecond; }
     void setBinsPerSecond(double value) { m_binsPerSecond = value; }
     
+    // Méthodes pour le curseur Resolution
+    double getResolutionSliderValue() const { return m_resolutionSliderValue; }
+    void setResolutionSliderValue(double value) { m_resolutionSliderValue = value; }
+    
+    // Méthodes de calcul pour le mode Resolution
+    double calculateMaxBps(double writingSpeed) const;
+    double calculateBpsFromSlider(double sliderValue, double writingSpeed) const;
+    double calculateOverlapFromSlider(double sliderValue) const;
+    double getPaperWidthCm() const;
+    double calculateAudioDuration() const;
+    
+    // Méthode pour vérifier si la limitation de résolution est atteinte
+    bool isResolutionLimited() const { return m_isResolutionLimited; }
+    
     // Méthode pour calculer la FFT size en fonction du bins/s et du préréglage d'overlap
     int calculateFftSize(int sampleRate) const;
     
@@ -186,6 +200,8 @@ private:
     double m_lineThicknessFactor;
     double m_binsPerSecond;          // Bins par seconde
     int m_overlapPreset;             // Préréglage d'overlap (0=Low, 1=Medium, 2=High)
+    double m_resolutionSliderValue;  // Position du curseur resolution (0=Temporal, 0.5=Balanced, 1=Spectral)
+    mutable bool m_isResolutionLimited; // Indique si la limitation de résolution est atteinte
 };
 
 #endif // SPECTROGRAMSETTINGSCPP_H

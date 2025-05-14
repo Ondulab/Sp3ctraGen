@@ -234,6 +234,54 @@ public:
      * @return List of supported extensions
      */
     Q_INVOKABLE QStringList getSupportedFileExtensions() const;
+    
+    /**
+     * @brief Calcule les bins/s en fonction de la position du curseur de résolution
+     *
+     * Cette méthode implémente l'interpolation entre les trois ancres du curseur:
+     * - 0.0 (Temporal): ratio = 0.26, privilégie la résolution temporelle
+     * - 0.5 (Balanced): ratio = 0.16, équilibre entre résolution temporelle et fréquentielle
+     * - 1.0 (Spectral): ratio = 0.085, privilégie la résolution fréquentielle
+     *
+     * @param sliderValue Position du curseur (0.0 à 1.0)
+     * @param writingSpeed Vitesse d'écriture en cm/s
+     * @return Valeur de bins/s calculée et limitée
+     */
+    Q_INVOKABLE double calculateBpsFromSlider(double sliderValue, double writingSpeed);
+    
+    /**
+     * @brief Calcule l'overlap en fonction de la position du curseur de résolution
+     *
+     * @param sliderValue Position du curseur (0.0 à 1.0)
+     * @return Valeur d'overlap calculée
+     */
+    Q_INVOKABLE double calculateOverlapFromSlider(double sliderValue);
+    
+    /**
+     * @brief Vérifie si la limitation de résolution est atteinte
+     *
+     * @return true si la valeur bins/s a été limitée (min ou max), false sinon
+     */
+    Q_INVOKABLE bool isResolutionLimited();
+    
+    /**
+     * @brief Calcule la durée audio en fonction du format papier et de la vitesse d'écriture
+     *
+     * Formule: durée (s) = largeur papier (cm) / writeSpeed (cm/s)
+     *
+     * @return Durée audio en secondes
+     */
+    Q_INVOKABLE double calculateAudioDuration();
+    
+    /**
+     * @brief Calcule le plafond physique maxBps basé sur la résolution d'impression
+     *
+     * Formule: maxBps = ⌊(800/2.54) × writeSpeed⌋
+     *
+     * @param writingSpeed Vitesse d'écriture en cm/s
+     * @return Nombre maximum de bins par seconde possible
+     */
+    Q_INVOKABLE double calculateMaxBps(double writingSpeed);
 
 signals:
     /**
@@ -314,6 +362,12 @@ private:
      * @param writingSpeed Writing speed in cm/s
      * @return Initialized SpectrogramSettingsCpp object
      * @param enableNormalization Enable volume normalization
+     */
+    // Propriété interne pour les paramètres
+    SpectrogramSettingsCpp m_settings;
+    
+    /**
+     * @brief Crée un objet SpectrogramSettingsCpp à partir des paramètres QML
      */
     SpectrogramSettingsCpp createSettings(
         double minFreq,

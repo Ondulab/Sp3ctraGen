@@ -234,6 +234,20 @@ Rectangle {
         waveformCanvas.requestPaint();
     }
     
+    // Fonction pour forcer explicitement le redessinage du canvas
+    function forceRedraw() {
+        console.log("AudioWaveform: forceRedraw called");
+        
+        // Peut-être que les données n'ont pas été détectées comme changées
+        // si c'est juste leurs propriétés internes qui ont été modifiées
+        waveformCanvas.requestPaint();
+        
+        // Astuce pour forcer le QML à recalculer le layout
+        var oldHeight = height;
+        height = oldHeight + 0.1;
+        height = oldHeight;
+    }
+    
     // Afficher un message si aucune donnée n'est disponible
     Text {
         anchors.centerIn: parent

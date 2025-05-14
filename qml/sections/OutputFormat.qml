@@ -55,7 +55,7 @@ SectionContainer {
         ParameterField {
             id: bottomMarginField
             label: "Bottom Margin (mm):"
-            value: "50,0"
+            value: "60.0"
             isNumeric: true
             allowDecimals: true
             minValue: 0.0
@@ -68,7 +68,7 @@ SectionContainer {
         ParameterField {
             id: spectroHeightField
             label: "Spectrogram Height (mm):"
-            value: "216,7"
+            value: "216.7"
             isNumeric: true
             allowDecimals: true
             minValue: 0.0
@@ -109,7 +109,7 @@ SectionContainer {
         ParameterField {
             id: bottomReferenceLineOffsetField
             label: "Bottom Offset (mm):"
-            value: "34,75"
+            value: "34.75"
             isNumeric: true
             allowDecimals: true
             minValue: 0.0
@@ -138,7 +138,7 @@ SectionContainer {
         ParameterField {
             id: topReferenceLineOffsetField
             label: "Top Offset (mm):"
-            value: "12,55"
+            value: "12.55"
             isNumeric: true
             allowDecimals: true
             minValue: 0.0

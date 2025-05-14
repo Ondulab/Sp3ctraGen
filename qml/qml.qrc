@@ -18,6 +18,7 @@
         <file>sections/FileSettings.qml</file>
         <file>sections/AudioWaveformSection.qml</file>
         <file>sections/PreviewSection.qml</file>
+        <file>sections/FilterParameters.qml</file>
         
         <!-- Dialogues -->
         <file>SavePreviewDialog.qml</file>

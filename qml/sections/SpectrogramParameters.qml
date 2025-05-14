@@ -6,7 +6,7 @@ import "../styles" as AppStyles
 
 /**
  * Section des paramètres du spectrogramme
- * 
+ *
  * Cette section contient tous les contrôles pour configurer
  * les paramètres de génération du spectrogramme.
  */
@@ -14,21 +14,25 @@ SectionContainer {
     id: spectrogramParametersSection
     title: "Spectrogram Parameters"
     
+    // Valeurs par défaut pour le style
+    readonly property int defaultFontSize: 12
+    readonly property int smallFontSize: 10
+    readonly property int spacing: 10
+    readonly property color separatorColor: "#444444"
+    
     property bool isSmall: false
+    
+    // Référence au générateur de spectrogrammes
+    property var generator
     
     // Exposer directement les composants pour accès
     property alias minFreqField: minFreqField
     property alias maxFreqField: maxFreqField
     property alias writingSpeedField: writingSpeedField
-    property alias binsPerSecondField: binsPerSecondField
-    property alias dynamicRangeField: dynamicRangeField
-    property alias gammaCorrectionField: gammaCorrectionField
-    property alias highBoostAlphaField: highBoostAlphaField
-    property alias highPassCutoffField: highPassCutoffField
     
     // Propriétés exposées qui peuvent être liées au modèle
-    // Nouvelle propriété pour le préréglage d'overlap
-    property alias overlapPreset: overlapPresetCombo.currentIndex
+    // Propriété pour le curseur de résolution
+    property alias resolutionSliderValue: resolutionSlider.value
     
     property alias minFreq: minFreqField.value
     property alias minFreqNumeric: minFreqField.numericValue
@@ -39,118 +43,275 @@ SectionContainer {
     property alias writingSpeed: writingSpeedField.value
     property alias writingSpeedNumeric: writingSpeedField.numericValue
     
-    property alias binsPerSecond: binsPerSecondField.value
-    property alias binsPerSecondNumeric: binsPerSecondField.numericValue
+    // Propriétés de compatibilité avec le code existant
+    property string binsPerSecond: binsPerSecondValue.toFixed(1)
+    property double binsPerSecondNumeric: binsPerSecondValue
     
-    property alias dynamicRange: dynamicRangeField.value
-    property alias dynamicRangeNumeric: dynamicRangeField.numericValue
+    // Compatibilité : fonction émulant le comportement du champ binsPerSecond supprimé
+    function getDisplayBinsPerSecond() {
+        return binsPerSecondValue.toFixed(1);
+    }
     
-    property alias gammaCorrection: gammaCorrectionField.value
-    property alias gammaCorrectionNumeric: gammaCorrectionField.numericValue
-    property alias normalizationEnabled: normalizationToggle.checked
-    property alias ditheringEnabled: ditheringToggle.checked
-    property alias contrastFactor: contrastFactorField.value
-    property alias highBoostEnabled: highBoostToggle.checked
-    property alias highBoostAlpha: highBoostAlphaField.value
-    property alias highPassEnabled: highPassToggle.checked
-    property alias highPassCutoff: highPassCutoffField.value
-    property alias highPassOrder: highPassOrderCombo.currentIndex
+    // Simulation d'overlap_preset maintenant géré par le curseur
+    property int overlapPreset: {
+        if (resolutionSlider.value < 0.25) return 0;      // Low
+        else if (resolutionSlider.value < 0.75) return 1; // Medium
+        else return 2;                                     // High
+    }
+    
+    // Valeur interne pour bins/s calculée à partir du curseur
+    property double binsPerSecondValue: 150.0
+    
+    // Propriété pour le tag de limitation
+    property bool isResolutionLimited: false
+    
+    // Propriété pour la durée audio calculée
+    property double audioDuration: 0.0
+    
+    // Les propriétés pour les paramètres de filtre ont été déplacées vers FilterParameters.qml
     
     // Signaux émis lorsque les paramètres changent
     signal parametersChanged()
+    
+    // Pas besoin de champ caché, l'ancien composant est complètement remplacé par le curseur
     
     GridLayout {
         id: parametersGrid
         columns: 2
         Layout.fillWidth: true
-        columnSpacing: AppStyles.Theme.spacing
-        rowSpacing: AppStyles.Theme.spacing
+        columnSpacing: spacing
+        rowSpacing: spacing
 
-        // Bins per second (nouveau paramètre)
+        // Writing Speed - Déplacé en haut
         ParameterField {
-            id: binsPerSecondField
-            label: "Bins/s:"
-            value: "150.0"
+            id: writingSpeedField
+            label: "Writing Speed (cm/s):"
+            value: "8.0"
             isNumeric: true
             allowDecimals: true
-            minValue: 10.0
-            maxValue: 300.0
+            minValue: 0.1
             Layout.fillWidth: true
             Layout.columnSpan: parametersGrid.columns
             onValueEdited: {
-                // Calculer dynamiquement la taille FFT en fonction du sample rate, bins/s et préréglage d'overlap
-                var sampleRate = 192000; // Valeur par défaut (sera remplacée par le vrai sample rate)
-                var hopSize = sampleRate / numericValue;
+                // Mettre à jour les paramètres calculés lorsque la vitesse d'écriture change
                 
-                // Obtenir la valeur d'overlap selon le préréglage
-                var overlapValue;
-                switch(overlapPresetCombo.currentIndex) {
-                    case 0: overlapValue = 0.75; break; // Low
-                    case 2: overlapValue = 0.95; break; // High
-                    default: overlapValue = 0.85; break; // Medium
+                if (generator) {
+                    // Recalculer les bins/s car maxBps dépend de la vitesse d'écriture
+                    binsPerSecondValue = generator.calculateBpsFromSlider(resolutionSlider.value, writingSpeedNumeric);
+                    
+                    // Vérifier si la limitation est atteinte
+                    isResolutionLimited = generator.isResolutionLimited();
+                    
+                    // Calculer la durée audio
+                    audioDuration = generator.calculateAudioDuration();
+                } else {
+                    console.error("Generator not available for calculations");
                 }
                 
-                var diviseur = 1.0 - overlapValue;
-                var calculatedFft = hopSize / diviseur;
+                // Mettre à jour les autres paramètres calculés
+                updateCalculatedParameters();
                 
-                // Arrondir à la puissance de 2 supérieure
-                var powerOf2 = 1;
-                while (powerOf2 < calculatedFft) {
-                    powerOf2 *= 2;
-                }
-                
-                // Mettre à jour l'affichage de la FFT calculée
-                fftSizeCalculatedLabel.text = powerOf2.toString();
-                
-                // Calculer l'overlap effectif
-                var effectiveOverlap = 1.0 - (hopSize / powerOf2);
-                overlapEffectifLabel.text = effectiveOverlap.toFixed(4);
-                
-                parametersChanged()
-            }
-        }
-        
-        // Overlap Preset
-        ThemedLabel {
-            text: "Overlap Preset:"
-            Layout.alignment: Qt.AlignRight
-        }
-        FilterComboBox {
-            id: overlapPresetCombo
-            model: ["Low", "Medium", "High"]
-            currentIndex: 1  // Medium par défaut
-            Layout.preferredWidth: AppStyles.Theme.rightColumnWidth
-            Layout.alignment: Qt.AlignLeft
-            
-            onCurrentIndexChanged: {
-                // Recalculer la FFT et l'overlap effectif
-                binsPerSecondField.valueEdited(binsPerSecondField.text);
                 parametersChanged();
             }
         }
-        
-        // FFT Size calculée (affichage uniquement)
-        ThemedLabel {
-            text: "FFT Size calculée:"
-            Layout.alignment: Qt.AlignRight
-        }
-        ThemedLabel {
-            id: fftSizeCalculatedLabel
-            text: "8192" // Valeur initiale
-            Layout.preferredWidth: AppStyles.Theme.rightColumnWidth
-            Layout.alignment: Qt.AlignLeft
-        }
-        
-        // Overlap effectif calculé (affichage uniquement)
-        ThemedLabel {
-            text: "Overlap effectif:"
-            Layout.alignment: Qt.AlignRight
-        }
-        ThemedLabel {
-            id: overlapEffectifLabel
-            text: "0.922" // Valeur initiale
-            Layout.preferredWidth: AppStyles.Theme.rightColumnWidth
-            Layout.alignment: Qt.AlignLeft
+
+        // Curseur de résolution (remplace bins/s et overlap)
+        Column {
+            spacing: 8
+            Layout.fillWidth: true
+            Layout.columnSpan: parametersGrid.columns
+            
+            // En-tête avec titre seulement
+            Row {
+                width: parent.width
+                ThemedLabel {
+                    text: "Resolution:"
+                    font.pixelSize: defaultFontSize
+                }
+            }
+            
+            // Message d'avertissement pour la limitation de résolution
+            ThemedLabel {
+                id: resolutionLimitedLabel
+                text: "Limited by print horizontal resolution"
+                color: "orange"
+                font.italic: true
+                font.pixelSize: smallFontSize
+                visible: isResolutionLimited
+                width: parent.width
+            }
+            
+            // Étiquettes Temporal/Spectral au-dessus du curseur
+            Row {
+                width: parent.width
+                
+                ThemedLabel {
+                    text: "Temporal"
+                    font.pixelSize: smallFontSize
+                    color: Qt.rgba(0.9, 0.9, 0.9, 0.9) // Blanc moins intense
+                    width: 75
+                }
+                
+                Item { width: parent.width - 155; height: 1 } // Spacer
+                
+                ThemedLabel {
+                    text: "Spectral"
+                    font.pixelSize: smallFontSize
+                    color: Qt.rgba(0.9, 0.9, 0.9, 0.9) // Blanc moins intense
+                    width: 75
+                    horizontalAlignment: Text.AlignRight
+                }
+            }
+            
+            // Slider pour le réglage de la résolution
+            Item {
+                width: parent.width
+                height: 30
+                
+                Slider {
+                    id: resolutionSlider
+                    anchors.fill: parent
+                    from: 0
+                    to: 1
+                    value: 0.5 // Valeur initiale: Balanced
+                    stepSize: 0.01
+                    
+                    // Style personnalisé pour réduire la taille du handle
+                    handle: Rectangle {
+                        x: resolutionSlider.leftPadding + resolutionSlider.visualPosition * (resolutionSlider.availableWidth - width)
+                        y: resolutionSlider.topPadding + resolutionSlider.availableHeight / 2 - height / 2
+                        implicitWidth: 16
+                        implicitHeight: 16
+                        radius: 8
+                        color: "#ffffff"
+                        border.color: "#cccccc"
+                    }
+                    
+                    // Utiliser onMoved au lieu de onValueChanged pour éviter les conflits
+                    onMoved: {
+                        if (generator) {
+                            // Calculer le bps en fonction de la position du curseur
+                            binsPerSecondValue = generator.calculateBpsFromSlider(value, writingSpeedNumeric);
+                            
+                            // Vérifier si la limitation est atteinte
+                            isResolutionLimited = generator.isResolutionLimited();
+                            
+                            // Calculer la durée audio
+                            audioDuration = generator.calculateAudioDuration();
+                            
+                            // Calculer l'overlap en fonction de la position du curseur
+                            var newOverlap = generator.calculateOverlapFromSlider(value);
+                        } else {
+                            console.error("Generator not available for calculations");
+                        }
+                        
+                        // Recalculer la FFT size et l'overlap effectif
+                        updateCalculatedParameters();
+                        
+                        parametersChanged();
+                    }
+                }
+                
+                // Marques pour les trois ancres
+                Rectangle {
+                    width: 2
+                    height: 8
+                    color: Qt.rgba(0.9, 0.9, 0.9, 0.7) // Blanc moins intense
+                    x: 0
+                    anchors.bottom: parent.bottom
+                }
+                
+                Rectangle {
+                    width: 2
+                    height: 8
+                    color: Qt.rgba(0.9, 0.9, 0.9, 0.7) // Blanc moins intense
+                    x: parent.width * 0.5
+                    anchors.bottom: parent.bottom
+                }
+                
+                Rectangle {
+                    width: 2
+                    height: 8
+                    color: Qt.rgba(0.9, 0.9, 0.9, 0.7) // Blanc moins intense
+                    x: parent.width - 2
+                    anchors.bottom: parent.bottom
+                }
+            }
+            
+            // Valeur de bins/s sous le curseur
+            Row {
+                width: parent.width
+                Layout.alignment: Qt.AlignCenter
+                
+                Item { width: (parent.width - 120) / 2; height: 1 } // Spacer pour centrage
+                
+                ThemedLabel {
+                    id: binsPerSecondValueLabel
+                    text: binsPerSecondNumeric.toFixed(1) + " bins/s"
+                    font.pixelSize: defaultFontSize
+                    width: 120
+                    horizontalAlignment: Text.AlignCenter
+                }
+            }
+            
+            // Les étiquettes explicatives ont été supprimées comme demandé
+            
+            // Affichage des valeurs dérivées
+            GridLayout {
+                columns: 2
+                width: parent.width
+                columnSpacing: spacing
+                rowSpacing: spacing / 2
+                Layout.topMargin: 5
+                
+                // FFT Size calculée
+                ThemedLabel {
+                    text: "FFT Size:"
+                    font.pixelSize: smallFontSize
+                    horizontalAlignment: Text.AlignRight
+                    Layout.alignment: Qt.AlignRight
+                    Layout.preferredWidth: parent.width / 2 - 10
+                }
+                ThemedLabel {
+                    id: fftSizeCalculatedLabel
+                    text: "8192" // Valeur initiale
+                    font.pixelSize: smallFontSize
+                    Layout.alignment: Qt.AlignLeft
+                    Layout.preferredWidth: parent.width / 2 - 10
+                }
+                
+                // Overlap effectif calculé
+                ThemedLabel {
+                    text: "Effective Overlap:"
+                    font.pixelSize: smallFontSize
+                    horizontalAlignment: Text.AlignRight
+                    Layout.alignment: Qt.AlignRight
+                    Layout.preferredWidth: parent.width / 2 - 10
+                }
+                ThemedLabel {
+                    id: overlapEffectifLabel
+                    text: "0.922" // Valeur initiale
+                    font.pixelSize: smallFontSize
+                    Layout.alignment: Qt.AlignLeft
+                    Layout.preferredWidth: parent.width / 2 - 10
+                }
+                
+                // Durée audio calculée
+                ThemedLabel {
+                    text: "Audio Duration (s):"
+                    font.pixelSize: smallFontSize
+                    horizontalAlignment: Text.AlignRight
+                    Layout.alignment: Qt.AlignRight
+                    Layout.preferredWidth: parent.width / 2 - 10
+                }
+                ThemedLabel {
+                    id: audioDurationLabel
+                    text: audioDuration.toFixed(2) // Formaté avec 2 décimales
+                    font.pixelSize: smallFontSize
+                    Layout.alignment: Qt.AlignLeft
+                    Layout.preferredWidth: parent.width / 2 - 10
+                }
+            }
         }
 
         // Min Frequency
@@ -179,161 +340,40 @@ SectionContainer {
             onValueEdited: parametersChanged()
         }
 
-        // Writing Speed
-        ParameterField {
-            id: writingSpeedField
-            label: "Writing Speed (cm/s):"
-            value: "8.0"
-            isNumeric: true
-            allowDecimals: true
-            minValue: 0.1
-            Layout.fillWidth: true
-            Layout.columnSpan: parametersGrid.columns
-            onValueEdited: parametersChanged()
-        }
-
-        // Dynamic Range
-        ParameterField {
-            id: dynamicRangeField
-            label: "Dynamic Range (dB):"
-            value: "60.0"
-            isNumeric: true
-            allowDecimals: true
-            minValue: 0.0
-            Layout.fillWidth: true
-            Layout.columnSpan: parametersGrid.columns
-            onValueEdited: parametersChanged()
-        }
-
-        // Gamma Correction
-        ParameterField {
-            id: gammaCorrectionField
-            label: "Gamma Correction:"
-            value: "0.8"
-            isNumeric: true
-            allowDecimals: true
-            minValue: 0.0
-            Layout.fillWidth: true
-            Layout.columnSpan: parametersGrid.columns
-            onValueEdited: parametersChanged()
-        }
-
-        // Normalization Toggle
-        ThemedLabel {
-            text: "Enable Normalization:"
-        }
-        ToggleSwitch {
-            id: normalizationToggle
-            Layout.preferredWidth: AppStyles.Theme.rightColumnWidth
-            Layout.preferredHeight: AppStyles.Theme.controlHeight
-            Layout.alignment: Qt.AlignLeft
-            checked: true
-            onToggled: parametersChanged()
+        // Les paramètres de filtre ont été déplacés vers une section séparée FilterParameters.qml
+    }
+    
+    // Méthode pour calculer et mettre à jour les paramètres dérivés
+    function updateCalculatedParameters() {
+        if (generator) {
+            // Calculer l'overlap à partir de la position du curseur
+            var newOverlap = generator.calculateOverlapFromSlider(resolutionSlider.value);
+        } else {
+            console.error("Generator not available for overlap calculation");
+            var newOverlap = 0.75; // Valeur par défaut
         }
         
-        // Dithering Toggle
-        ThemedLabel {
-            text: "Enable Dithering:"
-            Layout.alignment: Qt.AlignRight
-        }
-        ToggleSwitch {
-            id: ditheringToggle
-            Layout.preferredWidth: AppStyles.Theme.rightColumnWidth
-            Layout.preferredHeight: AppStyles.Theme.controlHeight
-            Layout.alignment: Qt.AlignLeft
-            checked: false
-            onToggled: parametersChanged()
-        }
-
-        // Contrast Factor
-        ParameterField {
-            id: contrastFactorField
-            label: "Contrast Factor:"
-            value: "1.9"
-            isNumeric: true
-            allowDecimals: true
-            minValue: 0.0
-            Layout.fillWidth: true
-            Layout.columnSpan: parametersGrid.columns
-            onValueEdited: parametersChanged()
-        }
-
-        // High Boost Filter
-        ThemedLabel {
-            text: "High Boost Filter:"
-            Layout.alignment: Qt.AlignRight
-        }
-        ToggleSwitch {
-            id: highBoostToggle
-            Layout.preferredWidth: AppStyles.Theme.rightColumnWidth
-            Layout.preferredHeight: AppStyles.Theme.controlHeight
-            Layout.alignment: Qt.AlignLeft
-            checked: true
-            onToggled: parametersChanged()
-        }
-
-        // High Boost Alpha
-        ParameterField {
-            id: highBoostAlphaField
-            label: "High Boost Alpha:"
-            value: "0.99"
-            isNumeric: true
-            allowDecimals: true
-            minValue: 0.0
-            maxValue: 1.0
-            Layout.fillWidth: true
-            Layout.columnSpan: parametersGrid.columns
-            onValueEdited: parametersChanged()
+        // Calculer la FFT size et l'overlap effectif
+        var sampleRate = 192000; // Valeur par défaut (sera remplacée par le vrai sample rate)
+        var hopSize = sampleRate / binsPerSecondValue;
+        var diviseur = 1.0 - newOverlap;
+        var calculatedFft = hopSize / diviseur;
+        
+        // Arrondir à la puissance de 2 supérieure
+        var powerOf2 = 1;
+        while (powerOf2 < calculatedFft) {
+            powerOf2 *= 2;
         }
         
-        // High-Pass Filter Toggle
-        ThemedLabel {
-            text: "High-Pass Filter:"
-            Layout.alignment: Qt.AlignRight
-        }
-        ToggleSwitch {
-            id: highPassToggle
-            Layout.preferredWidth: AppStyles.Theme.rightColumnWidth
-            Layout.preferredHeight: AppStyles.Theme.controlHeight
-            Layout.alignment: Qt.AlignLeft
-            checked: false
-            onToggled: parametersChanged()
-        }
+        // Mettre à jour l'affichage de la FFT calculée
+        fftSizeCalculatedLabel.text = powerOf2.toString();
         
-        // High-Pass Cutoff
-        ParameterField {
-            id: highPassCutoffField
-            label: "Cutoff Frequency (Hz):"
-            value: "100"
-            isNumeric: true
-            allowDecimals: true
-            minValue: 1.0
-            Layout.fillWidth: true
-            Layout.columnSpan: parametersGrid.columns
-            enabled: highPassToggle.checked
-            onValueEdited: parametersChanged()
-        }
+        // Calculer l'overlap effectif
+        var effectiveOverlap = 1.0 - (hopSize / powerOf2);
+        overlapEffectifLabel.text = effectiveOverlap.toFixed(4);
         
-        // High-Pass Filter Order
-        ThemedLabel {
-            text: "Filter Order (1-8):"
-            enabled: highPassToggle.checked
-            Layout.alignment: Qt.AlignRight
-        }
-        FilterComboBox
-        {
-            id:               highPassOrderCombo
-            model:            [ "1", "2", "3", "4", "5", "6", "7", "8" ]
-            currentIndex:     1                    // "2" par défaut
-            Layout.preferredWidth: AppStyles.Theme.rightColumnWidth
-            Layout.alignment: Qt.AlignLeft
-            enabled:          highPassToggle.checked
-
-            onCurrentIndexChanged:
-            {
-                parametersChanged()
-            }
-        }
+        // Mettre à jour l'affichage de la durée audio
+        audioDurationLabel.text = audioDuration.toFixed(2);
     }
     
     // Méthode pour mettre à jour les paramètres FFT calculés depuis le backend
@@ -346,9 +386,20 @@ SectionContainer {
                     calculatedFftSize + ", Overlap effectif=" + effectiveOverlap.toFixed(4));
     }
     
-    // Initialisation des valeurs calculées
+    // Initialisation
     Component.onCompleted: {
         // Calculer les valeurs initiales
-        binsPerSecondField.valueEdited(binsPerSecondField.value);
+        if (generator) {
+            binsPerSecondValue = generator.calculateBpsFromSlider(resolutionSlider.value, writingSpeedNumeric);
+            audioDuration = generator.calculateAudioDuration();
+            isResolutionLimited = generator.isResolutionLimited();
+            updateCalculatedParameters();
+        } else {
+            console.warn("Generator not available during initialization");
+            // Valeurs par défaut
+            binsPerSecondValue = 150.0;
+            audioDuration = 2.625; // 21cm / 8cm/s
+            isResolutionLimited = false;
+        }
     }
 }

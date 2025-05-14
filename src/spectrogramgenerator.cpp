@@ -17,6 +17,7 @@ PreviewImageProvider* SpectrogramGenerator::s_previewProvider = nullptr;
 
 SpectrogramGenerator::SpectrogramGenerator(QObject *parent)
     : QObject(parent)
+    , m_settings() // Initialisation de la structure des paramètres
 {
     // Connecter les signaux du TaskManager pour relayer les mises à jour de progression
     connect(TaskManager::getInstance(), &TaskManager::taskProgressUpdated,
@@ -402,6 +403,53 @@ QStringList SpectrogramGenerator::getSupportedFileExtensions() const
     return VisualizationFactory::getInstance()->getSupportedExtensions();
 }
 
+double SpectrogramGenerator::calculateBpsFromSlider(double sliderValue, double writingSpeed)
+{
+    // Mettre à jour la propriété interne
+    m_settings.setWritingSpeed(writingSpeed);
+    m_settings.setResolutionSliderValue(sliderValue);
+    
+    // Calculer les bins/s en fonction de la position du curseur
+    double bps = m_settings.calculateBpsFromSlider(sliderValue, writingSpeed);
+    
+    // Debug logs
+    qDebug() << "Calculated bins/s from slider:" << bps
+             << "(slider value:" << sliderValue
+             << ", writing speed:" << writingSpeed << ")";
+    
+    return bps;
+}
+
+double SpectrogramGenerator::calculateOverlapFromSlider(double sliderValue)
+{
+    // Calculer l'overlap en fonction de la position du curseur
+    double overlap = m_settings.calculateOverlapFromSlider(sliderValue);
+    
+    // Debug logs
+    qDebug() << "Calculated overlap from slider:" << overlap
+             << "(slider value:" << sliderValue << ")";
+    
+    return overlap;
+}
+
+bool SpectrogramGenerator::isResolutionLimited()
+{
+    // Vérifier si la limitation est atteinte
+    return m_settings.isResolutionLimited();
+}
+
+double SpectrogramGenerator::calculateAudioDuration()
+{
+    // Calculer la durée audio
+    return m_settings.calculateAudioDuration();
+}
+
+double SpectrogramGenerator::calculateMaxBps(double writingSpeed)
+{
+    // Calculer le plafond physique maxBps
+    return m_settings.calculateMaxBps(writingSpeed);
+}
+
 SpectrogramSettingsCpp SpectrogramGenerator::createSettings(
     double minFreq,
     double maxFreq,
@@ -445,6 +493,10 @@ SpectrogramSettingsCpp SpectrogramGenerator::createSettings(
     qDebug() << "DEBUG -   settings.m_minFreq = " << settings.getMinFreq();
     qDebug() << "DEBUG -   settings.m_maxFreq = " << settings.getMaxFreq();
     
+    // Stocker les paramètres dans l'instance m_settings pour pouvoir y accéder plus tard
+    m_settings = settings;
+    
+    // Initialiser les paramètres depuis QML
     settings.initFromQmlParameters(
         minFreq,
         maxFreq,

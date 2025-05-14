@@ -1,6 +1,34 @@
-# Sp3ctraGen
+# Documentation de Sp3ctraGen
 
-Application de génération de spectrogrammes basée sur Qt Quick. Cette application est un portage de l'application CISYNTH_App originale développée en SwiftUI.
+Bienvenue dans la documentation de Sp3ctraGen, une application de génération de spectrogrammes haute qualité basée sur Qt Quick.
+
+## Présentation
+
+Sp3ctraGen est un portage de l'application CISYNTH_App originale développée en SwiftUI. Elle permet de générer des spectrogrammes optimisés pour l'impression et la numérisation, avec un contrôle précis sur les paramètres de génération.
+
+## Structure de la documentation
+
+La documentation est organisée en plusieurs sections :
+
+### Documentation utilisateur
+
+- [Guide d'installation](guide_utilisateur/installation.md) - Instructions pour installer l'application
+- [Guide de démarrage rapide](guide_utilisateur/prise_en_main.md) - Premiers pas avec Sp3ctraGen
+- [Documentation des fonctionnalités](guide_utilisateur/fonctionnalites.md) - Description détaillée des fonctionnalités
+
+### Documentation technique
+
+- [Vue d'ensemble](vue_ensemble.md) - Vue d'ensemble du projet et de son architecture
+- [Spécification du spectrogramme](technique/specification_spectrogramme.md) - Spécifications techniques détaillées
+- [Bins par seconde](technique/description_bins_par_seconde.md) - Explication du paramètre Bins/s
+- [Flux de données](technique/flux_donnees.md) - Description du flux de données dans l'application
+- [Traitement du signal](technique/traitement_signal.md) - Détails sur les algorithmes de traitement du signal
+
+### Documentation pour développeurs
+
+- [Architecture](developpement/architecture.md) - Description de l'architecture du projet
+- [Guide de débogage](developpement/debugging.md) - Guide pour déboguer l'application
+- [Guide de style](developpement/guide_style.md) - Standards de code et conventions
 
 ## Prérequis
 
@@ -21,35 +49,13 @@ Pour compiler et exécuter cette application sur macOS, vous aurez besoin des é
    brew install bear # Optionnel, pour générer compile_commands.json
    ```
 
-## Configuration de VSCode
-
-Le projet inclut une configuration VSCode complète pour macOS:
-
-- `.vscode/c_cpp_properties.json`: Configuration de l'IntelliSense
-- `.vscode/tasks.json`: Tâches de compilation
-- `.vscode/launch.json`: Configuration de débogage
-
 ## Compilation
 
 Vous pouvez compiler l'application de plusieurs façons:
 
-### Avec VSCode
-
-1. Ouvrez le dossier `Sp3ctraGen` dans VSCode
-2. Appuyez sur `Ctrl+Shift+B` ou sélectionnez `Terminal > Run Build Task...` pour lancer la compilation
-3. La tâche par défaut exécutera `qmake` puis `make`
-
-### En ligne de commande
-
-```bash
-cd Sp3ctraGen
-/opt/homebrew/opt/qt@5/bin/qmake -spec macx-clang CONFIG+=debug CONFIG+=qml_debug
-make -j8
-```
-
 ### Avec les scripts fournis
 
-Le projet inclut deux scripts pour faciliter la compilation et l'exécution:
+Le projet inclut plusieurs scripts pour faciliter la compilation et l'exécution:
 
 1. **scripts/build.sh**: Compile l'application
    ```bash
@@ -61,33 +67,24 @@ Le projet inclut deux scripts pour faciliter la compilation et l'exécution:
    scripts/run.sh
    ```
 
-## Débogage
+3. **scripts/debug.sh**: Lance l'application avec le débogueur
+   ```bash
+   scripts/debug.sh
+   ```
 
-Pour déboguer l'application dans VSCode:
+### En ligne de commande
 
-1. Placez des points d'arrêt dans votre code en cliquant dans la marge à gauche du numéro de ligne
-2. Appuyez sur F5 ou sélectionnez `Run > Start Debugging` pour lancer le débogueur
-3. Le débogueur s'arrêtera automatiquement au point d'entrée du programme (fonction main)
-4. Utilisez les contrôles de débogage pour naviguer dans le code:
-   - F10: Pas à pas principal (Step Over) - exécute la ligne actuelle sans entrer dans les fonctions
-   - F11: Pas à pas détaillé (Step Into) - entre dans les fonctions appelées
-   - Shift+F11: Pas à pas sortant (Step Out) - sort de la fonction actuelle
-   - F5: Continuer l'exécution jusqu'au prochain point d'arrêt
+```bash
+cd Sp3ctraGen
+/opt/homebrew/opt/qt@5/bin/qmake -spec macx-clang CONFIG+=debug CONFIG+=qml_debug
+make -j8
+```
 
-Pour des instructions détaillées sur le débogage, consultez le fichier [doc/dev/DEBUGGING.md](dev/DEBUGGING.md).
+### Avec VSCode
 
-## Structure du projet
-
-- `Sp3ctraGen.pro`: Fichier de projet Qt
-- `src/`: Fichiers source C/C++
-- `include/`: Fichiers d'en-tête C/C++
-- `qml/`: Fichiers QML pour l'interface utilisateur
-  - `components/`: Composants QML réutilisables
-- `scripts/`: Scripts utilitaires pour la compilation, l'exécution et le débogage
-- `build/`: Fichiers générés lors de la compilation
-- `doc/`: Documentation du projet
-- `assets/`: Ressources non-code
-- `config/`: Fichiers de configuration
+1. Ouvrez le dossier `Sp3ctraGen` dans VSCode
+2. Appuyez sur `Ctrl+Shift+B` ou sélectionnez `Terminal > Run Build Task...` pour lancer la compilation
+3. La tâche par défaut exécutera `qmake` puis `make`
 
 ## Architecture
 
@@ -99,7 +96,7 @@ L'architecture du projet est basée sur une séparation claire entre:
 
 2. **Logique métier** (C++)
    - `SpectrogramGenerator` (classe intermédiaire)
-   - Stratégies de visualisation (`VisualizationStrategy`, `RasterVisualizationStrategy`, `VectorVisualizationStrategy`)
+   - Stratégies de visualisation (Pattern Strategy)
    - Gestionnaires (`FileManager`, `PathManager`, `TaskManager`)
 
 3. **Moteur de traitement** (C)
@@ -107,9 +104,9 @@ L'architecture du projet est basée sur une séparation claire entre:
    - `spectral_fft.c` (traitement FFT)
    - `spectral_raster.c` et `spectral_vector.c` (génération d'images)
 
-Pour une description détaillée de l'architecture, consultez le fichier [doc/SpectrogramGenerator_Specification.md](SpectrogramGenerator_Specification.md) et [doc/dev/ARCHITECTURE.md](dev/ARCHITECTURE.md).
+Pour une description détaillée de l'architecture, consultez le fichier [Architecture détaillée](developpement/architecture.md).
 
-## Fonctionnalités
+## Fonctionnalités principales
 
 - Configuration des paramètres du spectrogramme
 - Sélection des fichiers d'entrée/sortie
@@ -117,84 +114,24 @@ Pour une description détaillée de l'architecture, consultez le fichier [doc/Sp
 - Traitement multithreadé
 - Interface utilisateur réactive avec composants réutilisables
 - Prévisualisation du spectrogramme
-- Impression directe des spectrogrammes en haute résolution (800 DPI)
+- Visualisation de la forme d'onde audio
+- Paramètres de filtrage avancés
+- Optimisation pour l'impression et la numérisation
 
-## Remarques sur le portage
-
-Cette application est un portage de l'application CISYNTH_App originale développée en SwiftUI. Le portage a été réalisé en:
-
-1. Recréant l'interface utilisateur en QML
-2. Créant une classe C++ pour faire le pont entre QML et le code C existant
-3. Intégrant le code C existant sans modification
-4. Ajoutant un système de threading pour éviter de bloquer l'interface
-5. Implémentant le pattern Strategy pour les différentes visualisations
+Pour plus de détails sur ces fonctionnalités, consultez la [documentation des fonctionnalités](guide_utilisateur/fonctionnalites.md).
 
 ## Dépannage
 
-### Problèmes de compilation
+Pour résoudre les problèmes courants, veuillez consulter :
 
-Si vous rencontrez des problèmes de compilation, vérifiez:
+- [Guide de débogage](developpement/debugging.md) pour les problèmes de compilation et d'exécution
+- [Guide d'installation](guide_utilisateur/installation.md) pour les problèmes d'installation
+- [Bugs connus et limitations](technique/bugs_connus.md) pour les problèmes identifiés
 
-1. Que Qt 5 est correctement installé et accessible
-   ```bash
-   ls -la /opt/homebrew/opt/qt@5/bin/qmake
-   ```
+## Contribution
 
-2. Que les bibliothèques FFTW, Cairo et libsndfile sont installées
-   ```bash
-   brew list fftw cairo libsndfile
-   ```
+Les contributions au projet sont les bienvenues. Veuillez consulter notre [guide de style](developpement/guide_style.md) pour les conventions de code et le processus de contribution.
 
-3. Essayez de nettoyer et recompiler
-   ```bash
-   make clean
-   /opt/homebrew/opt/qt@5/bin/qmake -spec macx-clang CONFIG+=debug CONFIG+=qml_debug
-   make -j8
-   ```
+## Licence
 
-### Problèmes de débogage
-
-Si le débogueur ne se lance pas correctement:
-
-1. Vérifiez que l'application a été compilée avec succès
-2. Vérifiez que le chemin dans `launch.json` correspond à l'emplacement de l'exécutable
-3. Assurez-vous que LLDB est installé (il est généralement inclus avec les outils de ligne de commande Xcode)
-
-### Problèmes avec le débogage pas à pas
-
-Si vous rencontrez des problèmes avec le débogage pas à pas:
-
-1. **Pas de surbrillance dans les fichiers source**:
-   ```bash
-   # Générer une configuration LLDB améliorée
-   scripts/debug_config.sh
-   
-   # Utiliser le script de débogage amélioré
-   scripts/debug_enhanced.sh
-   ```
-
-2. **Problèmes avec les points d'arrêt**:
-   ```bash
-   # Utiliser le script de débogage standard
-   scripts/debug.sh
-   ```
-
-3. **Si vous préférez utiliser VSCode**:
-   - Lancez VSCode depuis le terminal: `open -a 'Visual Studio Code' .`
-   - Assurez-vous que l'option `"externalConsole": false` est définie dans `.vscode/launch.json`
-   - Vérifiez que `"stopAtEntry": true` est défini pour que le débogueur s'arrête au début du programme
-
-4. **Si l'interface graphique de l'application s'ouvre mais que le débogueur ne semble pas répondre**:
-   - Fermer l'application
-   - Ajouter un point d'arrêt au début de la fonction `main()` dans `src/main.cpp`
-   - Redémarrer le débogueur
-
-5. Pour les Mac avec Apple Silicon (M1, M2, etc.), consultez la section spécifique dans `doc/dev/DEBUGGING.md`
-
-## Documentation
-
-- [SpectrogramGenerator_Specification.md](SpectrogramGenerator_Specification.md): Spécification détaillée du générateur de spectrogramme
-- [STRUCTURE_PROJET.md](STRUCTURE_PROJET.md): Description de la structure du projet
-- [dev/ARCHITECTURE.md](dev/ARCHITECTURE.md): Description de l'architecture du projet
-- [dev/DEBUGGING.md](dev/DEBUGGING.md): Guide de débogage
-- [dev/Charte_Graphique_Sp3ctraGen.md](dev/Charte_Graphique_Sp3ctraGen.md): Charte graphique de l'application
+Sp3ctraGen est distribué sous licence [insérer licence]. Voir le fichier LICENSE pour plus de détails.
