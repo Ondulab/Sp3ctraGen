@@ -152,7 +152,7 @@ void WaveformProvider::resampleForDisplay(int targetWidth, QVariantList &result)
     }
 }
 
-QVariantMap WaveformProvider::calculateExtractionSegment(double cursorPosition, int pageFormat, double writingSpeed, double binsPerSecond, int overlapPreset)
+QVariantMap WaveformProvider::calculateExtractionSegment(double cursorPosition, int pageFormat, double writingSpeed, double resolutionValue)
 {
     if (!m_fileLoaded) {
         qWarning() << "No audio file loaded";
@@ -165,26 +165,24 @@ QVariantMap WaveformProvider::calculateExtractionSegment(double cursorPosition, 
     // Convert writing speed from cm/s to mm/s
     double speedMMS = writingSpeed * 10.0;
     
-    // Déterminer la valeur d'overlap en fonction du préréglage
-    double overlapValue = 0.85; // Medium par défaut
-    switch(overlapPreset) {
-        case 0: overlapValue = 0.75; break; // Low
-        case 2: overlapValue = 0.95; break; // High
-        default: overlapValue = 0.85; break; // Medium
+    // Calculate base segment duration without adjustments
+    double baseSegmentDuration = paperWidthMM / speedMMS;
+    
+    // Calculer l'ajustement de résolution (entre 0.7 et 1.3)
+    // - resolutionValue = 0.0 (Temporal) -> ajustement = 0.7 (segment plus court)
+    // - resolutionValue = 0.5 (Balanced) -> ajustement = 1.0 (pas d'ajustement)
+    // - resolutionValue = 1.0 (Spectral) -> ajustement = 1.3 (segment plus long)
+    double resolutionAdjustment;
+    if (resolutionValue <= 0.5) {
+        // Interpolation linéaire entre 0.7 et 1.0
+        resolutionAdjustment = 0.7 + (resolutionValue / 0.5) * 0.3;
+    } else {
+        // Interpolation linéaire entre 1.0 et 1.3
+        resolutionAdjustment = 1.0 + ((resolutionValue - 0.5) / 0.5) * 0.3;
     }
     
-    // Calculer un ajustement équivalent à l'ancien système
-    // Plus le nombre de bins par seconde est bas, plus la durée du segment est longue
-    double binsAdjustment = 150.0 / binsPerSecond;
-    
-    // Plus le taux d'overlap est élevé, plus la durée du segment est courte
-    double overlapAdjustment = (1.0 - 0.85) / (1.0 - overlapValue);
-    
-    // Ajustement combiné
-    double combinedAdjustment = binsAdjustment * overlapAdjustment;
-    
-    // Calculate segment duration in seconds, adjusted by bins/s and overlap
-    double segmentDuration = (paperWidthMM / speedMMS) * combinedAdjustment;
+    // Calculate adjusted segment duration
+    double segmentDuration = baseSegmentDuration * resolutionAdjustment;
     
     // Start position in seconds (based on relative cursor position)
     double totalDuration = static_cast<double>(m_fileInfo.frames) / m_fileInfo.samplerate;

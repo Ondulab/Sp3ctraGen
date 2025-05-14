@@ -37,8 +37,7 @@ SectionContainer {
     // Propriétés pour les paramètres de génération
     property int pageFormat: 0
     property var writingSpeed: 8.0     // Utiliser 'var' au lieu de 'double' pour une meilleure détection des changements
-    property var binsPerSecond: 150.0  // Remplace fftSize
-    property int overlapPreset: 1      // 0=Low, 1=Medium, 2=High
+    property var resolutionValue: 0.5  // Valeur du curseur de résolution (0.0 à 1.0)
     
     // Propriété pour stocker le chemin d'accès complet au fichier audio
     property string audioSourceUrl: ""
@@ -66,17 +65,9 @@ SectionContainer {
         updateSegmentDisplay(audioWaveform.cursorPosition)
     }
     
-    // Observer les changements de binsPerSecond pour mettre à jour le segment
-    onBinsPerSecondChanged: {
-        // Recalculer le segment lorsque bins/s change
-        if (waveformProvider && waveformProvider.getTotalDuration() > 0 && audioWaveform) {
-            updateSegmentDisplay(audioWaveform.cursorPosition)
-        }
-    }
-    
-    // Observer les changements de overlapPreset pour mettre à jour le segment
-    onOverlapPresetChanged: {
-        // Recalculer le segment lorsque le préréglage d'overlap change
+    // Observer les changements de résolution pour mettre à jour le segment
+    onResolutionValueChanged: {
+        // Recalculer le segment lorsque la résolution change
         if (waveformProvider && waveformProvider.getTotalDuration() > 0 && audioWaveform) {
             updateSegmentDisplay(audioWaveform.cursorPosition)
         }
@@ -107,8 +98,7 @@ SectionContainer {
                     audioWaveform.cursorPosition,
                     pageFormat,
                     writingSpeed,
-                    binsPerSecond,
-                    overlapPreset
+                    resolutionValue
                 );
                 
                 // Mettre à jour les indicateurs visuels
@@ -415,8 +405,7 @@ SectionContainer {
             audioWaveform.cursorPosition,
             pageFormat,
             writingSpeed,
-            binsPerSecond,
-            overlapPreset
+            resolutionValue
         );
         
         // Extraire le segment audio
@@ -447,8 +436,7 @@ SectionContainer {
             audioWaveform.cursorPosition,
             pageFormat,
             writingSpeed,
-            binsPerSecond,
-            overlapPreset
+            resolutionValue
         );
         
         return segment.startPosition;
@@ -464,8 +452,7 @@ SectionContainer {
             position,
             pageFormat,
             writingSpeed,
-            binsPerSecond,
-            overlapPreset
+            resolutionValue
         );
         // Mettre à jour les indicateurs visuels
         var relativeStart = segment.startPosition / waveformProvider.getTotalDuration();

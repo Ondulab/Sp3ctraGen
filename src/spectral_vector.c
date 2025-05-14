@@ -493,8 +493,21 @@ int spectral_generator_vector_pdf_impl(const SpectrogramSettings *cfg,
     }
     
     // Calculer la taille d'un pixel du spectrogramme
-    double window_width = spectro_width_pt / visible_windows;
+    
+    // Modification pour adaptation dynamique de l'espacement entre bins
+    // Même principe que dans spectral_raster.c : l'espacement entre bins est calculé
+    // pour garantir une largeur fixe indépendante du bins/s
+    double seconds_per_window = 1.0 / binsPerSecond;
+    double cm_per_window = seconds_per_window * writingSpeed;
+    // Conversion cm -> points pour PDF
+    double points_per_window = cm_per_window * (POINTS_PER_INCH / 2.54);
+    double window_width = points_per_window;
+    
     double bin_height = spectro_height_pt / (index_max - index_min + 1);
+    
+    printf(" - Vector window width: %.3f points\n", window_width);
+    printf(" - Adaptive spacing: %.3f points per bin (%.3f cm per bin)\n", 
+           window_width, cm_per_window);
     
     // Dessiner chaque "pixel" du spectrogramme avec des rectangles vectoriels
     for (int w = 0; w < visible_windows; w++) {

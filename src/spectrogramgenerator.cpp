@@ -421,6 +421,14 @@ double SpectrogramGenerator::calculateBpsFromSlider(double sliderValue, double w
              << "(slider value:" << sliderValue
              << ", writing speed:" << writingSpeed << ")";
     
+    // Calculer également la FFT size et l'overlap effectif pour l'affichage
+    int calculatedFftSize = m_settings.calculateFftSize(m_settings.getSampleRate());
+    double hopSize = static_cast<double>(m_settings.getSampleRate()) / bps;
+    double effectiveOverlap = 1.0 - (hopSize / calculatedFftSize);
+    
+    // Émettre le signal avec les paramètres calculés
+    emit fftParametersCalculated(calculatedFftSize, effectiveOverlap, bps);
+    
     return bps;
 }
 

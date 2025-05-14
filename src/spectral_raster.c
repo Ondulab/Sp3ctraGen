@@ -599,8 +599,18 @@ int spectral_generator_impl(const SpectrogramSettings *cfg,
     }
     
     // Calculate pixel dimensions - directement en 800 DPI
-    double window_width = spectro_width / (double)visible_windows;
+    
+    // Modification pour adaptation dynamique de l'espacement entre bins
+    // Principe : l'espacement entre bins est calculé pour garantir une largeur fixe
+    // indépendante du bins/s (seule la vitesse d'écriture influence la largeur)
+    double seconds_per_window = 1.0 / binsPerSecond;
+    double cm_per_window = seconds_per_window * writingSpeed;
+    double pixels_per_window = cm_per_window / PIXELS_TO_CM;
+    double window_width = pixels_per_window;
+    
     printf(" - Window width: %.3f pixels at 800 DPI\n", window_width);
+    printf(" - Adaptive spacing: %.3f pixels per bin (%.3f cm per bin)\n", 
+           window_width, cm_per_window);
     
     // Pré-calcul des fréquences réelles pour chaque bin FFT
     double *bin_frequencies = (double *)malloc(num_bins * sizeof(double));

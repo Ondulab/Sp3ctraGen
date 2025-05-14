@@ -392,9 +392,8 @@ ApplicationWindow {
                 pageFormat: outputFormatSection.pageFormat
                 // Utiliser la valeur numérique au lieu de la chaîne de caractères
                 writingSpeed: spectrogramParametersSection.writingSpeedNumeric
-                // Nouveaux paramètres qui remplacent fftSize
-                binsPerSecond: spectrogramParametersSection.binsPerSecondNumeric
-                overlapPreset: spectrogramParametersSection.overlapPreset
+                // Valeur du curseur de résolution
+                resolutionValue: spectrogramParametersSection.resolutionSliderValue
                 
                 onRequestGenerateSpectrogram: {
                     generateSpectrogramFromSegment()
@@ -462,13 +461,9 @@ ApplicationWindow {
         console.log("[qml] DEBUG -   minFreq après conversion: " + minFreq);
         console.log("[qml] DEBUG -   maxFreq brut (getDisplayValue): '" + spectrogramParametersSection.maxFreqField.getDisplayValue() + "'");
         console.log("[qml] DEBUG -   maxFreq après conversion: " + maxFreq);
-        console.log("[qml] DEBUG -   binsPerSecond: '" + spectrogramParametersSection.binsPerSecond + "'");
+        console.log("[qml] DEBUG -   resolution value: '" + spectrogramParametersSection.resolutionSliderValue + "'");
         
-        var overlapPreset = spectrogramParametersSection.overlapPreset;
-        var overlapText = ["Low", "Medium", "High"][overlapPreset];
-        
-        console.log("[qml] Paramètres spectrogram: bins/s=" + spectrogramParametersSection.binsPerSecondNumeric +
-                    ", overlapPreset=" + overlapText +
+        console.log("[qml] Paramètres spectrogram: resolution=" + spectrogramParametersSection.resolutionSliderValue +
                     ", minFreq=" + minFreq + ", maxFreq=" + maxFreq +
                     ", dynamicRange=" + dynamicRange + ", gamma=" + gammaCorrection);
                     
@@ -503,8 +498,8 @@ ApplicationWindow {
             audioSegment,
             originalFileName,
             startPosition,
-            spectrogramParametersSection.binsPerSecondNumeric, // Paramètre bins/s
-            spectrogramParametersSection.overlapPreset // Préréglage d'overlap (Low, Medium, High)
+            spectrogramParametersSection.binsPerSecondValue, // Paramètre bins/s calculé à partir du curseur
+            Math.round(spectrogramParametersSection.resolutionSliderValue * 2) // Préréglage d'overlap (0=Low, 1=Medium, 2=High)
         )
     }
 }

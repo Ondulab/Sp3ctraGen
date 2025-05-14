@@ -42,24 +42,14 @@ SectionContainer {
     property alias writingSpeed: writingSpeedField.value
     property alias writingSpeedNumeric: writingSpeedField.numericValue
     
-    // Propriétés de compatibilité avec le code existant
-    property string binsPerSecond: binsPerSecondValue.toFixed(1)
-    property double binsPerSecondNumeric: binsPerSecondValue
-    
-    // Compatibilité : fonction émulant le comportement du champ binsPerSecond supprimé
-    function getDisplayBinsPerSecond() {
-        return binsPerSecondValue.toFixed(1);
-    }
-    
-    // Simulation d'overlap_preset maintenant géré par le curseur
-    property int overlapPreset: {
-        if (resolutionSlider.value < 0.25) return 0;      // Low
-        else if (resolutionSlider.value < 0.75) return 1; // Medium
-        else return 2;                                     // High
-    }
+    // Valeurs calculées directement à partir du curseur
     
     // Valeur interne pour bins/s calculée à partir du curseur
     property double binsPerSecondValue: 150.0
+    
+    // Propriétés pour afficher les valeurs calculées par le backend
+    property int calculatedFftSize: 4096   // Valeur par défaut
+    property double calculatedOverlap: 0.85 // Valeur par défaut
     
     // Propriété pour le tag de limitation
     property bool isResolutionLimited: false
@@ -72,7 +62,7 @@ SectionContainer {
     // Signaux émis lorsque les paramètres changent
     signal parametersChanged()
     
-    // Pas besoin de champ caché, l'ancien composant est complètement remplacé par le curseur
+    // Configuration du layout de l'interface utilisateur
     
     GridLayout {
         id: parametersGrid
@@ -317,13 +307,13 @@ SectionContainer {
                 }
                 ThemedLabel {
                     id: binsPerSecondValueLabel
-                    text: binsPerSecondNumeric.toFixed(1)
+                    text: binsPerSecondValue.toFixed(1)
                     font.pixelSize: smallFontSize
                     Layout.alignment: Qt.AlignLeft
                     Layout.preferredWidth: parent.width / 2 - 10
                 }
                 
-                // FFT Size calculée
+                // Taille FFT calculée
                 ThemedLabel {
                     text: "FFT Size:"
                     font.pixelSize: smallFontSize
@@ -332,24 +322,24 @@ SectionContainer {
                     Layout.preferredWidth: parent.width / 2 - 10
                 }
                 ThemedLabel {
-                    id: fftSizeCalculatedLabel
-                    text: "8192" // Valeur initiale
+                    id: fftSizeLabel
+                    text: calculatedFftSize.toString()
                     font.pixelSize: smallFontSize
                     Layout.alignment: Qt.AlignLeft
                     Layout.preferredWidth: parent.width / 2 - 10
                 }
                 
-                // Overlap effectif calculé
+                // Overlap calculé
                 ThemedLabel {
-                    text: "Effective Overlap:"
+                    text: "Overlap:"
                     font.pixelSize: smallFontSize
                     horizontalAlignment: Text.AlignRight
                     Layout.alignment: Qt.AlignRight
                     Layout.preferredWidth: parent.width / 2 - 10
                 }
                 ThemedLabel {
-                    id: overlapEffectifLabel
-                    text: "0.922" // Valeur initiale
+                    id: overlapLabel
+                    text: calculatedOverlap.toFixed(3)
                     font.pixelSize: smallFontSize
                     Layout.alignment: Qt.AlignLeft
                     Layout.preferredWidth: parent.width / 2 - 10
@@ -402,47 +392,30 @@ SectionContainer {
         // Les paramètres de filtre ont été déplacés vers une section séparée FilterParameters.qml
     }
     
-    // Méthode pour calculer et mettre à jour les paramètres dérivés
+    // Méthode pour mettre à jour les valeurs affichées
     function updateCalculatedParameters() {
-        if (generator) {
-            // Calculer l'overlap à partir de la position du curseur
-            var newOverlap = generator.calculateOverlapFromSlider(resolutionSlider.value);
-        } else {
-            console.error("Generator not available for overlap calculation");
-            var newOverlap = 0.75; // Valeur par défaut
-        }
-        
-        // Calculer la FFT size et l'overlap effectif
-        var sampleRate = 192000; // Valeur par défaut (sera remplacée par le vrai sample rate)
-        var hopSize = sampleRate / binsPerSecondValue;
-        var diviseur = 1.0 - newOverlap;
-        var calculatedFft = hopSize / diviseur;
-        
-        // Arrondir à la puissance de 2 supérieure
-        var powerOf2 = 1;
-        while (powerOf2 < calculatedFft) {
-            powerOf2 *= 2;
-        }
-        
-        // Mettre à jour l'affichage de la FFT calculée
-        fftSizeCalculatedLabel.text = powerOf2.toString();
-        
-        // Calculer l'overlap effectif
-        var effectiveOverlap = 1.0 - (hopSize / powerOf2);
-        overlapEffectifLabel.text = effectiveOverlap.toFixed(4);
-        
         // Mettre à jour l'affichage de la durée audio
         audioDurationLabel.text = audioDuration.toFixed(2);
+        
+        // Mettre à jour l'affichage des bins/s
+        binsPerSecondValueLabel.text = binsPerSecondValue.toFixed(1);
+        
+        // Mettre à jour l'affichage de la taille FFT et de l'overlap
+        fftSizeLabel.text = calculatedFftSize.toString();
+        overlapLabel.text = calculatedOverlap.toFixed(3);
     }
     
     // Méthode pour mettre à jour les paramètres FFT calculés depuis le backend
     function updateCalculatedFftParameters(calculatedFftSize, effectiveOverlap) {
-        // Mettre à jour les labels avec les valeurs calculées
-        fftSizeCalculatedLabel.text = calculatedFftSize.toString();
-        overlapEffectifLabel.text = effectiveOverlap.toFixed(4);
+        // Mettre à jour les propriétés
+        this.calculatedFftSize = calculatedFftSize;
+        this.calculatedOverlap = effectiveOverlap;
         
-        console.log("Mise à jour des paramètres FFT calculés dans l'interface: FFT=" +
-                    calculatedFftSize + ", Overlap effectif=" + effectiveOverlap.toFixed(4));
+        // Forcer une mise à jour des labels
+        updateCalculatedParameters();
+        
+        console.log("FFT parameters updated: FFT Size = " + calculatedFftSize +
+                    ", Overlap = " + effectiveOverlap.toFixed(3));
     }
     
     // Initialisation
@@ -458,6 +431,8 @@ SectionContainer {
             // Valeurs par défaut
             binsPerSecondValue = 150.0;
             audioDuration = 2.625; // 21cm / 8cm/s
+            calculatedFftSize = 4096;
+            calculatedOverlap = 0.85;
             isResolutionLimited = false;
         }
     }

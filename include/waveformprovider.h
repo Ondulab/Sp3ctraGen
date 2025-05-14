@@ -38,8 +38,7 @@ public:
         double cursorPosition,
         int pageFormat,
         double writingSpeed,
-        double binsPerSecond = 150.0,
-        int overlapPreset = 1  // 0=Low, 1=Medium, 2=High
+        double resolutionValue = 0.5  // Position du curseur (0.0=Temporal, 0.5=Balanced, 1.0=Spectral)
     );
     
     // Extracts the audio segment for generation
