@@ -112,8 +112,9 @@ void draw_reference_lines_vector(cairo_t *cr, double spectro_x, double spectro_w
  *---------------------------------------------------------------------*/
 void draw_parameters_text_vector(cairo_t *cr, double page_width_pt, double page_height_pt,
                                 const SpectrogramSettings *s) {
-    // Formater la chaîne de paramètres
-    char params[1024];
+    // Formater la chaîne de paramètres sur deux lignes pour plus de lisibilité
+    char line1[1024];
+    char line2[1024];
     
     // Déterminer le texte du préréglage d'overlap
     const char* overlapText;
@@ -123,26 +124,54 @@ void draw_parameters_text_vector(cairo_t *cr, double page_width_pt, double page_
         default: overlapText = "Medium"; break;
     }
     
-    snprintf(params, sizeof(params),
-             "Bins/s: %.1f, Overlap: %s, Freq: %.0f-%.0f Hz, SR: %d Hz, DR: %.1f dB, "
-             "Gamma: %.1f, Contrast: %.1f, HB: %s (%.2f), WS: %.1f cm/s",
-             s->binsPerSecond, overlapText, s->minFreq, s->maxFreq, s->sampleRate,
+    // Calculer la taille FFT pour l'afficher (même formule que dans le code principal)
+    double hopSize = s->sampleRate / s->binsPerSecond;
+    double overlapValue;
+    switch(s->overlapPreset) {
+        case 0: overlapValue = OVERLAP_PRESET_LOW; break;
+        case 2: overlapValue = OVERLAP_PRESET_HIGH; break;
+        default: overlapValue = OVERLAP_PRESET_MEDIUM; break;
+    }
+    double diviseur = 1.0 - overlapValue;
+    double calculatedFftSize = hopSize / diviseur;
+    int fftSize = 1;
+    while (fftSize < calculatedFftSize) {
+        fftSize *= 2;
+    }
+    
+    // Ligne 1: paramètres essentiels du spectrogramme
+    snprintf(line1, sizeof(line1),
+             "Bins/s: %.1f, Overlap: %s (FFT: %d), Freq: %.0f-%.0f Hz, SR: %d Hz",
+             s->binsPerSecond, overlapText, fftSize, s->minFreq, s->maxFreq, s->sampleRate);
+    
+    // Ligne 2: paramètres de traitement et filtres
+    snprintf(line2, sizeof(line2),
+             "DR: %.1f dB, Gamma: %.1f, Contrast: %.1f, HB: %s (%.2f), HPF: %s (%.0f Hz), Norm: %s, WS: %.1f cm/s",
              s->dynamicRangeDB, s->gammaCorrection, s->contrastFactor,
-             s->enableHighBoost ? "On" : "Off", s->highBoostAlpha, s->writingSpeed);
+             s->enableHighBoost ? "On" : "Off", s->highBoostAlpha,
+             s->enableHighPassFilter ? "On" : "Off", s->highPassCutoffFreq,
+             s->enableNormalization ? "On" : "Off", s->writingSpeed);
     
     // Positionner et dessiner le texte
     cairo_set_source_rgb(cr, 0.0, 0.0, 0.0);
     cairo_select_font_face(cr, "Arial", CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_NORMAL);
     cairo_set_font_size(cr, 8);
     
-    cairo_text_extents_t extents;
-    cairo_text_extents(cr, params, &extents);
+    // Dessiner la première ligne
+    cairo_text_extents_t extents1;
+    cairo_text_extents(cr, line1, &extents1);
+    double text_x1 = (page_width_pt - extents1.width) / 2;
+    double text_y1 = page_height_pt - 25.0;
+    cairo_move_to(cr, text_x1, text_y1);
+    cairo_show_text(cr, line1);
     
-    double text_x = (page_width_pt - extents.width) / 2;
-    double text_y = page_height_pt - 15.0;
-    
-    cairo_move_to(cr, text_x, text_y);
-    cairo_show_text(cr, params);
+    // Dessiner la deuxième ligne
+    cairo_text_extents_t extents2;
+    cairo_text_extents(cr, line2, &extents2);
+    double text_x2 = (page_width_pt - extents2.width) / 2;
+    double text_y2 = page_height_pt - 15.0;
+    cairo_move_to(cr, text_x2, text_y2);
+    cairo_show_text(cr, line2);
 }
 
 /*---------------------------------------------------------------------
