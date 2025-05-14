@@ -20,6 +20,8 @@ ApplicationWindow {
     visible: true
     color: "#222"
     
+    // Aucun menu utilisé - interface minimaliste focalisée sur le contenu
+    
     // Propriétés responsives
     property bool isNarrow: width < AppStyles.Theme.narrowWidthThreshold
     property bool isSmall: width < AppStyles.Theme.smallWidthThreshold
@@ -417,6 +419,8 @@ ApplicationWindow {
             }
         }
     }
+    
+    // Aucun raccourci clavier global - toutes les interactions se font via les contrôles directs
     
     // ===== Fonctions de coordination =====
     
