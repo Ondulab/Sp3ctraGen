@@ -78,7 +78,8 @@ void fft_cleanup(fftw_plan plan, double *in, fftw_complex *out)
  * compute_spectrogram()
  *
  * Computes the spectrogram matrix from an audio signal.
- * Uses the exact overlap value provided by the user without adjustment.
+ * Uses FFT size and bins_per_second to handle the temporal/spectral
+ * resolution trade-off according to the new adaptive algorithm.
  *
  * Returns:
  *  - 0 on success, non-zero on error.
@@ -98,33 +99,34 @@ int compute_spectrogram(double *signal, int total_samples, int sample_rate,
         return 1;
     }
     
-    // Calculer la valeur d'overlap basée sur le préréglage
-    double overlap_value;
+    // Le overlap_preset est maintenant une valeur dérivée calculée par SpectrogramParametersModel
+    // et n'est conservé que pour compatibilité avec l'existant
+    const char* overlap_preset_name;
     switch(overlap_preset) {
-        case 0: // Low
-            overlap_value = OVERLAP_PRESET_LOW;
-            printf(" - Using low overlap preset: %.4f\n", overlap_value);
+        case 0: 
+            overlap_preset_name = "Low";
             break;
-        case 2: // High
-            overlap_value = OVERLAP_PRESET_HIGH;
-            printf(" - Using high overlap preset: %.4f\n", overlap_value);
+        case 2: 
+            overlap_preset_name = "High";
             break;
-        default: // Medium (default)
-            overlap_value = OVERLAP_PRESET_MEDIUM;
-            printf(" - Using medium overlap preset: %.4f\n", overlap_value);
+        default:
+            overlap_preset_name = "Medium";
             break;
     }
+    printf(" - Overlap preset: %s\n", overlap_preset_name);
     
-    // Calculate step size based on bins per second
+    // Calculer le step size basé sur bins_per_second
+    // Ce paramètre est directement lié à la vitesse d'écriture (WS)
+    // et est calculé dynamiquement selon la position du curseur
     int step = (int)(sample_rate / bins_per_second);
-    printf(" - Using bins/s: %.2f (hop size: %d samples)\n",
+    if (step < 1) step = 1;
+    
+    printf(" - Using bins/s: %.2f (hop size: %d samples)\n", 
            bins_per_second, step);
     
-    // Calculer l'overlap effectif pour information
+    // L'overlap effectif est maintenant une conséquence de la taille FFT et du step
     double effective_overlap = 1.0 - ((double)step / fft_size);
     printf(" - Resulting effective overlap: %.4f\n", effective_overlap);
-    
-    if (step < 1) step = 1;
     
     // Calculate number of windows
     int num_windows = (total_samples - fft_size) / step + 1;
@@ -164,8 +166,8 @@ int compute_spectrogram(double *signal, int total_samples, int sample_rate,
     }
     
     printf(" - Computing spectrogram: %d windows, %d frequency bins\n", num_windows, num_bins);
-    printf(" - Using overlap preset %d (value: %.4f, step size: %d samples)\n",
-           overlap_preset, overlap_value, step);
+    printf(" - Using overlap preset: %s (effective overlap: %.4f, step size: %d samples)\n",
+           overlap_preset_name, effective_overlap, step);
     printf(" - Frequency range: %.2f Hz to %.2f Hz (bins %d to %d)\n",
            min_freq, max_freq, index_min, index_max);
     

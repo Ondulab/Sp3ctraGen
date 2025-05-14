@@ -223,8 +223,9 @@ void design_highpass_filter(double cutoff_freq, int order, double sample_rate, d
  *
  * Applies the designed high-pass filter to the signal.
  *---------------------------------------------------------------------*/
-void apply_highpass_filter(double *signal, int num_samples, double *a, double *b, int filter_order)
+void apply_highpass_filter(double *signal, int num_samples, double *a, double *b, int filter_order __attribute__((unused)))
 {
+    // Note: filter_order parameter is unused in this implementation
     // For simplicity, implement a basic direct form I difference equation
     // This is a simplified version - a real implementation would handle all filter orders
     

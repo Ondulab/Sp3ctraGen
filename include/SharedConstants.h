@@ -17,28 +17,43 @@ extern "C" {
 #define ENABLE_HIGH_BOOST       1
 #define HIGH_BOOST_ALPHA        0.99
 #define DEFAULT_BINS_PER_SECOND 150.0
+#define DEFAULT_RESOLUTION_VALUE 0.5    // Position du curseur par défaut (0.0-1.0)
 
 // Limites pour les bins par seconde
-#define MIN_BINS_PER_SECOND     20.0
-#define MAX_BINS_PER_SECOND     1200.0
+#define MIN_BINS_PER_SECOND     20.0    // Minimum absolu pour la densité temporelle 
+#define MAX_BINS_PER_SECOND     1200.0  // Maximum absolu pour la densité temporelle
 
 // Constantes pour la résolution d'impression
 #define PRINTER_DPI             800.0
 #define INCH_TO_CM              2.54
 
-// Constantes pour les ancres du curseur "Resolution"
-#define RESOLUTION_TEMPORAL_RATIO    0.26
-#define RESOLUTION_BALANCED_RATIO    0.16
-#define RESOLUTION_SPECTRAL_RATIO    0.085
+// Paramètres du système de résolution adaptative
+// ---------------------------------------------
 
-#define RESOLUTION_TEMPORAL_OVERLAP  0.30
-#define RESOLUTION_BALANCED_OVERLAP  0.75
-#define RESOLUTION_SPECTRAL_OVERLAP  0.92
+// Taux d'échantillonnage de référence pour l'adaptation
+#define REFERENCE_SAMPLE_RATE    48000
 
-// Niveaux d'overlap pour le mode bins/s
-#define OVERLAP_PRESET_LOW      0.75
-#define OVERLAP_PRESET_MEDIUM   0.85
-#define OVERLAP_PRESET_HIGH     0.95
+// Tailles FFT de référence pour chaque position du curseur (à 48kHz)
+#define RESOLUTION_TEMPORAL_FFT_SIZE  512     // Position 0.0 (temporel)
+#define RESOLUTION_BALANCED_FFT_SIZE  2048    // Position 0.5 (équilibré)
+#define RESOLUTION_SPECTRAL_FFT_SIZE  8192    // Position 1.0 (spectral)
+
+// Facteurs de densité temporelle pour chaque position du curseur
+// (en pourcentage du maximum physique possible)
+#define RESOLUTION_TEMPORAL_DENSITY_FACTOR  1.0     // 100% du max
+#define RESOLUTION_BALANCED_DENSITY_FACTOR  0.5     // 50% du max
+#define RESOLUTION_SPECTRAL_DENSITY_FACTOR  0.2     // 20% du max
+
+// Valeurs d'overlap typiques (pour information, calculées dynamiquement)
+#define RESOLUTION_TEMPORAL_OVERLAP  0.30    // Faible overlap en mode temporel
+#define RESOLUTION_BALANCED_OVERLAP  0.75    // Overlap moyen en mode équilibré
+#define RESOLUTION_SPECTRAL_OVERLAP  0.92    // Overlap élevé en mode spectral
+
+// Presets d'overlap pour rétrocompatibilité
+// (utilisation progressivement remplacée par l'overlap calculé dynamiquement)
+#define OVERLAP_PRESET_LOW      0.30
+#define OVERLAP_PRESET_MEDIUM   0.75
+#define OVERLAP_PRESET_HIGH     0.92
 #define DEFAULT_OVERLAP_PRESET  1     // Medium (0=Low, 1=Medium, 2=High)
 
 // Dimensions de page en millimètres

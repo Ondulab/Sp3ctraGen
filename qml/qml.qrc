@@ -28,6 +28,9 @@
         <file>styles/Fonts.qml</file>
         <file>styles/qmldir</file>
         
+        <!-- Exemples MVVM -->
+        <file>examples/MVVMExample.qml</file>
+        
         <!-- Polices -->
         <file>styles/fonts/Orbitron-Regular.ttf</file>
         <file>styles/fonts/orbitron.css</file>

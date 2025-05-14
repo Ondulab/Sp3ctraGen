@@ -413,13 +413,21 @@ double SpectrogramGenerator::calculateBpsFromSlider(double sliderValue, double w
     m_settings.setWritingSpeed(writingSpeed);
     m_settings.setResolutionSliderValue(sliderValue);
     
-    // Calculer les bins/s en fonction de la position du curseur
+    // Déterminer le préréglage d'overlap en fonction de la position du curseur
+    int overlapPreset = m_settings.getOverlapPresetFromSlider(sliderValue);
+    m_settings.setOverlapPreset(overlapPreset);
+    
+    // Calculer les bins/s optimaux en fonction de la vitesse d'écriture et de la résolution d'impression
     double bps = m_settings.calculateBpsFromSlider(sliderValue, writingSpeed);
     
+    // IMPORTANT: Mettre à jour la valeur de bins/s dans les paramètres
+    m_settings.setBinsPerSecond(bps);
+    
     // Debug logs
-    qDebug() << "Calculated bins/s from slider:" << bps
-             << "(slider value:" << sliderValue
-             << ", writing speed:" << writingSpeed << ")";
+    qDebug() << "Resolution processing - slider:" << sliderValue
+             << "-> overlap preset:" << overlapPreset
+             << "-> optimal bins/s:" << bps
+             << "(writing speed:" << writingSpeed << "cm/s)";
     
     // Calculer également la FFT size et l'overlap effectif pour l'affichage
     int calculatedFftSize = m_settings.calculateFftSize(m_settings.getSampleRate());
@@ -540,9 +548,17 @@ SpectrogramSettingsCpp SpectrogramGenerator::createSettings(
         overlapPreset
     );
     
-    // Calculer la FFT size en fonction du taux d'échantillonnage et bins/s
-    int calculatedFftSize = settings.calculateFftSize(sampleRate);
-    qDebug() << " - Calculated FFT size:" << calculatedFftSize << "(from bins/s=" << binsPerSecond << ")";
+    // La taille FFT peut être fournie directement par le modèle de résolution adaptative
+    int calculatedFftSize;
+    if (settings.getFftSize() > 0) {
+        // Utiliser la taille FFT précalculée si disponible
+        calculatedFftSize = settings.getFftSize();
+        qDebug() << " - Using provided FFT size:" << calculatedFftSize << "from resolution model";
+    } else {
+        // Sinon calculer la taille FFT à partir des paramètres courants
+        calculatedFftSize = settings.calculateFftSize(sampleRate);
+        qDebug() << " - Calculated FFT size:" << calculatedFftSize << "(from bins/s=" << binsPerSecond << ")";
+    }
     
     // Calculer l'overlap effectif
     double hopSize = static_cast<double>(sampleRate) / binsPerSecond;
@@ -550,6 +566,9 @@ SpectrogramSettingsCpp SpectrogramGenerator::createSettings(
     double effectiveOverlap = 1.0 - (hopSize / calculatedFftSize);
     qDebug() << " - Overlap preset: " << overlapPreset << " (value: " << overlapValue << ")";
     qDebug() << " - Resulting effective overlap:" << effectiveOverlap;
+    
+    // Stocker la valeur calculée pour qu'elle soit transmise au moteur de génération
+    settings.setFftSize(calculatedFftSize);
     
     // Émettre le signal avec les paramètres calculés
     emit fftParametersCalculated(calculatedFftSize, effectiveOverlap, binsPerSecond);

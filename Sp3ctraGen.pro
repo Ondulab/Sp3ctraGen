@@ -41,6 +41,8 @@ SOURCES += \
     src/waveformprovider.cpp \
     src/vectorprintprovider.cpp \
     src/SpectrogramSettingsCpp.cpp \
+    src/SpectrogramParametersModel.cpp \
+    src/SpectrogramViewModel.cpp \
     src/FileManager.cpp \
     src/RasterVisualizationStrategy.cpp \
     src/VectorVisualizationStrategy.cpp \
@@ -62,6 +64,8 @@ HEADERS += \
     include/waveformprovider.h \
     include/vectorprintprovider.h \
     include/SpectrogramSettingsCpp.h \
+    include/SpectrogramParametersModel.h \
+    include/SpectrogramViewModel.h \
     include/Constants.h \
     include/SharedConstants.h \
     include/FileManager.h \

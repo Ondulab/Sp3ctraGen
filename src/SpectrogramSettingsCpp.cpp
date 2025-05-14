@@ -41,6 +41,7 @@ SpectrogramSettingsCpp::SpectrogramSettingsCpp()
     , m_overlapPreset(DEFAULT_OVERLAP_PRESET) // Préréglage d'overlap (Medium par défaut)
     , m_resolutionSliderValue(0.5) // Valeur initiale du curseur: Balanced
     , m_isResolutionLimited(false) // Pas de limitation initialement
+    , m_fftSize(0) // 0 signifie calcul automatique
 {
 }
 
@@ -106,6 +107,7 @@ SpectrogramSettings SpectrogramSettingsCpp::toCStruct() const
     // Paramètres pour le mode bins/s
     cSettings.binsPerSecond = m_binsPerSecond;
     cSettings.overlapPreset = m_overlapPreset;
+    cSettings.fftSize = m_fftSize; // Transfert de la taille FFT calculée
     return cSettings;
 }
 
@@ -141,6 +143,7 @@ SpectrogramSettingsCpp SpectrogramSettingsCpp::fromCStruct(const SpectrogramSett
     // Paramètres pour le mode bins/s
     settings.m_binsPerSecond = cSettings.binsPerSecond;
     settings.m_overlapPreset = cSettings.overlapPreset;
+    settings.m_fftSize = cSettings.fftSize; // Récupération de la taille FFT
     return settings;
 }
 
@@ -245,7 +248,9 @@ int SpectrogramSettingsCpp::calculateFftSize(int sampleRate) const
     const double diviseur = 1.0 - overlapValue;
     
     // Calcul du hop size (pas entre fenêtres FFT) en échantillons
-    double hopSize = sampleRate / m_binsPerSecond;
+    // S'assurer que la valeur de binsPerSecond est utilisée (pas une constante)
+    double actualBinsPerSecond = m_binsPerSecond;
+    double hopSize = sampleRate / actualBinsPerSecond;
     
     // Calcul de la FFT size initiale
     int fftSize = static_cast<int>(hopSize / diviseur);
@@ -311,77 +316,100 @@ double SpectrogramSettingsCpp::calculateAudioDuration() const
 }
 
 /**
- * @brief Calcule le bins/s en fonction de la position du curseur et de la vitesse d'écriture
+ * @brief Calcule le bins/s optimal en fonction de la vitesse d'écriture et de la résolution d'impression
  *
- * Cette méthode implémente une interpolation linéaire entre les trois ancres du curseur:
- * - Temporal (0): Privilégie la résolution temporelle
- * - Balanced (0.5): Équilibre entre résolution temporelle et fréquentielle
- * - Spectral (1.0): Privilégie la résolution fréquentielle
+ * Cette méthode implémente la nouvelle logique :
+ * 1. Le bins/s est automatiquement adapté à la résolution d'impression (800 dpi)
+ * 2. Le slider de résolution contrôle désormais uniquement l'overlap (temporel/spectral)
+ * 3. La relation est garantie: durée = largeur papier (cm) / writeSpeed (cm/s)
  *
- * La valeur de bps est limitée entre MIN_BINS_PER_SECOND et MAX_BINS_PER_SECOND
- * et ne peut pas dépasser le plafond physique maxBps.
- *
- * @param sliderValue Position du curseur (0.0 à 1.0)
+ * @param sliderValue Position du curseur (0.0 à 1.0) - Utilisé uniquement pour les logs
  * @param writingSpeed Vitesse d'écriture en cm/s
- * @return Valeur de bps calculée
+ * @return Valeur de bins/s optimale calculée
  */
 double SpectrogramSettingsCpp::calculateBpsFromSlider(double sliderValue, double writingSpeed) const
 {
-    double maxBps = calculateMaxBps(writingSpeed);
-    double ratio;
+    // Calcul du bins/s optimal basé sur la résolution d'impression (800dpi)
+    // Formula: bins_per_second = (800 dpi / 2.54 cm/inch) * writeSpeed
+    double optimalBps = (PRINTER_DPI / INCH_TO_CM) * writingSpeed;
     
-    if (sliderValue <= 0.5) {
-        // Interpolation linéaire entre Temporal (0) et Balanced (0.5)
-        ratio = RESOLUTION_TEMPORAL_RATIO +
-                (sliderValue / 0.5) * (RESOLUTION_BALANCED_RATIO - RESOLUTION_TEMPORAL_RATIO);
-    } else {
-        // Interpolation linéaire entre Balanced (0.5) et Spectral (1.0)
-        ratio = RESOLUTION_BALANCED_RATIO +
-                ((sliderValue - 0.5) / 0.5) * (RESOLUTION_SPECTRAL_RATIO - RESOLUTION_BALANCED_RATIO);
-    }
-    
-    // Calculer le bps initial
-    double bps = ratio * maxBps;
+    // Arrondir à l'entier inférieur pour s'assurer qu'on ne dépasse jamais la résolution physique
+    optimalBps = floor(optimalBps);
     
     // Vérifier si la limitation est atteinte
-    m_isResolutionLimited = (bps <= MIN_BINS_PER_SECOND || bps >= MAX_BINS_PER_SECOND);
+    m_isResolutionLimited = (optimalBps <= MIN_BINS_PER_SECOND || optimalBps >= MAX_BINS_PER_SECOND);
     
     // Appliquer les limites (clamp)
-    if (bps < MIN_BINS_PER_SECOND) {
-        bps = MIN_BINS_PER_SECOND;
-    } else if (bps > MAX_BINS_PER_SECOND) {
-        bps = MAX_BINS_PER_SECOND;
+    if (optimalBps < MIN_BINS_PER_SECOND) {
+        optimalBps = MIN_BINS_PER_SECOND;
+    } else if (optimalBps > MAX_BINS_PER_SECOND) {
+        optimalBps = MAX_BINS_PER_SECOND;
     }
     
-    qDebug() << "Resolution slider value:" << sliderValue
-             << "maxBps:" << maxBps
-             << "ratio:" << ratio
-             << "calculated bps:" << bps
+    qDebug() << "Resolution calculation - slider value:" << sliderValue
+             << "writing speed (cm/s):" << writingSpeed
+             << "optimal bins/s:" << optimalBps
              << "limited:" << m_isResolutionLimited;
     
-    return bps;
+    return optimalBps;
 }
 
 /**
  * @brief Calcule la valeur d'overlap en fonction de la position du curseur
  *
  * Cette méthode implémente une interpolation linéaire entre les trois ancres du curseur:
- * - Temporal (0): Faible chevauchement
- * - Balanced (0.5): Chevauchement moyen
- * - Spectral (1.0): Fort chevauchement
+ * - Temporal (0): Très faible chevauchement (privilégie la résolution temporelle)
+ * - Balanced (0.5): Chevauchement moyen (équilibre temps/fréquence)
+ * - Spectral (1.0): Fort chevauchement (privilégie la résolution fréquentielle)
+ *
+ * Avec la nouvelle approche, le curseur contrôle directement et uniquement l'overlap,
+ * puisque le bins/s est calculé automatiquement par rapport à la résolution physique.
  *
  * @param sliderValue Position du curseur (0.0 à 1.0)
  * @return Valeur d'overlap calculée
  */
 double SpectrogramSettingsCpp::calculateOverlapFromSlider(double sliderValue) const
 {
+    // Définir des valeurs d'overlap plus extrêmes pour offrir une meilleure distinction
+    // entre le mode temporel (0.30) et le mode spectral (0.92)
+    const double TEMPORAL_OVERLAP = 0.30;  // Faible overlap = meilleure résolution temporelle
+    const double BALANCED_OVERLAP = 0.75;  // Overlap moyen = compromis
+    const double SPECTRAL_OVERLAP = 0.92;  // Fort overlap = meilleure résolution spectrale
+    
     if (sliderValue <= 0.5) {
         // Interpolation linéaire entre Temporal (0) et Balanced (0.5)
-        return RESOLUTION_TEMPORAL_OVERLAP +
-               (sliderValue / 0.5) * (RESOLUTION_BALANCED_OVERLAP - RESOLUTION_TEMPORAL_OVERLAP);
+        return TEMPORAL_OVERLAP +
+               (sliderValue / 0.5) * (BALANCED_OVERLAP - TEMPORAL_OVERLAP);
     } else {
         // Interpolation linéaire entre Balanced (0.5) et Spectral (1.0)
-        return RESOLUTION_BALANCED_OVERLAP +
-               ((sliderValue - 0.5) / 0.5) * (RESOLUTION_SPECTRAL_OVERLAP - RESOLUTION_BALANCED_OVERLAP);
+        return BALANCED_OVERLAP +
+               ((sliderValue - 0.5) / 0.5) * (SPECTRAL_OVERLAP - BALANCED_OVERLAP);
+    }
+}
+
+/**
+ * @brief Détermine le préréglage d'overlap à utiliser en fonction de la position du curseur
+ *
+ * Cette méthode permet de synchroniser la position du curseur de résolution
+ * avec les préréglages d'overlap existants :
+ * - Slidervalue 0.0-0.33   -> Preset Low (0)
+ * - Slidervalue 0.33-0.67  -> Preset Medium (1)
+ * - Slidervalue 0.67-1.0   -> Preset High (2)
+ *
+ * @param sliderValue Position du curseur (0.0 à 1.0)
+ * @return Préréglage d'overlap correspondant (0=Low, 1=Medium, 2=High)
+ */
+int SpectrogramSettingsCpp::getOverlapPresetFromSlider(double sliderValue) const
+{
+    // Diviser la plage du curseur en trois segments égaux
+    if (sliderValue < 0.33) {
+        // Zone Temporal (0.0 - 0.33) -> Low overlap
+        return 0;
+    } else if (sliderValue < 0.67) {
+        // Zone Balanced (0.33 - 0.67) -> Medium overlap
+        return 1;
+    } else {
+        // Zone Spectral (0.67 - 1.0) -> High overlap
+        return 2;
     }
 }

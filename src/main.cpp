@@ -11,6 +11,8 @@
 #include "../include/QmlConstants.h"
 #include "../include/PathManager.h"
 #include "../include/MacOSBridge.h"
+#include "../include/SpectrogramParametersModel.h"
+#include "../include/SpectrogramViewModel.h"
 #include <QDebug>
 
 // Déclaration de la fonction d'initialisation macOS
@@ -47,6 +49,8 @@ int main(int argc, char *argv[])
     qmlRegisterType<SpectrogramGenerator>("com.Sp3ctraGen.backend", 1, 0, "SpectrogramGenerator");
     qmlRegisterType<WaveformProvider>("com.Sp3ctraGen.backend", 1, 0, "WaveformProvider");
     qmlRegisterType<MacOSBridge>("com.Sp3ctraGen.backend", 1, 0, "MacOSBridge");
+    qmlRegisterType<SpectrogramParametersModel>("com.Sp3ctraGen.backend", 1, 0, "SpectrogramParametersModel");
+    qmlRegisterType<SpectrogramViewModel>("com.Sp3ctraGen.backend", 1, 0, "SpectrogramViewModel");
     
     // Enregistrer la classe QmlConstants comme singleton
     qmlRegisterSingletonType<QmlConstants>("com.Sp3ctraGen.constants", 1, 0, "Constants",
@@ -64,6 +68,18 @@ int main(int argc, char *argv[])
     
     // Rendre le fournisseur d'images accessible à la classe SpectrogramGenerator
     SpectrogramGenerator::setPreviewImageProvider(previewProvider);
+    
+    // Créer les modèles centralisés (modèle de paramètres et ViewModel)
+    SpectrogramParametersModel* paramsModel = new SpectrogramParametersModel(&app);
+    SpectrogramGenerator* generator = new SpectrogramGenerator(&app);
+    SpectrogramViewModel* viewModel = new SpectrogramViewModel(&app);
+    
+    // Initialiser le ViewModel avec les modèles existants
+    viewModel->initialize(paramsModel, generator);
+    
+    // Exposer les modèles au contexte QML
+    engine.rootContext()->setContextProperty("paramsModel", paramsModel);
+    engine.rootContext()->setContextProperty("viewModel", viewModel);
     
     // Définir le chemin d'accès aux fichiers QML
     const QUrl url(QStringLiteral("qrc:/main.qml"));

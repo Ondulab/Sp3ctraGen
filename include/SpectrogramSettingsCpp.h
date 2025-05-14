@@ -36,6 +36,10 @@ public:
     int getOverlapPreset() const { return m_overlapPreset; }
     void setOverlapPreset(int value) { m_overlapPreset = value; }
     
+    // FFT size getter/setter
+    int getFftSize() const { return m_fftSize; }
+    void setFftSize(int value) { m_fftSize = value; }
+    
     // Méthode pour obtenir la valeur d'overlap en fonction du préréglage
     double getOverlapValueFromPreset() const;
     
@@ -133,6 +137,9 @@ public:
     double getPaperWidthCm() const;
     double calculateAudioDuration() const;
     
+    // Nouvelle méthode pour synchroniser le préréglage d'overlap avec la position du curseur
+    int getOverlapPresetFromSlider(double sliderValue) const;
+    
     // Méthode pour vérifier si la limitation de résolution est atteinte
     bool isResolutionLimited() const { return m_isResolutionLimited; }
     
@@ -202,6 +209,7 @@ private:
     int m_overlapPreset;             // Préréglage d'overlap (0=Low, 1=Medium, 2=High)
     double m_resolutionSliderValue;  // Position du curseur resolution (0=Temporal, 0.5=Balanced, 1=Spectral)
     mutable bool m_isResolutionLimited; // Indique si la limitation de résolution est atteinte
+    int m_fftSize;                   // Taille FFT calculée par le curseur de résolution (0=auto)
 };
 
 #endif // SPECTROGRAMSETTINGSCPP_H

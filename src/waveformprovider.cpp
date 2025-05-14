@@ -107,7 +107,7 @@ void WaveformProvider::resampleForDisplay(int targetWidth, QVariantList &result)
         int startIdx = i * samplesPerPixel * channels;
         
         // Make sure we don't exceed the limits
-        if (startIdx >= m_audioData.size()) {
+        if (startIdx >= static_cast<int>(m_audioData.size())) {
             break;
         }
         
@@ -118,12 +118,12 @@ void WaveformProvider::resampleForDisplay(int targetWidth, QVariantList &result)
         int count = 0;
         
         // Go through all samples for this pixel
-        for (int j = 0; j < samplesPerPixel && (startIdx + j * channels) < m_audioData.size(); ++j) {
+        for (int j = 0; j < samplesPerPixel && (startIdx + j * channels) < static_cast<int>(m_audioData.size()); ++j) {
             // Average of channels for each sample
             float sampleValue = 0.0f;
             for (int ch = 0; ch < channels; ++ch) {
                 int idx = startIdx + j * channels + ch;
-                if (idx < m_audioData.size()) {
+                if (idx < static_cast<int>(m_audioData.size())) {
                     sampleValue += m_audioData[idx];
                 }
             }
@@ -165,24 +165,9 @@ QVariantMap WaveformProvider::calculateExtractionSegment(double cursorPosition, 
     // Convert writing speed from cm/s to mm/s
     double speedMMS = writingSpeed * 10.0;
     
-    // Calculate base segment duration without adjustments
-    double baseSegmentDuration = paperWidthMM / speedMMS;
-    
-    // Calculer l'ajustement de résolution (entre 0.7 et 1.3)
-    // - resolutionValue = 0.0 (Temporal) -> ajustement = 0.7 (segment plus court)
-    // - resolutionValue = 0.5 (Balanced) -> ajustement = 1.0 (pas d'ajustement)
-    // - resolutionValue = 1.0 (Spectral) -> ajustement = 1.3 (segment plus long)
-    double resolutionAdjustment;
-    if (resolutionValue <= 0.5) {
-        // Interpolation linéaire entre 0.7 et 1.0
-        resolutionAdjustment = 0.7 + (resolutionValue / 0.5) * 0.3;
-    } else {
-        // Interpolation linéaire entre 1.0 et 1.3
-        resolutionAdjustment = 1.0 + ((resolutionValue - 0.5) / 0.5) * 0.3;
-    }
-    
-    // Calculate adjusted segment duration
-    double segmentDuration = baseSegmentDuration * resolutionAdjustment;
+    // Calculate segment duration based solely on paper format and writing speed
+    // This ensures a consistent time window regardless of resolution settings
+    double segmentDuration = paperWidthMM / speedMMS;
     
     // Start position in seconds (based on relative cursor position)
     double totalDuration = static_cast<double>(m_fileInfo.frames) / m_fileInfo.samplerate;

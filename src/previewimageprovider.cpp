@@ -210,7 +210,7 @@ bool PreviewImageProvider::printImage() const
     painter.setRenderHint(QPainter::SmoothPixmapTransform, true);
     painter.setRenderHint(QPainter::Antialiasing, true);
     painter.setRenderHint(QPainter::TextAntialiasing, true);
-    painter.setRenderHint(QPainter::HighQualityAntialiasing, true);
+    // HighQualityAntialiasing est déprécié, Antialiasing est déjà activé plus haut
     
     // Dessiner l'image sans mise à l'échelle
     painter.drawImage(targetRect, m_originalImage);

@@ -30,6 +30,7 @@ typedef struct SpectrogramSettings
     double  bottomMarginMM;               // bottom margin in millimeters
     double  spectroHeightMM;              // spectrogram height in millimeters
     double  writingSpeed;                 // writing speed in cm/s
+    int     fftSize;                      // FFT size (0 = auto-calculate)
     int     enableHighPassFilter;         // 0 = disabled, 1 = enabled
     double  highPassCutoffFreq;           // Cutoff frequency in Hz
     int     highPassFilterOrder;          // Filter order (1-8)

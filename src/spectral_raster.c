@@ -183,9 +183,9 @@ void draw_reference_lines(cairo_t *cr, double spectro_left, double spectro_width
  *  - startTime: Start time in seconds
  *  - segmentDuration: Duration of the segment in seconds
  *---------------------------------------------------------------------*/
-void draw_parameters_text(cairo_t *cr, double page_width, double page_height,
+void draw_parameters_text(cairo_t *cr, double page_width __attribute__((unused)), double page_height,
                           const SpectrogramSettings *s, const char *audioFile, 
-                          double startTime, double segmentDuration)
+                          double startTime, double segmentDuration __attribute__((unused)))
 {
     // Extract filename from path (if provided)
     const char *filename = audioFile;
@@ -314,8 +314,33 @@ int spectral_generator_impl(const SpectrogramSettings *cfg,
     double  contrastFactor  = DEFAULT_DBL(s.contrastFactor, CONTRAST_FACTOR);
     int     enableHighBoost = DEFAULT_BOOL(s.enableHighBoost, ENABLE_HIGH_BOOST);
     double  highBoostAlpha  = DEFAULT_DBL(s.highBoostAlpha, HIGH_BOOST_ALPHA);
-    double  binsPerSecond   = DEFAULT_DBL(s.binsPerSecond,  DEFAULT_BINS_PER_SECOND);
-    int     overlapPreset   = DEFAULT_INT(s.overlapPreset,  DEFAULT_OVERLAP_PRESET);  // Préréglage d'overlap (Medium par défaut)
+    double  binsPerSecond;
+    
+    // Calcul du bins/s optimal basé sur la résolution d'impression
+    if (writingSpeed > 0.0) {
+        // Formula: bins_per_second = (800 dpi / 2.54 cm/inch) * writeSpeed
+        double optimalBps = (PRINTER_DPI / INCH_TO_CM) * writingSpeed;
+        
+        // Arrondir à l'entier inférieur pour s'assurer qu'on ne dépasse jamais la résolution physique
+        optimalBps = floor(optimalBps);
+        
+        // Appliquer les limites (clamp)
+        if (optimalBps < MIN_BINS_PER_SECOND) {
+            optimalBps = MIN_BINS_PER_SECOND;
+        } else if (optimalBps > MAX_BINS_PER_SECOND) {
+            optimalBps = MAX_BINS_PER_SECOND;
+        }
+        
+        // Utiliser la valeur calculée
+        binsPerSecond = optimalBps;
+        printf(" - Calculated optimal bins/s: %.1f based on writing speed: %.2f cm/s\n", binsPerSecond, writingSpeed);
+    } else {
+        // Si pas de vitesse d'écriture spécifiée, utiliser la valeur de la structure ou la valeur par défaut
+        binsPerSecond = DEFAULT_DBL(s.binsPerSecond, DEFAULT_BINS_PER_SECOND);
+        printf(" - Using provided bins/s: %.1f (no writing speed specified)\n", binsPerSecond);
+    }
+    
+    int overlapPreset = DEFAULT_INT(s.overlapPreset, DEFAULT_OVERLAP_PRESET);  // Préréglage d'overlap (Medium par défaut)
     
     // Détermination de la valeur d'overlap en fonction du préréglage
     double overlapValue;
@@ -348,8 +373,18 @@ int spectral_generator_impl(const SpectrogramSettings *cfg,
     // Stockage de la taille FFT pour l'affichage dans les journaux
     // (Note: s.fftSize a été supprimé de la structure)
     
-    printf(" - Calculated FFT size: %d (from bins/s=%.1f, overlap=%.2f)\n",
-           fft_size, binsPerSecond, overlapValue);
+    // Vérification: si un fft_size est calculé à partir du modèle de résolution adaptative,
+    // nous utilisons cette valeur directement plutôt que de recalculer
+    // Note: Cette logique préserve la valeur calculée par SpectrogramParametersModel
+    if (cfg->fftSize > 0) {
+        // Si fftSize est spécifié, nous utilisons directement cette valeur
+        fft_size = cfg->fftSize;
+        printf(" - Using precalculated FFT size: %d (from resolution slider)\n", fft_size);
+    } else {
+        // Sinon, nous utilisons la méthode de calcul traditionnelle
+        printf(" - Calculated FFT size: %d (from bins/s=%.1f, overlap=%.2f)\n",
+               fft_size, binsPerSecond, overlapValue);
+    }
     
     /* Use default paths if input/output files are not specified */
     const char* inputFilePath = DEFAULT_STR(inputFile, DEFAULT_INPUT_FILENAME);
@@ -561,7 +596,7 @@ int spectral_generator_impl(const SpectrogramSettings *cfg,
         }
         
         // Convertir la page en cm
-        double page_width_cm = page_width / (800.0 / 2.54); // 800 pixels par pouce, 2.54 cm par pouce
+        /* La variable page_width_cm n'est pas utilisée dans cette fonction */
         double spectro_width_cm = spectro_width / (800.0 / 2.54);
         
         // Calculer la largeur du spectrogramme en cm pour la durée spécifiée
@@ -759,7 +794,7 @@ int spectral_generator_with_metadata(const SpectrogramSettings *cfg,
                                     const char *outputFile,
                                     const char *audioFileName,
                                     double startTime,
-                                    double segmentDuration)
+                                     double segmentDuration __attribute__((unused)))
 {
     // Create a copy of the settings
     SpectrogramSettings settings = *cfg;

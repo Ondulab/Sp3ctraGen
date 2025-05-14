@@ -54,8 +54,8 @@ SectionContainer {
     // Propriété pour le tag de limitation
     property bool isResolutionLimited: false
     
-    // Propriété pour la durée audio calculée
-    property double audioDuration: 0.0
+    // Propriété pour la durée audio calculée à partir du ViewModel
+    property double audioDuration: generator && generator.audioDuration ? generator.audioDuration : 0.0
     
     // Les propriétés pour les paramètres de filtre ont été déplacées vers FilterParameters.qml
     
@@ -91,8 +91,7 @@ SectionContainer {
                     // Vérifier si la limitation est atteinte
                     isResolutionLimited = generator.isResolutionLimited();
                     
-                    // Calculer la durée audio
-                    audioDuration = generator.calculateAudioDuration();
+            // La durée audio est maintenant calculée par le ViewModel via la propriété audioDuration
                 } else {
                     console.error("Generator not available for calculations");
                 }
@@ -106,186 +105,151 @@ SectionContainer {
 
         // Curseur de résolution (remplace bins/s et overlap)
         Column {
-            spacing: AppStyles.Theme.spacing
+            spacing: 2 // Réduire considérablement l'espacement vertical entre éléments
             Layout.fillWidth: true
             Layout.columnSpan: parametersGrid.columns
             
-            // Titre simplifié
-            ThemedLabel {
-                text: "Resolution:"
-            }
-            
-            // Message d'avertissement pour la limitation de résolution
-            ThemedLabel {
-                id: resolutionLimitedLabel
-                text: "Limited by print horizontal resolution"
-                color: "orange"
-                font.italic: true
-                font.pixelSize: smallFontSize
-                visible: isResolutionLimited
+            // En-tête avec titre et description
+            Column {
                 width: parent.width
-            }
-            
-            // Étiquettes Temporal/Spectral au-dessus du curseur
-            Row {
-                width: parent.width
+                spacing: 2
                 
+                // Titre principal
                 ThemedLabel {
-                    text: "Temporal"
-                    font.pixelSize: smallFontSize
-                    color: Qt.rgba(0.9, 0.9, 0.9, 0.9) // Blanc moins intense
-                    width: 75
-                }
-                
-                Item { width: parent.width - 155; height: 1 } // Spacer
-                
-                ThemedLabel {
-                    text: "Spectral"
-                    font.pixelSize: smallFontSize
-                    color: Qt.rgba(0.9, 0.9, 0.9, 0.9) // Blanc moins intense
-                    width: 75
-                    horizontalAlignment: Text.AlignRight
+                    text: "Résolution:"
+                    font.pixelSize: defaultFontSize + 1
+                    font.bold: true
                 }
             }
             
-            // Slider personnalisé avec poignée centrée
+            // Conteneur pour les libellés et le slider
             Item {
-                id: customSlider
+                id: sliderContainer
                 width: parent.width
-                height: 30
-                property double value: 0.5  // La valeur du slider (0.0 - 1.0)
-                property double visualPos: width * value  // Position visuelle
+                height: 36 // Hauteur réduite
                 
-                // Fond sombre du slider
-                Rectangle {
-                    anchors.centerIn: parent
+                // Libellés
+                Row {
                     width: parent.width
-                    height: 4
-                    radius: 2
-                    color: "#333333"
-                }
-                
-                // Partie active du slider (ligne blanche) - partant du centre
-                Rectangle {
-                    anchors.verticalCenter: parent.verticalCenter
-                    height: 4
+                    height: childrenRect.height
                     
-                    // Calcul de la position et largeur en fonction de la position du curseur
-                    width: Math.abs(customSlider.visualPos - parent.width / 2)
-                    x: customSlider.visualPos > parent.width / 2 ? parent.width / 2 : customSlider.visualPos
-                    color: "#ffffff"
-                    radius: 2
-                }
-                
-                // Poignée du slider (curseur)
-                Rectangle {
-                    id: handle
-                    width: 16
-                    height: 16
-                    radius: 8
-                    color: "#ffffff"
-                    border.color: "#cccccc"
-                    border.width: 1
+                    Text {
+                        text: "Temporel"
+                        color: "white"
+                        font.pixelSize: smallFontSize
+                        font.bold: true
+                        width: parent.width / 2
+                    }
                     
-                    // Position centrée sur la valeur
-                    x: customSlider.visualPos - width/2
-                    y: customSlider.height/2 - height/2
-                    
-                    // Animation pour un déplacement fluide
-                    Behavior on x {
-                        NumberAnimation { duration: 50 }
+                    Text {
+                        text: "Spectral"
+                        color: "white"
+                        font.pixelSize: smallFontSize
+                        font.bold: true
+                        width: parent.width / 2
+                        horizontalAlignment: Text.AlignRight
                     }
                 }
                 
-                // Marques pour les trois positions de référence
-                Rectangle {
-                    width: 2
-                    height: 8
-                    color: Qt.rgba(0.9, 0.9, 0.9, 0.7) // Blanc moins intense
-                    x: 0
-                    anchors.bottom: parent.bottom
-                }
-                
-                Rectangle {
-                    width: 2
-                    height: 8
-                    color: Qt.rgba(0.9, 0.9, 0.9, 0.7) // Blanc moins intense
-                    x: parent.width * 0.5 - 1
-                    anchors.bottom: parent.bottom
-                }
-                
-                Rectangle {
-                    width: 2
-                    height: 8
-                    color: Qt.rgba(0.9, 0.9, 0.9, 0.7) // Blanc moins intense
-                    x: parent.width - 2
-                    anchors.bottom: parent.bottom
-                }
-                
-                // Zone de détection pour le drag
-                MouseArea {
-                    anchors.fill: parent
-                    drag.target: handle
-                    drag.axis: Drag.XAxis
-                    drag.minimumX: -handle.width/2
-                    drag.maximumX: parent.width - handle.width/2
+                // Slider standard mais stylisé
+                Slider {
+                    id: resolutionSlider
+                    anchors.top: parent.top
+                    anchors.topMargin: 16 // Espace réduit
+                    anchors.left: parent.left
+                    anchors.right: parent.right
+                    height: 20
                     
-                    // Permet de cliquer n'importe où sur le slider
-                    onPressed: {
-                        handle.x = mouse.x - handle.width/2
-                        updateSliderValue()
-                    }
+                    // Propriétés par défaut
+                    from: 0
+                    to: 1
+                    value: 0.5
+                    stepSize: 0.01
                     
-                    onPositionChanged: {
-                        if (pressed) updateSliderValue()
-                    }
-                    
-                    // Fonction pour mettre à jour la valeur du slider (0.0-1.0)
-                    function updateSliderValue() {
-                        var newValue = (handle.x + handle.width/2) / customSlider.width
-                        // Limiter entre 0 et 1
-                        newValue = Math.max(0, Math.min(1, newValue))
-                        customSlider.value = newValue
-                        resolutionSlider.value = newValue  // Mise à jour du slider caché
-                    }
-                }
-            }
-            
-            // Slider invisible pour compatibilité avec le reste du code
-            Slider {
-                id: resolutionSlider
-                visible: false
-                from: 0
-                to: 1
-                value: customSlider.value
-                stepSize: 0.01
-                
-                onValueChanged: {
-                    if (value !== customSlider.value) {
-                        customSlider.value = value
-                        customSlider.visualPos = customSlider.width * value
-                    }
-                    
-                    if (generator) {
-                        // Calculer le bps en fonction de la position du curseur
-                        binsPerSecondValue = generator.calculateBpsFromSlider(value, writingSpeedNumeric);
+                    // Style personnalisé pour le fond du slider
+                    background: Rectangle {
+                        x: resolutionSlider.leftPadding
+                        y: resolutionSlider.topPadding + resolutionSlider.availableHeight / 2 - height / 2
+                        width: resolutionSlider.availableWidth
+                        height: 4
+                        radius: 2
+                        color: "#333333"
                         
-                        // Vérifier si la limitation est atteinte
-                        isResolutionLimited = generator.isResolutionLimited();
+                        // Partie active du slider
+                        Rectangle {
+                            width: Math.abs(resolutionSlider.visualPosition * parent.width - parent.width / 2)
+                            height: parent.height
+                            color: "white"
+                            radius: 2
+                            x: resolutionSlider.visualPosition * parent.width < parent.width / 2 
+                               ? resolutionSlider.visualPosition * parent.width 
+                               : parent.width / 2
+                        }
                         
-                        // Calculer la durée audio
-                        audioDuration = generator.calculateAudioDuration();
+                        // Points de repère
+                        Rectangle {
+                            width: 2
+                            height: 8
+                            color: Qt.rgba(0.9, 0.9, 0.9, 0.7) // Blanc moins intense
+                            x: 0
+                            anchors.bottom: parent.bottom
+                            anchors.bottomMargin: -8
+                        }
                         
-                        // Calculer l'overlap en fonction de la position du curseur
-                        var newOverlap = generator.calculateOverlapFromSlider(value);
-                    } else {
-                        console.error("Generator not available for calculations");
+                        Rectangle {
+                            width: 2
+                            height: 8
+                            color: Qt.rgba(0.9, 0.9, 0.9, 0.7) // Blanc moins intense
+                            x: parent.width * 0.5 - 1
+                            anchors.bottom: parent.bottom
+                            anchors.bottomMargin: -8
+                        }
+                        
+                        Rectangle {
+                            width: 2
+                            height: 8
+                            color: Qt.rgba(0.9, 0.9, 0.9, 0.7) // Blanc moins intense
+                            x: parent.width - 2
+                            anchors.bottom: parent.bottom
+                            anchors.bottomMargin: -8
+                        }
                     }
                     
-                    // Recalculer la FFT size et l'overlap effectif
-                    updateCalculatedParameters();
+                    // Style personnalisé pour le bouton du slider
+                    handle: Rectangle {
+                        x: resolutionSlider.leftPadding + resolutionSlider.visualPosition * (resolutionSlider.availableWidth - width)
+                        y: resolutionSlider.topPadding + resolutionSlider.availableHeight / 2 - height / 2
+                        width: 16
+                        height: 16
+                        radius: 8
+                        color: "white"
+                        border.color: "#cccccc"
+                        border.width: 1
+                    }
                     
-                    parametersChanged();
+                    // Mettre à jour les valeurs calculées lorsque le slider change
+                    onValueChanged: {
+                        if (generator) {
+                            // Calculer le bps en fonction de la position du curseur
+                            binsPerSecondValue = generator.calculateBpsFromSlider(value, writingSpeedNumeric);
+                            
+                            // Vérifier si la limitation est atteinte
+                            isResolutionLimited = generator.isResolutionLimited();
+                            
+                            // Calculer la durée audio
+                            audioDuration = generator.calculateAudioDuration();
+                            
+                            // Calculer l'overlap en fonction de la position du curseur
+                            var newOverlap = generator.calculateOverlapFromSlider(value);
+                        } else {
+                            console.error("Generator not available for calculations");
+                        }
+                        
+                        // Recalculer la FFT size et l'overlap effectif
+                        updateCalculatedParameters();
+                        
+                        parametersChanged();
+                    }
                 }
             }
             
