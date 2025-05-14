@@ -328,3 +328,73 @@ void apply_separable_box_blur(cairo_surface_t *surface, int radius)
     free(temp);
     cairo_surface_mark_dirty(surface);
 }
+
+/*---------------------------------------------------------------------
+ * normalize_wav_file()
+ *
+ * Normalizes an audio file by applying a multiplication factor and
+ * saves the result to a new file.
+ *
+ * Parameters:
+ *  - input_path: Path to the input WAV file
+ *  - output_path: Path where the normalized WAV file will be saved
+ *  - factor: The normalization factor to apply to each sample
+ *
+ * Returns:
+ *  - 0 on success, non-zero on error.
+ *---------------------------------------------------------------------*/
+int normalize_wav_file(const char *input_path, const char *output_path, double factor)
+{
+    double *signal = NULL;
+    int num_samples = 0;
+    int sample_rate = 0;
+    
+    // Load the input file without normalizing it (normalize=0)
+    if (load_wav_file(input_path, &signal, &num_samples, &sample_rate, 0, 0) != 0) {
+        fprintf(stderr, "Error: Failed to load input audio file for normalization\n");
+        return 1;
+    }
+    
+    printf("Normalizing audio file with factor: %.6f\n", factor);
+    
+    // Apply the normalization factor
+    for (int i = 0; i < num_samples; i++) {
+        signal[i] *= factor;
+    }
+    
+    // Save the normalized signal to a new WAV file
+    SF_INFO info;
+    SNDFILE *sf;
+    
+    // Configure output format
+    memset(&info, 0, sizeof(info));
+    info.samplerate = sample_rate;
+    info.channels = 1;  // Always mono
+    info.format = SF_FORMAT_WAV | SF_FORMAT_PCM_16;  // 16-bit PCM WAV
+    
+    // Open output file
+    sf = sf_open(output_path, SFM_WRITE, &info);
+    if (sf == NULL) {
+        fprintf(stderr, "Error: Could not open output file %s: %s\n",
+                output_path, sf_strerror(NULL));
+        free(signal);
+        return 2;
+    }
+    
+    // Write normalized data
+    sf_count_t frames_written = sf_write_double(sf, signal, num_samples);
+    if (frames_written != num_samples) {
+        fprintf(stderr, "Error: Could only write %lld of %d frames\n",
+                (long long)frames_written, num_samples);
+        sf_close(sf);
+        free(signal);
+        return 3;
+    }
+    
+    // Cleanup
+    sf_close(sf);
+    free(signal);
+    
+    printf("Successfully created normalized audio file: %s\n", output_path);
+    return 0;
+}

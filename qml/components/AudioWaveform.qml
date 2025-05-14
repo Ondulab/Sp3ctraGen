@@ -21,6 +21,7 @@ Rectangle {
     property string audioSource: ""
     property real totalDuration: 0
     property bool isPlaying: false
+    property real segmentEndTime: 0 // Position de fin du segment en millisecondes
     
     // Signaux
     signal cursorMoved(double position)
@@ -185,23 +186,41 @@ Rectangle {
         color: cursorColor
         z: 10
         
-        // Poignée du curseur pour faciliter la manipulation
-        Rectangle {
+        // Poignée du curseur en forme de triangle
+        Canvas {
             id: cursorHandle
-            width: 14
-            height: 14
-            radius: 7
+            width: 16
+            height: 10
             anchors.horizontalCenter: parent.horizontalCenter
-            anchors.top: parent.top
-            anchors.topMargin: 5
-            color: cursorColor
+            anchors.top: parent.top  // Ancrer au bord supérieur
+            anchors.topMargin: 0     // Sans marge - collé au bord
             
-            // Effet de brillance
-            Rectangle {
-                anchors.fill: parent
-                anchors.margins: 2
-                radius: 5
-                color: Qt.lighter(cursorColor, 1.5)
+            // Dessiner le triangle inversé
+            onPaint: {
+                var ctx = getContext("2d");
+                ctx.clearRect(0, 0, width, height);
+                
+                // Dessiner le triangle principal
+                ctx.beginPath();
+                ctx.moveTo(0, 0);
+                ctx.lineTo(width, 0);
+                ctx.lineTo(width/2, height);
+                ctx.closePath();
+                
+                // Remplir avec la couleur du curseur
+                ctx.fillStyle = cursorColor;
+                ctx.fill();
+                
+                // Ajouter un effet de brillance avec un triangle intérieur plus petit
+                ctx.beginPath();
+                ctx.moveTo(2, 2);
+                ctx.lineTo(width-2, 2);
+                ctx.lineTo(width/2, height-2);
+                ctx.closePath();
+                
+                // Remplir avec une version plus claire de la couleur pour l'effet de brillance
+                ctx.fillStyle = Qt.lighter(cursorColor, 1.3);
+                ctx.fill();
             }
         }
     }
@@ -263,8 +282,13 @@ Rectangle {
         source: audioSource
         
         onPositionChanged: {
-            // Si nous atteignons la fin du segment, arrêter la lecture
-            if (position >= duration) {
+            // Arrêter la lecture si nous atteignons la fin du segment
+            if (position >= segmentEndTime) {
+                console.log("Lecture arrêtée à la fin du segment :", position, "ms (fin segment:", segmentEndTime, "ms)");
+                stop();
+            } else if (position >= duration) {
+                // Vérification de sécurité pour le cas où segmentEndTime n'est pas correctement défini
+                console.log("Lecture arrêtée à la fin du fichier :", position, "ms");
                 stop();
             }
         }
@@ -305,7 +329,7 @@ Rectangle {
             console.log("Starting playback");
             // Définir la position de départ au début du segment
             var startTime = segmentStart * totalDuration * 1000; // en millisecondes
-            var segmentEndTime = (segmentStart + segmentDuration) * totalDuration * 1000;
+            segmentEndTime = (segmentStart + segmentDuration) * totalDuration * 1000;
             
             console.log("  startTime:", startTime);
             console.log("  segmentEndTime:", segmentEndTime);

@@ -24,6 +24,8 @@ SectionContainer {
     // Propriétés pour la normalisation
     property bool isAudioNormalized: false
     property real normalizationFactor: 1.0
+    property string originalAudioPath: ""
+    property string normalizedAudioPath: ""
     
     // Propriétés exposées
     property alias audioWaveform: audioWaveform
@@ -361,7 +363,14 @@ SectionContainer {
         console.log("loadAudioFile called with:", filePath);
         
         if (waveformProvider) {
+            // Stocker le chemin du fichier original
+            originalAudioPath = filePath;
             audioFilePath = filePath;
+            
+            // Réinitialiser l'état de normalisation
+            isAudioNormalized = false;
+            normalizationFactor = 1.0;
+            normalizedAudioPath = "";
             
             // Convertir le chemin de fichier en URL compatible avec QtMultimedia
             // Pour macOS, nous assurons que le chemin est correctement formaté
@@ -411,60 +420,14 @@ SectionContainer {
         );
         
         // Extraire le segment audio
+        // Puisqu'on utilise déjà le fichier audio normalisé si la normalisation est activée,
+        // nous n'avons plus besoin d'appliquer la normalisation ici
         var audioData = waveformProvider.extractSegment(
             segment.startPosition,
             segment.duration
         );
         
-        // Appliquer la normalisation si elle a été activée
-        if (isAudioNormalized && normalizationFactor !== 1.0) {
-            console.log("Applying normalization factor to audio data for spectrogram:", normalizationFactor);
-            
-            // Les données audio sont au format QByteArray de floats
-            // Nous devons les convertir, normaliser, puis reconvertir
-            
-            // Récupérer les données brutes
-            var dataSize = audioData.length / 4; // 4 bytes par float
-            var floatArray = new Float32Array(dataSize);
-            
-            // Convertir QByteArray en Float32Array
-            for (var i = 0; i < dataSize; i++) {
-                // Extraire les 4 octets qui représentent chaque float
-                var value = 0;
-                value += (audioData[i*4]   & 0xFF) << 0;
-                value += (audioData[i*4+1] & 0xFF) << 8;
-                value += (audioData[i*4+2] & 0xFF) << 16;
-                value += (audioData[i*4+3] & 0xFF) << 24;
-                
-                // Convertir en float via un buffer
-                var buffer = new ArrayBuffer(4);
-                var view = new DataView(buffer);
-                view.setUint32(0, value, true); // true = little endian
-                
-                // Lire la valeur flottante
-                floatArray[i] = view.getFloat32(0, true);
-            }
-            
-            // Appliquer la normalisation
-            for (var j = 0; j < dataSize; j++) {
-                floatArray[j] *= normalizationFactor;
-            }
-            
-            // Reconvertir en QByteArray
-            var normalizedData = new ArrayBuffer(dataSize * 4);
-            var dataView = new DataView(normalizedData);
-            
-            for (var k = 0; k < dataSize; k++) {
-                dataView.setFloat32(k * 4, floatArray[k], true);
-            }
-            
-            // Créer un nouveau QByteArray avec les données normalisées
-            var normalizedByteArray = new Uint8Array(normalizedData);
-            
-            // Utiliser directement le tableau normalisé
-            return normalizedByteArray.buffer;
-        }
-        
+        // Retourner les données sans traitement supplémentaire
         return audioData;
     }
     
@@ -542,124 +505,79 @@ SectionContainer {
     
     // Fonction pour normaliser l'audio et mettre à jour l'affichage
     function normalizeAudio() {
-        console.log("Normalizing audio waveform...");
+        console.log("Normalizing audio...");
         
         if (!waveformProvider || waveformProvider.getTotalDuration() <= 0 || !audioWaveform) {
             console.error("Cannot normalize: provider or audioWaveform not available");
             return;
         }
         
-        // Si l'audio est déjà normalisé, désactiver la normalisation
+        // Si l'audio est déjà normalisé, désactiver la normalisation et revenir au fichier original
         if (isAudioNormalized) {
             console.log("Audio already normalized - toggling normalization off");
             isAudioNormalized = false;
             normalizationFactor = 1.0;
             
-            // Recharger les données originales
-            var waveformWidth = audioWaveform.width;
-            audioWaveform.waveformData = waveformProvider.getWaveformData(waveformWidth);
+            // Recharger le fichier audio original
+            console.log("Reverting to original audio file:", originalAudioPath);
+            waveformProvider.loadFile(originalAudioPath);
             
-            // Forcer le redessinage du Canvas
-            if (audioWaveform && audioWaveform.forceRedraw) {
-                audioWaveform.forceRedraw();
+            // Mettre à jour l'URL source pour la lecture
+            if (originalAudioPath.startsWith("file://")) {
+                audioSourceUrl = originalAudioPath;
+            } else {
+                audioSourceUrl = "file://" + originalAudioPath;
+            }
+            
+            // Mettre à jour la source audio pour le composant AudioWaveform
+            if (audioWaveform) {
+                audioWaveform.setAudioSource(audioSourceUrl, waveformProvider.getTotalDuration());
             }
             
             statusText.showSuccess("Audio normalization disabled");
             return;
         }
         
-        // Récupérer les données de forme d'onde actuelles
-        var waveformWidth = audioWaveform.width;
-        console.log("Canvas width:", waveformWidth);
-        
-        var waveformData = waveformProvider.getWaveformData(waveformWidth);
-        console.log("Waveform data loaded, entries:", waveformData.length);
-        
-        // Vérifier le format des données (objet ou valeur simple)
-        var isObjectData = typeof waveformData[0] === 'object';
-        console.log("Data format:", isObjectData ? "object" : "simple value");
-        
-        // Trouver les valeurs min et max pour la normalisation
-        var maxValue = 0;
-        var originalMax = 0;
-        
-        for (var i = 0; i < waveformData.length; i++) {
-            if (isObjectData) {
-                // Format avec objets {min, max, rms}
-                maxValue = Math.max(maxValue, Math.abs(waveformData[i].max));
-                maxValue = Math.max(maxValue, Math.abs(waveformData[i].min));
-            } else {
-                // Format avec valeurs simples
-                maxValue = Math.max(maxValue, Math.abs(waveformData[i]));
-            }
+        // Si nous n'avons pas encore calculé le facteur de normalisation, le faire maintenant
+        if (normalizationFactor === 1.0) {
+            console.log("Calculating normalization factor for:", originalAudioPath);
+            normalizationFactor = generator.calculateNormalizationFactor(originalAudioPath);
+            console.log("Calculated normalization factor:", normalizationFactor);
         }
         
-        originalMax = maxValue;
-        console.log("Original max amplitude:", originalMax);
+        // Vérifier si nous avons déjà un fichier normalisé
+        if (!normalizedAudioPath || normalizedAudioPath === "") {
+            console.log("Creating normalized audio file with factor:", normalizationFactor);
+            normalizedAudioPath = generator.normalizeAudioFile(originalAudioPath, normalizationFactor);
+            
+            if (!normalizedAudioPath || normalizedAudioPath === "") {
+                statusText.showError("Failed to create normalized audio file");
+                return;
+            }
+            
+            console.log("Normalized audio file created at:", normalizedAudioPath);
+        }
         
-        // Toujours normaliser, même si l'amplitude est faible
-        // Utiliser un facteur optimal pour une meilleure visualisation
-        var factor = (maxValue > 0.001) ? (0.95 / maxValue) : 10.0;
-        console.log("Applying normalization factor:", factor);
+        // Charger le fichier audio normalisé
+        console.log("Loading normalized audio file into provider");
+        waveformProvider.loadFile(normalizedAudioPath);
         
-        // Stocker le facteur de normalisation pour l'utiliser avec les données audio réelles
-        normalizationFactor = factor;
+        // Mettre à jour l'URL source pour la lecture
+        if (normalizedAudioPath.startsWith("file://")) {
+            audioSourceUrl = normalizedAudioPath;
+        } else {
+            audioSourceUrl = "file://" + normalizedAudioPath;
+        }
+        
+        // Mettre à jour la source audio pour le composant AudioWaveform
+        if (audioWaveform) {
+            audioWaveform.setAudioSource(audioSourceUrl, waveformProvider.getTotalDuration());
+        }
+        
+        // Activer l'état normalisé
         isAudioNormalized = true;
         
-        // Créer une nouvelle instance du tableau pour éviter les problèmes de référence
-        var normalizedData = [];
-        
-        // Appliquer le facteur de normalisation à toutes les valeurs
-        for (var j = 0; j < waveformData.length; j++) {
-            if (isObjectData) {
-                // Format avec objets {min, max, rms}
-                var newPoint = {};
-                newPoint.max = waveformData[j].max * factor;
-                newPoint.min = waveformData[j].min * factor;
-                newPoint.rms = waveformData[j].rms * factor;
-                normalizedData.push(newPoint);
-            } else {
-                // Format avec valeurs simples
-                normalizedData.push(waveformData[j] * factor);
-            }
-        }
-        
-        // Log quelques valeurs avant/après pour vérifier
-        console.log("Sample values - Before normalization:");
-        for (var k = 0; k < Math.min(5, waveformData.length); k++) {
-            if (isObjectData) {
-                console.log("  [" + k + "] max:", waveformData[k].max, "min:", waveformData[k].min);
-            } else {
-                console.log("  [" + k + "]:", waveformData[k]);
-            }
-        }
-        
-        console.log("Sample values - After normalization:");
-        for (var l = 0; l < Math.min(5, normalizedData.length); l++) {
-            if (isObjectData) {
-                console.log("  [" + l + "] max:", normalizedData[l].max, "min:", normalizedData[l].min);
-            } else {
-                console.log("  [" + l + "]:", normalizedData[l]);
-            }
-        }
-        
-        // Mettre à jour l'affichage avec les données normalisées
-        audioWaveform.waveformData = normalizedData;
-        
-        // Forcer le redessinage du Canvas
-        // Cela garantit que les modifications sont rendues visuellement
-        if (audioWaveform && audioWaveform.forceRedraw) {
-            console.log("Forcing canvas redraw");
-            audioWaveform.forceRedraw();
-        }
-        
-        // Afficher un message de confirmation plus détaillé
-        var message = "Audio normalized: " +
-                     (originalMax * 100).toFixed(1) + "% → " +
-                     (Math.min(normalizedData.length > 0 ?
-                               (isObjectData ? Math.abs(normalizedData[0].max) * 100 :
-                                             Math.abs(normalizedData[0]) * 100) : 0, 100)).toFixed(1) + "%";
-        
-        statusText.showSuccess(message);
+        // Afficher un message de confirmation
+        statusText.showSuccess("Audio normalized (factor: " + normalizationFactor.toFixed(2) + ")");
     }
 }

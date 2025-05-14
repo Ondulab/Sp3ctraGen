@@ -16,6 +16,9 @@
 #include <QImage>
 #include <QByteArray>
 #include <QUuid>
+#include <QStringList>
+#include <QDir>
+#include <QFileInfo>
 #include "SpectrogramSettingsCpp.h"
 
 // Forward declarations
@@ -282,6 +285,28 @@ public:
      * @return Nombre maximum de bins par seconde possible
      */
     Q_INVOKABLE double calculateMaxBps(double writingSpeed);
+    
+   /**
+    * @brief Normalizes an audio file and saves the result to a temporary file
+    *
+    * @param inputPath Path to the original audio file
+    * @param factor Normalization factor to apply (1.0 = no change)
+    * @return Path to the normalized temporary file, or empty string if failed
+    */
+   Q_INVOKABLE QString normalizeAudioFile(const QString &inputPath, double factor);
+   
+   /**
+    * @brief Calculates the normalization factor for an audio file
+    *
+    * @param audioPath Path to the audio file
+    * @return Recommended normalization factor (0.95/maxAmplitude)
+    */
+   Q_INVOKABLE double calculateNormalizationFactor(const QString &audioPath);
+   
+   /**
+    * @brief Cleans up temporary files created during normalization
+    */
+   Q_INVOKABLE void cleanup();
 
 signals:
     /**
@@ -434,6 +459,9 @@ private:
     
     // Map of running tasks
     QMap<QUuid, QString> m_runningTasks;
+    
+    // List of temporary files to be cleaned up
+    QStringList m_tempFiles;
 };
 
 #endif // SPECTROGRAMGENERATOR_H

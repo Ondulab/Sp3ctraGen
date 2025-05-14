@@ -4,12 +4,14 @@
 #include "../include/VisualizationFactory.h"
 #include "../include/TaskManager.h"
 #include "../include/Constants.h"
+#include "../src/spectral_wav_processing.h"
 #include <QDir>
 #include <QFileInfo>
 #include <QDebug>
 #include <QTemporaryFile>
 #include <QImageReader>
 #include <QBuffer>
+#include <QDateTime>
 #include <sndfile.h>
 
 // Initialisation de la variable statique
@@ -31,6 +33,8 @@ void SpectrogramGenerator::setPreviewImageProvider(PreviewImageProvider *provide
 
 SpectrogramGenerator::~SpectrogramGenerator()
 {
+    // Nettoyer les fichiers temporaires lors de la destruction
+    cleanup();
 }
 
 void SpectrogramGenerator::generateSpectrogram(
@@ -710,4 +714,116 @@ bool SpectrogramGenerator::printPreview()
     
     // Appeler la méthode d'impression du fournisseur d'images
     return s_previewProvider->printImage();
+}
+
+QString SpectrogramGenerator::normalizeAudioFile(const QString &inputPath, double factor)
+{
+    qDebug() << "SpectrogramGenerator::normalizeAudioFile - Normalizing audio file:" << inputPath << "with factor:" << factor;
+    
+    // Vérifier que le fichier d'entrée existe
+    if (!QFileInfo::exists(inputPath)) {
+        qWarning() << "Le fichier d'entrée n'existe pas:" << inputPath;
+        return QString();
+    }
+    
+    // Créer un nom de fichier temporaire unique dans le dossier temporaire du système
+    QDir tempDir(QDir::tempPath());
+    QFileInfo fileInfo(inputPath);
+    QString baseName = fileInfo.baseName();
+    QString extension = fileInfo.suffix();
+    
+    QString outputFileName = baseName + "_normalized_" +
+                            QString::number(QDateTime::currentMSecsSinceEpoch()) + "." + extension;
+    QString outputPath = tempDir.filePath(outputFileName);
+    
+    qDebug() << "Fichier temporaire normalisé:" << outputPath;
+    
+    // Appeler la fonction C pour normaliser le fichier audio
+    int result = normalize_wav_file(
+        inputPath.toUtf8().constData(),
+        outputPath.toUtf8().constData(),
+        factor
+    );
+    
+    if (result != 0) {
+        qWarning() << "Échec de la normalisation du fichier audio (code:" << result << ")";
+        return QString();
+    }
+    
+    // Enregistrer le fichier temporaire pour le nettoyage ultérieur
+    m_tempFiles.append(outputPath);
+    
+    return outputPath;
+}
+
+double SpectrogramGenerator::calculateNormalizationFactor(const QString &audioPath)
+{
+    qDebug() << "SpectrogramGenerator::calculateNormalizationFactor - Analyzing audio file:" << audioPath;
+    
+    // Vérifier que le fichier d'entrée existe
+    if (!QFileInfo::exists(audioPath)) {
+        qWarning() << "Le fichier d'entrée n'existe pas:" << audioPath;
+        return 1.0; // Valeur par défaut (pas de changement)
+    }
+    
+    // Ouvrir le fichier audio avec libsndfile
+    SF_INFO info;
+    memset(&info, 0, sizeof(info));
+    
+    SNDFILE *sf = sf_open(audioPath.toUtf8().constData(), SFM_READ, &info);
+    if (!sf) {
+        qWarning() << "Impossible d'ouvrir le fichier audio:" << sf_strerror(NULL);
+        return 1.0;
+    }
+    
+    // Lire les échantillons et trouver la valeur maximale d'amplitude
+    double max_amplitude = 0.0;
+    const int BUFFER_SIZE = 4096;
+    double buffer[BUFFER_SIZE];
+    
+    sf_count_t read_count;
+    while ((read_count = sf_read_double(sf, buffer, BUFFER_SIZE)) > 0) {
+        for (sf_count_t i = 0; i < read_count; i++) {
+            double abs_value = fabs(buffer[i]);
+            if (abs_value > max_amplitude) {
+                max_amplitude = abs_value;
+            }
+        }
+    }
+    
+    sf_close(sf);
+    
+    // Calculer le facteur de normalisation
+    // Limiter le facteur à une valeur raisonnable pour éviter une amplification excessive
+    // des fichiers avec de très faibles amplitudes
+    double factor = 1.0;
+    if (max_amplitude > 0.001) {
+        factor = 0.95 / max_amplitude; // 95% du maximum pour éviter l'écrêtage
+    } else {
+        factor = 10.0; // Limite pour les fichiers avec amplitude très faible
+    }
+    
+    qDebug() << "Amplitude maximale:" << max_amplitude << "- Facteur de normalisation calculé:" << factor;
+    
+    return factor;
+}
+
+void SpectrogramGenerator::cleanup()
+{
+    qDebug() << "SpectrogramGenerator::cleanup - Nettoyage de" << m_tempFiles.size() << "fichiers temporaires";
+    
+    // Supprimer tous les fichiers temporaires
+    for (const QString &filePath : m_tempFiles) {
+        QFile file(filePath);
+        if (file.exists()) {
+            qDebug() << "Suppression du fichier temporaire:" << filePath;
+            if (!file.remove()) {
+                qWarning() << "Impossible de supprimer le fichier temporaire:" << filePath
+                          << "- Erreur:" << file.errorString();
+            }
+        }
+    }
+    
+    // Vider la liste
+    m_tempFiles.clear();
 }

@@ -17,6 +17,10 @@
 #include <cairo/cairo.h>
 #include "spectral_common.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 // Function prototypes
 int load_wav_file(const char *filename, double **signal, int *num_samples, int *sample_rate, double duration, int normalize);
 void generate_sine_wave(double *signal, int total_samples, double sample_rate, double frequency, double amplitude);
@@ -25,5 +29,10 @@ void apply_high_freq_boost_filter(double *signal, int num_samples, double alpha)
 void design_highpass_filter(double cutoff_freq, int order, double sample_rate, double *a, double *b);
 void apply_highpass_filter(double *signal, int num_samples, double *a, double *b, int filter_order);
 void apply_separable_box_blur(cairo_surface_t *surface, int radius);
+int normalize_wav_file(const char *input_path, const char *output_path, double factor);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* SPECTRAL_WAV_PROCESSING_H */
