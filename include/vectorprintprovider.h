@@ -14,6 +14,7 @@
 #include <QUrl>
 #include <QQmlEngine>
 #include "spectral_generator.h"
+#include "SharedConstants.h"
 
 /**
  * @brief The VectorPrintProvider class
@@ -89,7 +90,7 @@ public:
         int overlapPreset,
         const QString &inputFile,
         const QString &outputFolder,
-        int dpi = 800
+        int dpi = PRINTER_DPI
     );
 
 signals:

@@ -399,7 +399,7 @@ int spectral_generator_impl(const SpectrogramSettings *cfg,
         double pageWidth = (s.pageFormat == 1) ? A3_WIDTH : A4_WIDTH;
         
         // Convertir la largeur de pixels à cm - en utilisant la valeur exacte
-        double pageWidthCM = pageWidth / (800.0 / 2.54); // 800 pixels par pouce, 2.54 cm par pouce
+        double pageWidthCM = pageWidth / (PRINTER_DPI / 2.54); // 800 pixels par pouce, 2.54 cm par pouce
         
         // Calculer la durée: durée (s) = largeur (cm) / vitesse (cm/s)
         duration = pageWidthCM / writingSpeed;
@@ -521,15 +521,15 @@ int spectral_generator_impl(const SpectrogramSettings *cfg,
     double bottom_margin_px = DEFAULT_DBL(s.bottomMarginMM * MM_TO_PIXELS, DEFAULT_BOTTOM_MARGIN);
     double spectro_height_px = DEFAULT_DBL(s.spectroHeightMM * MM_TO_PIXELS, DEFAULT_SPECTRO_HEIGHT);
     
-    printf(" - Label margin: %.2f pixels at 800 DPI\n", label_margin);
-    printf(" - Bottom margin: %.2f mm (%.2f pixels at 800 DPI)\n", s.bottomMarginMM, bottom_margin_px);
-    printf(" - Spectrogram height: %.2f mm (%.2f pixels at 800 DPI)\n", s.spectroHeightMM, spectro_height_px);
+    printf(" - Label margin: %.2f pixels at %.0f DPI\n", label_margin, PRINTER_DPI);
+    printf(" - Bottom margin: %.2f mm (%.2f pixels at %.0f DPI)\n", s.bottomMarginMM, bottom_margin_px, PRINTER_DPI);
+    printf(" - Spectrogram height: %.2f mm (%.2f pixels at %.0f DPI)\n", s.spectroHeightMM, spectro_height_px, PRINTER_DPI);
     
     // Create surface and context for 800 DPI
     int image_width = (int)(page_width);
     int image_height = (int)(page_height);
     
-    printf(" - Creating canvas: %d x %d pixels at 800 DPI\n", image_width, image_height);
+    printf(" - Creating canvas: %d x %d pixels at %.0f DPI\n", image_width, image_height, PRINTER_DPI);
     
     cairo_surface_t *surface = cairo_image_surface_create(CAIRO_FORMAT_ARGB32, image_width, image_height);
     cairo_t *cr = cairo_create(surface);
@@ -597,7 +597,7 @@ int spectral_generator_impl(const SpectrogramSettings *cfg,
         
         // Convertir la page en cm
         /* La variable page_width_cm n'est pas utilisée dans cette fonction */
-        double spectro_width_cm = spectro_width / (800.0 / 2.54);
+        double spectro_width_cm = spectro_width / (PRINTER_DPI / 2.54);
         
         // Calculer la largeur du spectrogramme en cm pour la durée spécifiée
         double required_width_cm = fft_duration * writingSpeed;
@@ -643,7 +643,7 @@ int spectral_generator_impl(const SpectrogramSettings *cfg,
     double pixels_per_window = cm_per_window / PIXELS_TO_CM;
     double window_width = pixels_per_window;
     
-    printf(" - Window width: %.3f pixels at 800 DPI\n", window_width);
+    printf(" - Window width: %.3f pixels at %.0f DPI\n", window_width, PRINTER_DPI);
     printf(" - Adaptive spacing: %.3f pixels per bin (%.3f cm per bin)\n", 
            window_width, cm_per_window);
     
@@ -768,7 +768,7 @@ int spectral_generator_impl(const SpectrogramSettings *cfg,
     free(spectro_data.data);
     free(bin_frequencies);
     
-    printf("Spectrogram generated successfully at 800 DPI: %s\n", outputFilePath);
+    printf("Spectrogram generated successfully at %.0f DPI: %s\n", PRINTER_DPI, outputFilePath);
     
     return EXIT_SUCCESS;
 }

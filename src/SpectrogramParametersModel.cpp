@@ -162,7 +162,7 @@ double SpectrogramParametersModel::calculateMaxBps(double writingSpeed)
 {
     // Calculate maximum bins per second based on physical limitations
     // 800 DPI means 800 pixels per inch, or 800 / 2.54 pixels per cm
-    const double DPI = 800.0;
+    const double DPI = PRINTER_DPI;
     const double CM_TO_INCH = 2.54;
     
     // Max bins per second = (DPI / CM_TO_INCH) * writing speed

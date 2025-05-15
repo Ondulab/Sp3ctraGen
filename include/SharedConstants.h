@@ -20,11 +20,11 @@ extern "C" {
 #define DEFAULT_RESOLUTION_VALUE 0.5    // Position du curseur par défaut (0.0-1.0)
 
 // Limites pour les bins par seconde
-#define MIN_BINS_PER_SECOND     20.0    // Minimum absolu pour la densité temporelle 
-#define MAX_BINS_PER_SECOND     1200.0  // Maximum absolu pour la densité temporelle
+#define MIN_BINS_PER_SECOND     10.0    // Minimum absolu pour la densité temporelle 
+#define MAX_BINS_PER_SECOND     1200  // Maximum absolu pour la densité temporelle
 
 // Constantes pour la résolution d'impression
-#define PRINTER_DPI             800.0
+#define PRINTER_DPI             400.0
 #define INCH_TO_CM              2.54
 
 // Paramètres du système de résolution adaptative
@@ -67,17 +67,17 @@ extern "C" {
 #define A3_LANDSCAPE_WIDTH_CM   42.0
 
 // Facteurs de conversion
-#define MM_TO_PIXELS            31.5    // 800 DPI / 25.4 mm/inch
+#define MM_TO_PIXELS           (PRINTER_DPI/25.4)
 #define MM_TO_POINTS            2.83    // 72 DPI / 25.4 mm/inch
 #define POINTS_PER_INCH         72.0
-#define PIXELS_TO_CM            0.00317 // 1 pixel = 0.00317 cm à 800 DPI
+#define PIXELS_TO_CM            (2.54/PRINTER_DPI)
 
 // Marges par défaut
 #define DEFAULT_BOTTOM_MARGIN_MM 50.8
 #define DEFAULT_SPECTRO_HEIGHT_MM 216.7
 
 // Chemins par défaut
-#define DEFAULT_INPUT_FILENAME  "sample.wav"
+#define DEFAULT_INPUT_FILENAME  "./sample.wav"
 #define DEFAULT_OUTPUT_FOLDER   "."
 #define DEFAULT_OUTPUT_FILENAME "spectrogram.png"
 #define DEFAULT_PDF_FILENAME    "spectrogram.pdf"

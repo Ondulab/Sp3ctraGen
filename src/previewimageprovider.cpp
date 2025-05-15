@@ -6,6 +6,7 @@
 #include <QProcess>
 #include <QtPrintSupport/QPrinter>
 #include <QtPrintSupport/QPrintDialog>
+#include "SharedConstants.h"
 
 PreviewImageProvider::PreviewImageProvider()
     : QQuickImageProvider(QQuickImageProvider::Image)
@@ -65,7 +66,8 @@ void PreviewImageProvider::updateImage(const QImage &image)
     qDebug() << "Original high-resolution image stored: " << m_originalImage.width() << "x" << m_originalImage.height();
     
     // Create a resized version for display
-    int maxWidth = 800;
+    // Utiliser une taille fixe pour l'aperçu indépendante du DPI
+    int maxWidth = 800; // Taille fixe pour l'affichage
     
     if (image.width() > maxWidth) {
         m_displayImage = image.scaled(maxWidth, 
@@ -166,12 +168,12 @@ bool PreviewImageProvider::printImage() const
     QPrinter printer(QPrinter::HighResolution);
     
     // Configurer la résolution à 800 DPI
-    printer.setResolution(800);
+    printer.setResolution(PRINTER_DPI);
     
     // Calculer les dimensions physiques de l'image en millimètres
     // Convertir les pixels en millimètres (à 800 DPI)
-    double widthMM = m_originalImage.width() / (800.0 / 25.4);
-    double heightMM = m_originalImage.height() / (800.0 / 25.4);
+    double widthMM = m_originalImage.width() / (PRINTER_DPI / 25.4);
+    double heightMM = m_originalImage.height() / (PRINTER_DPI / 25.4);
     
     qDebug() << "Image physical dimensions: " << widthMM << "mm x " << heightMM << "mm";
     
@@ -215,7 +217,7 @@ bool PreviewImageProvider::printImage() const
     // Dessiner l'image sans mise à l'échelle
     painter.drawImage(targetRect, m_originalImage);
     
-    qDebug() << "Printing image at 800 DPI, size:" << m_originalImage.width() << "x" << m_originalImage.height();
+    qDebug() << "Printing image at " << PRINTER_DPI << " DPI, size:" << m_originalImage.width() << "x" << m_originalImage.height();
     qDebug() << "Physical dimensions:" << widthMM << "mm x " << heightMM << "mm";
     
     return true;

@@ -96,10 +96,57 @@ Rectangle {
         anchors.margins: AppStyles.Theme.padding
         spacing: AppStyles.Theme.spacing
         
-        // Titre de la prévisualisation
-        ThemedLabel {
-            text: "Preview"
-            font.pixelSize: AppStyles.Theme.labelFontSize
+        // Titre et contrôles de la prévisualisation
+        RowLayout {
+            Layout.fillWidth: true
+            spacing: AppStyles.Theme.spacing
+            
+            ThemedLabel {
+                text: "Preview"
+                font.pixelSize: AppStyles.Theme.labelFontSize
+                Layout.fillWidth: true
+            }
+            
+                // Bouton de contrôle du zoom
+            Button {
+                width: 30
+                height: 24
+                visible: previewImage && previewImage.status === Image.Ready
+                
+                onClicked: {
+                    zoomToFit()
+                }
+                
+                contentItem: Text {
+                    text: "Fit"
+                    color: parent.hovered ? AppStyles.Theme.buttonHoverText : AppStyles.Theme.buttonText
+                    horizontalAlignment: Text.AlignHCenter
+                    verticalAlignment: Text.AlignVCenter
+                    font.pixelSize: AppStyles.Theme.smallFontSize
+                }
+                
+                background: Rectangle {
+                    color: parent.hovered ? AppStyles.Theme.buttonHoverBackground : AppStyles.Theme.buttonBackground
+                    radius: AppStyles.Theme.borderRadius / 2
+                    
+                    Behavior on color {
+                        ColorAnimation {
+                            duration: AppStyles.Theme.animationDuration
+                        }
+                    }
+                }
+            }
+            
+            // Indicateur de zoom
+            Text {
+                text: previewImage && previewImage.status === Image.Ready ? 
+                      Math.round(previewImage.zoomLevel * 100) + "%" : ""
+                color: AppStyles.Theme.fieldText
+                font.pixelSize: AppStyles.Theme.smallFontSize
+                visible: previewImage && previewImage.status === Image.Ready
+                width: 50
+                horizontalAlignment: Text.AlignRight
+            }
         }
         
         // Zone de prévisualisation simplifiée et robuste
@@ -130,10 +177,9 @@ Rectangle {
                     cursorShape: pressed ? Qt.ClosedHandCursor : Qt.OpenHandCursor
                     acceptedButtons: Qt.LeftButton
                     
-                    // Double-clic pour réinitialiser le zoom
+                    // Double-clic pour adapter l'image à la fenêtre
                     onDoubleClicked: {
-                        zoomImage(1.0)
-                        centerImage()
+                        zoomToFit()
                     }
                     
                     // Commencer le pan
@@ -294,10 +340,8 @@ Rectangle {
                     // Le zoom minimum permet d'adapter l'image à la fenêtre (fit)
                     minZoom = Math.min(widthRatio, heightRatio)
                     
-                    // Si l'image vient d'être chargée, adapter son zoom à la fenêtre
-                    if (zoomLevel < minZoom || zoomLevel === 1.0) {
-                        zoomLevel = minZoom
-                    }
+                // Toujours utiliser le zoom minimum (fit) comme valeur initiale
+                zoomLevel = minZoom
                 }
             }
             
