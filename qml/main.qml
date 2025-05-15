@@ -483,7 +483,10 @@ ApplicationWindow {
         var gammaCorrection = filterParametersSection.gammaCorrectionNumeric;
         var contrastFactor = parseFloat(filterParametersSection.contrastFactor);
         var highBoostAlpha = filterParametersSection.highBoostAlpha;
-        var highPassCutoff = filterParametersSection.highPassCutoff;
+        // Utiliser directement la valeur numérique depuis le composant
+        var highPassCutoff = filterParametersSection.highPassCutoffNumeric;
+        console.log("[qml] DEBUG - High-pass filter cutoff (string): '" + filterParametersSection.highPassCutoff + "'");
+        console.log("[qml] DEBUG - High-pass filter cutoff (numericValue): " + highPassCutoff);
         var highPassOrder = filterParametersSection.highPassOrder + 1; // +1 car highPassOrder est un index, pas la valeur
         
         // Log des valeurs brutes extraites des composants QML
@@ -495,9 +498,16 @@ ApplicationWindow {
         console.log("[qml] DEBUG -   maxFreq après conversion: " + maxFreq);
         console.log("[qml] DEBUG -   resolution value: '" + spectrogramParametersSection.resolutionSliderValue + "'");
         
-        console.log("[qml] Paramètres spectrogram: resolution=" + spectrogramParametersSection.resolutionSliderValue +
-                    ", minFreq=" + minFreq + ", maxFreq=" + maxFreq +
-                    ", dynamicRange=" + dynamicRange + ", gamma=" + gammaCorrection);
+        // Log détaillé de tous les paramètres essentiels pour le débogage
+        console.log("[qml] DEBUG PARAMETERS - FINAL VALUES:");
+        console.log("[qml] - resolution slider = " + spectrogramParametersSection.resolutionSliderValue);
+        console.log("[qml] - minFreq = " + minFreq + ", maxFreq = " + maxFreq);
+        console.log("[qml] - sampleRate = " + sampleRate + ", segmentDuration = " + segmentDur);
+        console.log("[qml] - binsPerSecond = " + spectrogramParametersSection.binsPerSecondValue);
+        console.log("[qml] - overlapPreset = " + Math.round(spectrogramParametersSection.resolutionSliderValue * 2));
+        console.log("[qml] - highPassEnabled = " + filterParametersSection.highPassEnabled);
+        console.log("[qml] - highPassCutoff = " + highPassCutoff);
+        console.log("[qml] - highPassOrder = " + highPassOrder);
                     
         generator.generateSpectrogramFromSegment(
             minFreq,
@@ -511,7 +521,8 @@ ApplicationWindow {
             filterParametersSection.highBoostEnabled,
             highBoostAlpha,
             filterParametersSection.highPassEnabled,
-            highPassCutoff,
+            // Utiliser directement la valeur numérique plutôt que de tenter de parser une chaîne
+            filterParametersSection.highPassCutoffNumeric,
             highPassOrder,
             outputFormatSection.pageFormat,
             parseFloat(outputFormatSection.bottomMargin),

@@ -239,7 +239,7 @@ SectionContainer {
                             
                         // Calculer la durée audio et forcer sa mise à jour dans l'interface
                         audioDuration = generator.calculateAudioDuration();
-                        console.log("Slider de résolution changé: valeur=" + value + 
+                        console.log("Slider de résolution changé: valeur=" + value +
                                   ", nouvelle durée audio: " + audioDuration.toFixed(2) + "s");
                         forceUpdateDisplay();
                             

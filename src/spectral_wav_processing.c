@@ -193,70 +193,159 @@ void apply_high_freq_boost_filter(double *signal, int num_samples, double alpha)
  * design_highpass_filter()
  *
  * Designs a digital high-pass filter with specified parameters.
- * Implements a simple Butterworth high-pass filter.
+ * Implements a simple high-pass filter based on standard difference equation.
  *---------------------------------------------------------------------*/
 void design_highpass_filter(double cutoff_freq, int order, double sample_rate, double *a, double *b)
 {
-    // Normalized cutoff frequency (0 to 1, where 1 is Nyquist)
-    double w0 = 2.0 * cutoff_freq / sample_rate;
+    // Validation et logs détaillés pour le débogage
+    printf("=== FILTRE PASSE-HAUT DEBUG ===\n");
+    printf("design_highpass_filter - cutoff_freq reçue: %.2f Hz\n", cutoff_freq);
+    printf("design_highpass_filter - order reçu: %d\n", order);
+    printf("design_highpass_filter - sample_rate reçu: %.2f Hz\n", sample_rate);
     
-    // Limit w0 to avoid instabilities
-    if (w0 < 0.001) w0 = 0.001;
-    if (w0 > 0.999) w0 = 0.999;
+    if (cutoff_freq <= 0.0) {
+        printf("Warning: Invalid cutoff frequency (%.2f Hz), using default of 100 Hz\n", cutoff_freq);
+        cutoff_freq = 100.0;
+    }
     
-    // Simple first-order high-pass filter design
-    // This is a simplified version - a real implementation would use more complex filter design
+    if (order < 1 || order > 8) {
+        printf("Warning: Invalid filter order (%d), using order = 2\n", order);
+        order = 2;
+    }
     
-    double alpha = cos(M_PI * w0) / (1.0 + sin(M_PI * w0));
+    // Utiliser une implémentation très simple mais robuste
+    // Ceci est un filtre à réponse impulsionnelle infinie (IIR) du premier ordre
     
-    // Initialize filter coefficients
+    // Calculer le coefficient alpha (facteur de lissage) à partir de la fréquence de coupure
+    // alpha est proche de 1.0 pour des fréquences de coupure basses
+    double rc = 1.0 / (2.0 * M_PI * cutoff_freq);
+    double dt = 1.0 / sample_rate;
+    double alpha = rc / (rc + dt);
+    
+    // Limiter alpha pour éviter l'instabilité
+    if (alpha < 0.1) alpha = 0.1;
+    if (alpha > 0.95) alpha = 0.95;
+    
+    // Filtre passe-haut de premier ordre très simple: y[n] = alpha * (y[n-1] + x[n] - x[n-1])
     a[0] = 1.0;
     a[1] = -alpha;
-    b[0] = (1.0 + alpha) / 2.0;
-    b[1] = -(1.0 + alpha) / 2.0;
+    b[0] = alpha;
+    b[1] = -alpha;
+    a[2] = 0.0;  // Non utilisé pour un filtre du premier ordre
+    b[2] = 0.0;  // Non utilisé pour un filtre du premier ordre
     
-    printf(" - Designed high-pass filter: cutoff = %.2f Hz, order = %d\n", cutoff_freq, order);
+    printf(" - Designed simple high-pass filter: cutoff = %.2f Hz, alpha = %.4f\n",
+           cutoff_freq, alpha);
+    printf(" - Filter coefficients: a=[%.4f, %.4f], b=[%.4f, %.4f]\n",
+           a[0], a[1], b[0], b[1]);
 }
 
 /*---------------------------------------------------------------------
  * apply_highpass_filter()
  *
- * Applies the designed high-pass filter to the signal.
+ * Applies a simple high-pass filter to the signal.
+ * Implements the formula: y[n] = alpha * (y[n-1] + x[n] - x[n-1])
+ * where alpha is a coefficient related to the cutoff frequency.
  *---------------------------------------------------------------------*/
-void apply_highpass_filter(double *signal, int num_samples, double *a, double *b, int filter_order __attribute__((unused)))
+void apply_highpass_filter(double *signal, int num_samples, double *a, double *b, int filter_order)
 {
-    // Note: filter_order parameter is unused in this implementation
-    // For simplicity, implement a basic direct form I difference equation
-    // This is a simplified version - a real implementation would handle all filter orders
+    // Validate order
+    if (filter_order < 1 || filter_order > 8) {
+        fprintf(stderr, "Warning: Invalid filter order (%d), using order = 2\n", filter_order);
+        filter_order = 2;
+    }
     
+    // Extraire le coefficient alpha du filtre
+    double alpha = b[0];  // b[0] contient alpha selon notre design du filtre
+    
+    printf(" - Applying simplified high-pass filter (alpha = %.4f)\n", alpha);
+    
+    // Mesurer l'amplitude maximale du signal avant filtrage
+    double max_amplitude = 0.0;
+    for (int i = 0; i < num_samples; i++) {
+        double abs_val = fabs(signal[i]);
+        if (abs_val > max_amplitude) {
+            max_amplitude = abs_val;
+        }
+    }
+    printf(" - Original signal max amplitude: %.6f\n", max_amplitude);
+    
+    // Créer une copie de travail du signal
     double *filtered = (double *)malloc(num_samples * sizeof(double));
     if (filtered == NULL) {
         fprintf(stderr, "Error: Memory allocation failed for filtered signal.\n");
         return;
     }
     
-    // Initialize filter state
-    double x_prev = 0.0;
-    double y_prev = 0.0;
+    // Copier le signal original
+    memcpy(filtered, signal, num_samples * sizeof(double));
     
-    // Apply filter
-    for (int i = 0; i < num_samples; i++) {
-        double x = signal[i];
-        double y = (b[0] * x + b[1] * x_prev - a[1] * y_prev) / a[0];
+    // Nombre de passes pour simuler un ordre plus élevé
+    int passes = filter_order;
+    printf(" - Applying filter with %d passes for order %d\n", passes, filter_order);
+    
+    // Appliquer le filtre plusieurs fois pour simuler un ordre plus élevé
+    for (int pass = 0; pass < passes; pass++) {
+        double prev_x = filtered[0];  // Premier échantillon
+        double prev_y = 0.0;          // Sortie précédente (initialisée à 0)
         
-        filtered[i] = y;
+        // Premier échantillon (cas spécial)
+        double y = alpha * filtered[0];
+        filtered[0] = y;
+        prev_y = y;
         
-        // Update state
-        x_prev = x;
-        y_prev = y;
+        // Appliquer le filtre: y[n] = alpha * (y[n-1] + x[n] - x[n-1])
+        for (int i = 1; i < num_samples; i++) {
+            double x = filtered[i];
+            y = alpha * (prev_y + x - prev_x);
+            
+            // Mettre à jour les états
+            prev_x = x;
+            prev_y = y;
+            
+            // Éviter les instabilités numériques
+            if (isnan(y) || isinf(y)) {
+                y = 0.0;
+            } else if (y > 10.0) {
+                y = 10.0;
+            } else if (y < -10.0) {
+                y = -10.0;
+            }
+            
+            filtered[i] = y;
+        }
+        
+        printf(" - Pass %d completed\n", pass + 1);
     }
     
-    // Copy filtered signal back to original
+    // Vérifier l'amplitude après filtrage
+    double max_filtered = 0.0;
+    for (int i = 0; i < num_samples; i++) {
+        double abs_val = fabs(filtered[i]);
+        if (abs_val > max_filtered) {
+            max_filtered = abs_val;
+        }
+    }
+    printf(" - Filtered signal max amplitude: %.6f\n", max_filtered);
+    
+    // Normaliser le signal si nécessaire
+    if (max_filtered > 0.0 &&
+        (max_filtered < 0.01 * max_amplitude || max_filtered > 2.0 * max_amplitude)) {
+        double normalize_factor = max_amplitude / max_filtered;
+        printf(" - Normalizing output (factor = %.4f)\n", normalize_factor);
+        
+        for (int i = 0; i < num_samples; i++) {
+            filtered[i] *= normalize_factor;
+        }
+    }
+    
+    // Copier le résultat filtré dans le signal original
     memcpy(signal, filtered, num_samples * sizeof(double));
     
+    // Libérer la mémoire
     free(filtered);
     
-    printf(" - Applied high-pass filter to signal\n");
+    printf(" - Successfully applied high-pass filter to signal\n");
 }
 
 /*---------------------------------------------------------------------

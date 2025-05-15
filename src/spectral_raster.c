@@ -451,11 +451,21 @@ int spectral_generator_impl(const SpectrogramSettings *cfg,
 
     /* Apply high-pass filter if enabled */
     int enableHighPass = DEFAULT_BOOL(s.enableHighPassFilter, 0);
-    double highPassCutoff = DEFAULT_DBL(s.highPassCutoffFreq, 0.0);
-    int highPassOrder = DEFAULT_INT(s.highPassFilterOrder, 2);
+    
+    // DÉBOGAGE CRITIQUE - Afficher la structure entière des paramètres pour le filtre
+    printf(" === DÉTAIL COMPLET DES PARAMÈTRES DU FILTRE PASSE-HAUT ===\n");
+    printf(" - Filtre activé: %s\n", enableHighPass ? "OUI" : "NON");
+    printf(" - Valeur brute de s.highPassCutoffFreq = %.2f Hz\n", s.highPassCutoffFreq);
+    printf(" - Ordre du filtre: %d\n", s.highPassFilterOrder);
+    
+    // Utiliser DIRECTEMENT la valeur brute sans DEFAULT_DBL
+    double highPassCutoff = s.highPassCutoffFreq;
+    int highPassOrder = s.highPassFilterOrder;
+    
+    printf(" - Valeur finale utilisée pour highPassCutoff = %.2f Hz\n", highPassCutoff);
     
     if (enableHighPass && highPassCutoff > 0.0) {
-        printf(" - High-pass filter: enabled (cutoff = %.2f Hz, order = %d)\n", 
+        printf(" - High-pass filter: enabled (cutoff = %.2f Hz, order = %d)\n",
                highPassCutoff, highPassOrder);
         
         // Limit order to valid range (1-12)

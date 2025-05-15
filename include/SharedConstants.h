@@ -1,6 +1,9 @@
 #ifndef SHARED_CONSTANTS_H
 #define SHARED_CONSTANTS_H
 
+// Ajouter des logs de debug pour suivre l'état des structures
+#define DEBUG_STRUCTURES
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -24,7 +27,7 @@ extern "C" {
 #define MAX_BINS_PER_SECOND     1200  // Maximum absolu pour la densité temporelle
 
 // Constantes pour la résolution d'impression
-#define PRINTER_DPI             400.0
+#define PRINTER_DPI             100.0
 #define INCH_TO_CM              2.54
 
 // Paramètres du système de résolution adaptative

@@ -29,7 +29,11 @@ SectionContainer {
     property alias highBoostEnabled: highBoostToggle.checked
     property alias highBoostAlpha: highBoostAlphaField.value
     property alias highPassEnabled: highPassToggle.checked
+    
+    // CORRECTION IMPORTANTE: Ajouter une propriété numérique pour la fréquence de coupure
     property alias highPassCutoff: highPassCutoffField.value
+    property alias highPassCutoffNumeric: highPassCutoffField.numericValue
+    
     property alias highPassOrder: highPassOrderCombo.currentIndex
     
     // Signaux émis lorsque les paramètres changent
@@ -149,7 +153,15 @@ SectionContainer {
             Layout.fillWidth: true
             Layout.columnSpan: filterGrid.columns
             enabled: highPassToggle.checked
-            onValueEdited: parametersChanged()
+            onValueEdited: {
+                console.log("Valeur numérique changée pour highPassCutoffField: " + value + " → numericValue: " + numericValue)
+                console.log("IMPORTANT - Trace état: enableHighPassFilter=" + highPassToggle.checked + ", cutoffFreq=" + numericValue)
+                parametersChanged()
+            }
+            // Désactiver les liaisons automatiques pour éviter les réinitialisations
+            Component.onCompleted: {
+                console.log("Initialisation du champ highPassCutoffField avec: " + value)
+            }
         }
         
         // High-Pass Filter Order

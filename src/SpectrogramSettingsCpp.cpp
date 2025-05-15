@@ -22,7 +22,7 @@ SpectrogramSettingsCpp::SpectrogramSettingsCpp()
     , m_enableHighBoost(Constants::HIGH_BOOST)
     , m_highBoostAlpha(Constants::HIGH_BOOST_ALPHA_VAL)
     , m_enableHighPassFilter(false)
-    , m_highPassCutoffFreq(0.0)
+    , m_highPassCutoffFreq(100.0)  // Valeur raisonnable par défaut pour le passe-haut
     , m_highPassFilterOrder(2)
     , m_pageFormat(Constants::PAGE_FORMAT_A4_PORTRAIT)
     , m_bottomMarginMM(Constants::BOTTOM_MARGIN)
@@ -89,6 +89,10 @@ SpectrogramSettings SpectrogramSettingsCpp::toCStruct() const
     cSettings.enableHighBoost = m_enableHighBoost ? 1 : 0;
     cSettings.highBoostAlpha = m_highBoostAlpha;
     cSettings.enableHighPassFilter = m_enableHighPassFilter ? 1 : 0;
+    
+    // Debug: Afficher la valeur de la fréquence de coupure
+    qDebug() << "DEBUG - toCStruct - m_highPassCutoffFreq = " << m_highPassCutoffFreq;
+    
     cSettings.highPassCutoffFreq = m_highPassCutoffFreq;
     cSettings.highPassFilterOrder = m_highPassFilterOrder;
     cSettings.pageFormat = m_pageFormat;
@@ -196,7 +200,10 @@ void SpectrogramSettingsCpp::initFromQmlParameters(
     m_enableHighBoost = enableHighBoost;
     m_highBoostAlpha = highBoostAlpha;
     m_enableHighPassFilter = enableHighPassFilter;
+    // IMPORTANT: Afficher la valeur reçue pour débogage
+    qDebug() << "DEBUG - Valeur de highPassCutoffFreq reçue depuis QML: " << highPassCutoffFreq;
     m_highPassCutoffFreq = highPassCutoffFreq;
+    qDebug() << "DEBUG - Après assignation, m_highPassCutoffFreq = " << m_highPassCutoffFreq;
     m_highPassFilterOrder = highPassFilterOrder;
     m_pageFormat = pageFormat;
     m_bottomMarginMM = bottomMarginMM;
