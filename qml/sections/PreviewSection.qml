@@ -147,6 +147,17 @@ Rectangle {
                 width: 50
                 horizontalAlignment: Text.AlignRight
             }
+            
+            // Affichage des dimensions de l'image et résolution
+            Text {
+                id: resolutionText
+                text: ""
+                color: AppStyles.Theme.fieldText
+                font.pixelSize: AppStyles.Theme.smallFontSize
+                visible: previewImage && previewImage.status === Image.Ready
+                horizontalAlignment: Text.AlignRight
+                Layout.fillWidth: true
+            }
         }
         
         // Zone de prévisualisation simplifiée et robuste
@@ -320,6 +331,19 @@ Rectangle {
                         calculateMinZoom()
                         // Centrer l'image au chargement
                         viewportMouseArea.centerImage()
+                        
+                        // Mettre à jour l'affichage des informations de résolution
+                        if (generator) {
+                            var width = generator.getPreviewImageWidth();
+                            var height = generator.getPreviewImageHeight();
+                            var dpi = generator.getPreviewImageDPI();
+                            var widthCM = generator.getPreviewImageWidthCM().toFixed(1);
+                            var heightCM = generator.getPreviewImageHeightCM().toFixed(1);
+                            
+                            resolutionText.text = width + "×" + height + " px (" + 
+                                                widthCM + "×" + heightCM + " cm) @ " + 
+                                                dpi + " DPI";
+                        }
                     }
                 }
                 

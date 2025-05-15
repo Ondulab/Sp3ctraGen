@@ -329,10 +329,40 @@ public:
     */
    Q_INVOKABLE double calculateNormalizationFactor(const QString &audioPath);
    
-   /**
-    * @brief Cleans up temporary files created during normalization
-    */
+    /**
+     * @brief Cleans up temporary files created during normalization
+     */
    Q_INVOKABLE void cleanup();
+    
+    /**
+     * @brief Gets the width of the current preview image in pixels
+     * @return Image width in pixels
+     */
+    Q_INVOKABLE int getPreviewImageWidth() const;
+    
+    /**
+     * @brief Gets the height of the current preview image in pixels
+     * @return Image height in pixels
+     */
+    Q_INVOKABLE int getPreviewImageHeight() const;
+    
+    /**
+     * @brief Gets the DPI of the current preview image
+     * @return Image DPI
+     */
+    Q_INVOKABLE double getPreviewImageDPI() const;
+    
+    /**
+     * @brief Gets the width of the current preview image in centimeters
+     * @return Image width in centimeters
+     */
+    Q_INVOKABLE double getPreviewImageWidthCM() const;
+    
+    /**
+     * @brief Gets the height of the current preview image in centimeters
+     * @return Image height in centimeters
+     */
+    Q_INVOKABLE double getPreviewImageHeightCM() const;
 
 signals:
     /**

@@ -939,3 +939,48 @@ void SpectrogramGenerator::cleanup()
     // Vider la liste
     m_tempFiles.clear();
 }
+
+int SpectrogramGenerator::getPreviewImageWidth() const
+{
+    if (!s_previewProvider) {
+        qWarning() << "Fournisseur d'images non disponible!";
+        return 0;
+    }
+    return s_previewProvider->getImageWidth();
+}
+
+int SpectrogramGenerator::getPreviewImageHeight() const
+{
+    if (!s_previewProvider) {
+        qWarning() << "Fournisseur d'images non disponible!";
+        return 0;
+    }
+    return s_previewProvider->getImageHeight();
+}
+
+double SpectrogramGenerator::getPreviewImageDPI() const
+{
+    if (!s_previewProvider) {
+        qWarning() << "Fournisseur d'images non disponible!";
+        return PRINTER_DPI; // Valeur par défaut
+    }
+    return s_previewProvider->getImageDPI();
+}
+
+double SpectrogramGenerator::getPreviewImageWidthCM() const
+{
+    if (!s_previewProvider) {
+        qWarning() << "Fournisseur d'images non disponible!";
+        return 0.0;
+    }
+    return s_previewProvider->getImageWidthCM();
+}
+
+double SpectrogramGenerator::getPreviewImageHeightCM() const
+{
+    if (!s_previewProvider) {
+        qWarning() << "Fournisseur d'images non disponible!";
+        return 0.0;
+    }
+    return s_previewProvider->getImageHeightCM();
+}

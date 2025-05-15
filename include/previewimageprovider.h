@@ -12,6 +12,7 @@
 #include <QQuickImageProvider>
 #include <QImage>
 #include <QDebug>
+#include "SharedConstants.h"
 
 class PreviewImageProvider : public QQuickImageProvider
 {
@@ -28,6 +29,27 @@ public:
     
     // Method to print the original image in high resolution
     Q_INVOKABLE bool printImage() const;
+    
+    // Methods to get image dimensions and resolution information
+    Q_INVOKABLE int getImageWidth() const { return m_originalImage.width(); }
+    Q_INVOKABLE int getImageHeight() const { return m_originalImage.height(); }
+    Q_INVOKABLE double getImageDPI() const { return PRINTER_DPI; }
+    
+    // Get physical dimensions in millimeters
+    Q_INVOKABLE double getImageWidthMM() const { 
+        return m_originalImage.width() / (PRINTER_DPI / 25.4); 
+    }
+    Q_INVOKABLE double getImageHeightMM() const { 
+        return m_originalImage.height() / (PRINTER_DPI / 25.4); 
+    }
+    
+    // Get physical dimensions in centimeters
+    Q_INVOKABLE double getImageWidthCM() const { 
+        return getImageWidthMM() / 10.0; 
+    }
+    Q_INVOKABLE double getImageHeightCM() const { 
+        return getImageHeightMM() / 10.0; 
+    }
     
     // Debug method to check the image state
     void debugImageState() {

@@ -63,23 +63,11 @@ void PreviewImageProvider::updateImage(const QImage &image)
     
     // Store the original high-resolution image
     m_originalImage = image;
+    // Utiliser directement l'image originale pour l'affichage
+    m_displayImage = image;
+    
     qDebug() << "Original high-resolution image stored: " << m_originalImage.width() << "x" << m_originalImage.height();
-    
-    // Create a resized version for display
-    // Utiliser une taille fixe pour l'aperçu indépendante du DPI
-    int maxWidth = 800; // Taille fixe pour l'affichage
-    
-    if (image.width() > maxWidth) {
-        m_displayImage = image.scaled(maxWidth, 
-                                     (maxWidth * image.height()) / image.width(), 
-                                     Qt::KeepAspectRatio, 
-                                     Qt::SmoothTransformation);
-        qDebug() << "Display image resized to " << m_displayImage.width() << "x" << m_displayImage.height();
-    } else {
-        m_displayImage = image;
-        qDebug() << "Image small enough, using as display image without resizing";
-    }
-    
+    qDebug() << "Using original image for display without resizing";
     qDebug() << "Image updated successfully";
 }
 
