@@ -55,7 +55,7 @@ SectionContainer {
     property bool isResolutionLimited: false
     
     // Propriété pour la durée audio calculée à partir du ViewModel
-    property double audioDuration: generator && generator.audioDuration ? generator.audioDuration : 0.0
+    property double audioDuration: 0.0
     
     // Les propriétés pour les paramètres de filtre ont été déplacées vers FilterParameters.qml
     
@@ -91,7 +91,10 @@ SectionContainer {
                     // Vérifier si la limitation est atteinte
                     isResolutionLimited = generator.isResolutionLimited();
                     
-            // La durée audio est maintenant calculée par le ViewModel via la propriété audioDuration
+                    // IMPORTANT: Recalculer la durée audio lorsque la vitesse d'écriture change
+                    audioDuration = generator.calculateAudioDuration();
+                    console.log("Vitesse d'écriture changée: " + writingSpeedNumeric + 
+                              " cm/s, nouvelle durée audio: " + audioDuration.toFixed(2) + "s");
                 } else {
                     console.error("Generator not available for calculations");
                 }
@@ -116,9 +119,7 @@ SectionContainer {
                 
                 // Titre principal
                 ThemedLabel {
-                    text: "Résolution:"
-                    font.pixelSize: defaultFontSize + 1
-                    font.bold: true
+                    text: "Resolution:"
                 }
             }
             
@@ -236,8 +237,11 @@ SectionContainer {
                             // Vérifier si la limitation est atteinte
                             isResolutionLimited = generator.isResolutionLimited();
                             
-                            // Calculer la durée audio
-                            audioDuration = generator.calculateAudioDuration();
+                        // Calculer la durée audio et forcer sa mise à jour dans l'interface
+                        audioDuration = generator.calculateAudioDuration();
+                        console.log("Slider de résolution changé: valeur=" + value + 
+                                  ", nouvelle durée audio: " + audioDuration.toFixed(2) + "s");
+                        forceUpdateDisplay();
                             
                             // Calculer l'overlap en fonction de la position du curseur
                             var newOverlap = generator.calculateOverlapFromSlider(value);
@@ -272,6 +276,7 @@ SectionContainer {
                 ThemedLabel {
                     id: binsPerSecondValueLabel
                     text: binsPerSecondValue.toFixed(1)
+                    color: "white"
                     font.pixelSize: smallFontSize
                     Layout.alignment: Qt.AlignLeft
                     Layout.preferredWidth: parent.width / 2 - 10
@@ -288,6 +293,7 @@ SectionContainer {
                 ThemedLabel {
                     id: fftSizeLabel
                     text: calculatedFftSize.toString()
+                    color: "white"
                     font.pixelSize: smallFontSize
                     Layout.alignment: Qt.AlignLeft
                     Layout.preferredWidth: parent.width / 2 - 10
@@ -304,6 +310,7 @@ SectionContainer {
                 ThemedLabel {
                     id: overlapLabel
                     text: calculatedOverlap.toFixed(3)
+                    color: "white"
                     font.pixelSize: smallFontSize
                     Layout.alignment: Qt.AlignLeft
                     Layout.preferredWidth: parent.width / 2 - 10
@@ -320,6 +327,7 @@ SectionContainer {
                 ThemedLabel {
                     id: audioDurationLabel
                     text: audioDuration.toFixed(2) // Formaté avec 2 décimales
+                    color: "white"
                     font.pixelSize: smallFontSize
                     Layout.alignment: Qt.AlignLeft
                     Layout.preferredWidth: parent.width / 2 - 10
@@ -356,8 +364,39 @@ SectionContainer {
         // Les paramètres de filtre ont été déplacés vers une section séparée FilterParameters.qml
     }
     
+    // Item pour contenir le Timer (nécessaire pour la structure QML)
+    Item {
+        id: timerContainer
+        width: 0
+        height: 0
+        visible: false
+        
+        // Timer pour forcer le rafraîchissement de l'interface
+        Timer {
+            id: refreshTimer
+            interval: 100
+            repeat: false
+            onTriggered: {
+                // Force un rafraîchissement complet des valeurs
+                audioDurationLabel.text = "";
+                audioDurationLabel.text = audioDuration.toFixed(2);
+                
+                binsPerSecondValueLabel.text = "";
+                binsPerSecondValueLabel.text = binsPerSecondValue.toFixed(1);
+                
+                fftSizeLabel.text = "";
+                fftSizeLabel.text = calculatedFftSize.toString();
+                
+                overlapLabel.text = "";
+                overlapLabel.text = calculatedOverlap.toFixed(3);
+            }
+        }
+    }
+
     // Méthode pour mettre à jour les valeurs affichées
     function updateCalculatedParameters() {
+        console.log("SpectrogramParameters: updateCalculatedParameters() appelé avec audioDuration=" + audioDuration);
+        
         // Mettre à jour l'affichage de la durée audio
         audioDurationLabel.text = audioDuration.toFixed(2);
         
@@ -367,6 +406,19 @@ SectionContainer {
         // Mettre à jour l'affichage de la taille FFT et de l'overlap
         fftSizeLabel.text = calculatedFftSize.toString();
         overlapLabel.text = calculatedOverlap.toFixed(3);
+    }
+    
+    // Fonction publique pour forcer une mise à jour externe
+    function forceUpdateDisplay() {
+        updateCalculatedParameters();
+        // Déclencher le timer pour forcer un rafraîchissement complet
+        refreshTimer.restart();
+    }
+    
+    // Surveiller les changements de audioDuration pour mettre à jour l'affichage
+    onAudioDurationChanged: {
+        console.log("SpectrogramParameters: onAudioDurationChanged: nouvelle valeur=" + audioDuration);
+        updateCalculatedParameters();
     }
     
     // Méthode pour mettre à jour les paramètres FFT calculés depuis le backend

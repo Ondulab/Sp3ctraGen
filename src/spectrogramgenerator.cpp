@@ -470,6 +470,89 @@ double SpectrogramGenerator::calculateMaxBps(double writingSpeed)
     return m_settings.calculateMaxBps(writingSpeed);
 }
 
+double SpectrogramGenerator::updatePageFormat(
+    int pageFormat,
+    double bottomMarginMM,
+    double spectroHeightMM,
+    double writingSpeed,
+    double minFreq,
+    double maxFreq,
+    int sampleRate)
+{
+    qDebug() << "SpectrogramGenerator::updatePageFormat - Mise à jour du format de page:" << pageFormat;
+    
+    // Si le sample rate n'est pas fourni, utiliser la valeur actuelle
+    if (sampleRate <= 0) {
+        sampleRate = m_settings.getSampleRate();
+    }
+    
+    // Récupérer les paramètres actuels de la structure
+    double dynamicRangeDB = m_settings.getDynamicRangeDB();
+    double gammaCorrection = m_settings.getGammaCorrection();
+    bool enableDithering = m_settings.getEnableDithering();
+    double contrastFactor = m_settings.getContrastFactor();
+    bool enableHighBoost = m_settings.getEnableHighBoost();
+    double highBoostAlpha = m_settings.getHighBoostAlpha();
+    bool enableHighPassFilter = m_settings.getEnableHighPassFilter();
+    double highPassCutoffFreq = m_settings.getHighPassCutoffFreq();
+    int highPassFilterOrder = m_settings.getHighPassFilterOrder();
+    
+    // Valeurs pour l'affichage (par défaut)
+    bool enableVerticalScale = m_settings.getEnableVerticalScale();
+    bool enableBottomReferenceLine = m_settings.getEnableBottomReferenceLine();
+    double bottomReferenceLineOffset = m_settings.getBottomReferenceLineOffset();
+    bool enableTopReferenceLine = m_settings.getEnableTopReferenceLine();
+    double topReferenceLineOffset = m_settings.getTopReferenceLineOffset();
+    bool displayParameters = m_settings.getDisplayParameters();
+    double textScaleFactor = m_settings.getTextScaleFactor();
+    double lineThicknessFactor = m_settings.getLineThicknessFactor();
+    
+    // Valeurs pour la résolution
+    double binsPerSecond = m_settings.getBinsPerSecond();
+    int overlapPreset = m_settings.getOverlapPreset();
+    
+    // Mettre à jour les paramètres avec createSettings
+    m_settings = createSettings(
+        minFreq,
+        maxFreq,
+        0.0, // Durée recalculée après
+        sampleRate,
+        dynamicRangeDB,
+        gammaCorrection,
+        enableDithering,
+        contrastFactor,
+        enableHighBoost,
+        highBoostAlpha,
+        enableHighPassFilter,
+        highPassCutoffFreq,
+        highPassFilterOrder,
+        pageFormat,
+        bottomMarginMM,
+        spectroHeightMM,
+        writingSpeed,
+        true, // enableNormalization
+        enableVerticalScale,
+        enableBottomReferenceLine,
+        bottomReferenceLineOffset,
+        enableTopReferenceLine,
+        topReferenceLineOffset,
+        displayParameters,
+        textScaleFactor,
+        lineThicknessFactor,
+        binsPerSecond,
+        overlapPreset
+    );
+    
+    // Calculer la nouvelle durée audio
+    double audioDuration = calculateAudioDuration();
+    
+    qDebug() << "Format de page changé:" << pageFormat 
+             << ", nouvelle durée audio:" << audioDuration << "s"
+             << ", writingSpeed:" << writingSpeed << "cm/s";
+             
+    return audioDuration;
+}
+
 SpectrogramSettingsCpp SpectrogramGenerator::createSettings(
     double minFreq,
     double maxFreq,
@@ -512,11 +595,10 @@ SpectrogramSettingsCpp SpectrogramGenerator::createSettings(
     qDebug() << "DEBUG - Avant initFromQmlParameters:";
     qDebug() << "DEBUG -   settings.m_minFreq = " << settings.getMinFreq();
     qDebug() << "DEBUG -   settings.m_maxFreq = " << settings.getMaxFreq();
+    qDebug() << "DEBUG -   pageFormat = " << pageFormat;
+    qDebug() << "DEBUG -   writingSpeed = " << writingSpeed;
     
-    // Stocker les paramètres dans l'instance m_settings pour pouvoir y accéder plus tard
-    m_settings = settings;
-    
-    // Initialiser les paramètres depuis QML
+    // Initialiser les paramètres depuis QML (IMPORTANT: avant l'affectation à m_settings)
     settings.initFromQmlParameters(
         minFreq,
         maxFreq,
@@ -569,6 +651,9 @@ SpectrogramSettingsCpp SpectrogramGenerator::createSettings(
     
     // Stocker la valeur calculée pour qu'elle soit transmise au moteur de génération
     settings.setFftSize(calculatedFftSize);
+    
+    // IMPORTANT: Stocker les paramètres mis à jour dans l'instance m_settings pour pouvoir y accéder plus tard
+    m_settings = settings;
     
     // Émettre le signal avec les paramètres calculés
     emit fftParametersCalculated(calculatedFftSize, effectiveOverlap, binsPerSecond);

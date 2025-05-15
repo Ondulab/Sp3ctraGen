@@ -55,7 +55,19 @@ SectionContainer {
             // Convertir explicitement la valeur en nombre pour éviter les problèmes avec les points décimaux
             var numericSpeed = parseFloat(writingSpeed)
             console.log("  - Calling _updateSegmentWithNumericSpeed with:", numericSpeed)
-            _updateSegmentWithNumericSpeed(numericSpeed)
+            
+            // Forcer une mise à jour du generator avec la nouvelle vitesse d'écriture
+            if (generator) {
+                // Recalculer la durée audio avec la nouvelle vitesse d'écriture
+                var newDuration = generator.calculateAudioDuration();
+                console.log("  - Nouvelle durée audio calculée:", newDuration);
+                
+                // Laisser un peu de temps au système pour mettre à jour les valeurs
+                updateSegmentTimer.speedValue = numericSpeed;
+                updateSegmentTimer.restart();
+            } else {
+                _updateSegmentWithNumericSpeed(numericSpeed);
+            }
         }
     }
     
@@ -63,11 +75,40 @@ SectionContainer {
     function _updateSegmentWithNumericSpeed(speedValue) {
         console.log("Mise à jour du segment avec vitesse numérique:", speedValue)
         updateSegmentDisplay(audioWaveform.cursorPosition)
+        
+        // Explicitement forcer une mise à jour de la durée audio
+        if (generator) {
+            var audioDuration = generator.calculateAudioDuration();
+            console.log("Durée audio après mise à jour WS:", audioDuration);
+        }
     }
     
     // Observer les changements de résolution pour mettre à jour le segment
     onResolutionValueChanged: {
+        console.log("*** onResolutionValueChanged triggered ***")
+        console.log("  - resolutionValue:", resolutionValue)
+        
         // Recalculer le segment lorsque la résolution change
+        if (waveformProvider && waveformProvider.getTotalDuration() > 0 && audioWaveform) {
+            // Forcer une mise à jour du generator avec la nouvelle résolution
+            if (generator) {
+                // Recalculer la durée audio avec la nouvelle résolution
+                var newDuration = generator.calculateAudioDuration();
+                console.log("  - Nouvelle durée audio calculée:", newDuration);
+                
+                // Utiliser le timer pour retarder légèrement la mise à jour
+                updateSegmentTimer.speedValue = writingSpeed; // Utiliser la vitesse d'écriture actuelle
+                updateSegmentTimer.restart();
+            } else {
+                updateSegmentDisplay(audioWaveform.cursorPosition);
+            }
+        }
+    }
+    
+    // Observer les changements de format de page pour mettre à jour le segment
+    onPageFormatChanged: {
+        console.log("Format de page changé:", pageFormat)
+        // Recalculer le segment lorsque le format de page change
         if (waveformProvider && waveformProvider.getTotalDuration() > 0 && audioWaveform) {
             updateSegmentDisplay(audioWaveform.cursorPosition)
         }
@@ -124,8 +165,29 @@ SectionContainer {
         }
     }
     
+    // Composant invisible pour le timer
+    Item {
+        id: timerContainer
+        width: 0
+        height: 0
+        visible: false
+
+        Timer {
+            id: updateSegmentTimer
+            interval: 50 // 50ms de délai
+            repeat: false
+            property var speedValue: 0
+            
+            onTriggered: {
+                console.log("Timer déclenché pour mise à jour du segment")
+                _updateSegmentWithNumericSpeed(speedValue)
+            }
+        }
+    }
+
     // Mise en page
     ColumnLayout {
+        id: mainLayout
         Layout.fillWidth: true
         Layout.fillHeight: true
         spacing: AppStyles.Theme.spacing

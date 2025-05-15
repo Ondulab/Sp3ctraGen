@@ -261,20 +261,46 @@ public:
     Q_INVOKABLE double calculateOverlapFromSlider(double sliderValue);
     
     /**
-     * @brief Vérifie si la limitation de résolution est atteinte
+     * @brief Checks if resolution limitation is reached
      *
-     * @return true si la valeur bins/s a été limitée (min ou max), false sinon
+     * @return true if bins/s value has been limited (min or max), false otherwise
      */
     Q_INVOKABLE bool isResolutionLimited();
     
     /**
-     * @brief Calcule la durée audio en fonction du format papier et de la vitesse d'écriture
+     * @brief Calculates audio duration based on paper format and writing speed
      *
-     * Formule: durée (s) = largeur papier (cm) / writeSpeed (cm/s)
+     * Formula: duration (s) = paper width (cm) / writeSpeed (cm/s)
      *
-     * @return Durée audio en secondes
+     * @return Audio duration in seconds
      */
     Q_INVOKABLE double calculateAudioDuration();
+    
+    /**
+     * @brief Updates parameters when page format changes
+     * 
+     * This method serves as a wrapper for the private createSettings method
+     * to update spectrogramgenerator parameters and recalculate audio duration
+     * when output format changes in the UI.
+     * 
+     * @param pageFormat Page format (0=A4 portrait, 1=A3 landscape)
+     * @param bottomMarginMM Bottom margin in millimeters
+     * @param spectroHeightMM Spectrogram height in millimeters 
+     * @param writingSpeed Writing speed in cm/s
+     * @param minFreq Minimum frequency (Hz)
+     * @param maxFreq Maximum frequency (Hz)
+     * @param sampleRate Sample rate (optional, will use current value if 0)
+     * @return Calculated audio duration in seconds after format change
+     */
+    Q_INVOKABLE double updatePageFormat(
+        int pageFormat,
+        double bottomMarginMM,
+        double spectroHeightMM,
+        double writingSpeed,
+        double minFreq,
+        double maxFreq,
+        int sampleRate = 0
+    );
     
     /**
      * @brief Calcule le plafond physique maxBps basé sur la résolution d'impression

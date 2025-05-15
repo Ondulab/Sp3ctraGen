@@ -343,10 +343,42 @@ ApplicationWindow {
                     Layout.fillWidth: true
                     isSmall: window.isSmall
                     
-                    onFormatChanged: {
-                        // Mise à jour des dépendances lorsque le format change
-                        audioWaveformSection.pageFormat = pageFormat
+                onFormatChanged: {
+                    // Mise à jour des dépendances lorsque le format change
+                    audioWaveformSection.pageFormat = pageFormat
+                    
+                    // Mettre à jour le format de page dans le générateur (crucial)
+                    // Utiliser la nouvelle méthode updatePageFormat au lieu de la méthode privée createSettings
+                    var newAudioDuration = generator.updatePageFormat(
+                        pageFormat, // nouveau format de page
+                        parseFloat(bottomMargin),
+                        parseFloat(spectroHeight),
+                        spectrogramParametersSection.writingSpeedNumeric,
+                        spectrogramParametersSection.minFreqNumeric,
+                        spectrogramParametersSection.maxFreqNumeric,
+                        waveformProvider ? waveformProvider.getSampleRate() : 44100
+                    );
+                    
+                    // Mettre à jour la durée audio dans tous les composants qui en ont besoin
+                    if (spectrogramParametersSection && audioWaveformSection && waveformProvider && 
+                        waveformProvider.getTotalDuration() > 0) {
+                        
+                        // Utiliser directement la valeur retournée par updatePageFormat
+                        // au lieu de la recalculer
+                        console.log("Format de page changé: " + pageFormat + 
+                                  ", nouvelle durée audio: " + newAudioDuration.toFixed(2) + "s" +
+                                  ", writingSpeed: " + spectrogramParametersSection.writingSpeedNumeric + " cm/s");
+                        
+                        // IMPORTANT : Forcer la mise à jour de la durée audio
+                        spectrogramParametersSection.audioDuration = newAudioDuration;
+                        
+                        // Déclencher le timer pour garantir la mise à jour de l'interface
+                        spectrogramParametersSection.forceUpdateDisplay();
+                        
+                        // Mettre à jour le segment audio dans la section de forme d'onde
+                        audioWaveformSection.updateSegmentDisplay(audioWaveformSection.cursorPosition);
                     }
+                }
                 }
                 
                 // Séparateur
