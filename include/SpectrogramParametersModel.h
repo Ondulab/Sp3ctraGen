@@ -18,7 +18,8 @@
  *
  * This class centralizes all parameters used for spectrogram generation
  * and provides a unified interface for QML and C++ backend.
- * It implements caching of derived values to avoid redundant calculations.
+ * Input parameters are set by the UI, and derived parameters are set by the ViewModel
+ * based on calculations performed by the SpectrogramGenerator.
  */
 class SpectrogramParametersModel : public QObject
 {
@@ -32,7 +33,7 @@ class SpectrogramParametersModel : public QObject
     Q_PROPERTY(int sampleRate READ sampleRate WRITE setSampleRate NOTIFY sampleRateChanged)
     Q_PROPERTY(double dynamicRangeDB READ dynamicRangeDB WRITE setDynamicRangeDB NOTIFY dynamicRangeDBChanged)
     Q_PROPERTY(double gammaCorrection READ gammaCorrection WRITE setGammaCorrection NOTIFY gammaCorrectionChanged)
-    Q_PROPERTY(bool enableDithering READ enableDithering WRITE setEnableDithering NOTIFY enablDitheringChanged)
+    Q_PROPERTY(bool enableDithering READ enableDithering WRITE setEnableDithering NOTIFY enableDitheringChanged)
     Q_PROPERTY(double contrastFactor READ contrastFactor WRITE setContrastFactor NOTIFY contrastFactorChanged)
     Q_PROPERTY(double writingSpeed READ writingSpeed WRITE setWritingSpeed NOTIFY writingSpeedChanged)
     Q_PROPERTY(double resolutionSliderValue READ resolutionSliderValue WRITE setResolutionSliderValue NOTIFY resolutionSliderValueChanged)
@@ -57,11 +58,14 @@ class SpectrogramParametersModel : public QObject
     Q_PROPERTY(bool displayParameters READ displayParameters WRITE setDisplayParameters NOTIFY displayParametersChanged)
     Q_PROPERTY(double textScaleFactor READ textScaleFactor WRITE setTextScaleFactor NOTIFY textScaleFactorChanged)
     Q_PROPERTY(double lineThicknessFactor READ lineThicknessFactor WRITE setLineThicknessFactor NOTIFY lineThicknessFactorChanged)
+    Q_PROPERTY(double printerDpi READ printerDpi WRITE setPrinterDpi NOTIFY printerDpiChanged)
     
-    // Derived/Calculated parameters
-    Q_PROPERTY(double binsPerSecond READ binsPerSecond NOTIFY binsPerSecondChanged)
-    Q_PROPERTY(int fftSize READ fftSize NOTIFY fftSizeChanged)
-    Q_PROPERTY(double effectiveOverlap READ effectiveOverlap NOTIFY effectiveOverlapChanged)
+    // Derived/Calculated parameters (now set externally by ViewModel)
+    Q_PROPERTY(double binsPerSecond READ binsPerSecond WRITE setBinsPerSecond NOTIFY binsPerSecondChanged)
+    Q_PROPERTY(int fftSize READ fftSize WRITE setFftSize NOTIFY fftSizeChanged)
+    Q_PROPERTY(double effectiveOverlap READ effectiveOverlap WRITE setEffectiveOverlap NOTIFY effectiveOverlapChanged)
+    Q_PROPERTY(double audioDuration READ audioDuration WRITE setAudioDuration NOTIFY audioDurationChanged)
+    Q_PROPERTY(bool isResolutionLimited READ isResolutionLimited WRITE setIsResolutionLimited NOTIFY isResolutionLimitedChanged)
     Q_PROPERTY(int overlapPreset READ overlapPreset WRITE setOverlapPreset NOTIFY overlapPresetChanged)
     
 public:
@@ -71,13 +75,6 @@ public:
     // Batch update control
     Q_INVOKABLE void beginUpdate();
     Q_INVOKABLE void endUpdate();
-    
-    // Derived value calculations
-    Q_INVOKABLE double calculateBpsFromSlider(double sliderValue);
-    Q_INVOKABLE double calculateOverlapFromSlider(double sliderValue);
-    Q_INVOKABLE bool isResolutionLimited();
-    Q_INVOKABLE double calculateAudioDuration();
-    Q_INVOKABLE double calculateMaxBps(double writingSpeed);
     
     // Conversion to C structure
     SpectrogramSettings toCStruct() const;
@@ -111,12 +108,15 @@ public:
     double textScaleFactor() const { return m_textScaleFactor; }
     double lineThicknessFactor() const { return m_lineThicknessFactor; }
     int overlapPreset() const { return m_overlapPreset; }
+    double printerDpi() const { return m_printerDpi; }
     
-    // Derived getters (with caching)
-    double binsPerSecond();
-    int fftSize();
-    double effectiveOverlap();
-    
+    // Getters for derived properties
+    double binsPerSecond() const { return m_binsPerSecond; }
+    int fftSize() const { return m_fftSize; }
+    double effectiveOverlap() const { return m_effectiveOverlap; }
+    double audioDuration() const { return m_audioDuration; }
+    bool isResolutionLimited() const { return m_isResolutionLimited; }
+
     // Setters
     void setMinFreq(double value);
     void setMaxFreq(double value);
@@ -146,6 +146,14 @@ public:
     void setTextScaleFactor(double value);
     void setLineThicknessFactor(double value);
     void setOverlapPreset(int value);
+    void setPrinterDpi(double value);
+
+    // Setters for derived properties
+    void setBinsPerSecond(double value);
+    void setFftSize(int value);
+    void setEffectiveOverlap(double value);
+    void setAudioDuration(double value);
+    void setIsResolutionLimited(bool value);
     
 signals:
     // Property change signals
@@ -155,7 +163,7 @@ signals:
     void sampleRateChanged();
     void dynamicRangeDBChanged();
     void gammaCorrectionChanged();
-    void enablDitheringChanged();
+    void enableDitheringChanged();
     void contrastFactorChanged();
     void writingSpeedChanged();
     void resolutionSliderValueChanged();
@@ -177,11 +185,14 @@ signals:
     void textScaleFactorChanged();
     void lineThicknessFactorChanged();
     void overlapPresetChanged();
+    void printerDpiChanged();
     
     // Derived value change signals
     void binsPerSecondChanged();
     void fftSizeChanged();
     void effectiveOverlapChanged();
+    void audioDurationChanged();
+    void isResolutionLimitedChanged();
     
     // Batch update signal
     void parametersChanged();
@@ -220,22 +231,21 @@ private:
     double m_textScaleFactor;
     double m_lineThicknessFactor;
     int m_overlapPreset;
-    
-    // Cache for calculated values
-    bool m_cacheValid;
-    double m_cachedBps;
-    int m_cachedFftSize;
-    double m_cachedOverlap;
-    bool m_resolutionLimited;
+    double m_printerDpi;
+
+    // Derived parameters (now set externally)
+    double m_binsPerSecond;
+    int m_fftSize;
+    double m_effectiveOverlap;
+    double m_audioDuration;
+    bool m_isResolutionLimited;
     
     // Batch update tracking
     bool m_batchUpdating;
     bool m_paramsChanged;
     
     // Private methods
-    void invalidateCache();
-    void recalculateDerivedValues();
-    double getOverlapValueFromPreset() const;
+    double getOverlapValueFromPreset() const; // Kept for overlapPreset logic
     void emitChangeSignal(bool batch = false);
 };
 

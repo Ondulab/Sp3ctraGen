@@ -90,7 +90,7 @@ public:
         int overlapPreset,
         const QString &inputFile,
         const QString &outputFolder,
-        int dpi = PRINTER_DPI
+        int dpi = 400 // Valeur par défaut pour la résolution
     );
 
 signals:

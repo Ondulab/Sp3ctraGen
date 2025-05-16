@@ -7,6 +7,7 @@
  */
 
 #include "../include/SpectrogramSettingsCpp.h"
+#include "../include/SpectrogramParametersModel.h" // Needed for the new constructor
 #include "../include/Constants.h"
 #include <QDebug>
 
@@ -42,7 +43,55 @@ SpectrogramSettingsCpp::SpectrogramSettingsCpp()
     , m_resolutionSliderValue(0.5) // Valeur initiale du curseur: Balanced
     , m_isResolutionLimited(false) // Pas de limitation initialement
     , m_fftSize(0) // 0 signifie calcul automatique
+    , m_printerDpi(DEFAULT_PRINTER_DPI) // Valeur par défaut pour la résolution d'impression
 {
+}
+
+// Constructeur à partir de SpectrogramParametersModel
+SpectrogramSettingsCpp::SpectrogramSettingsCpp(const SpectrogramParametersModel* model)
+{
+    if (!model) {
+        qWarning() << "SpectrogramSettingsCpp: SpectrogramParametersModel pointer is null, initializing with default settings.";
+        // Initialize with default values (delegating to default constructor or setting them here)
+        *this = SpectrogramSettingsCpp(); // Use default constructor
+        return;
+    }
+
+    initFromQmlParameters(
+        model->minFreq(),
+        model->maxFreq(),
+        model->duration(),
+        model->sampleRate(),
+        model->dynamicRangeDB(),
+        model->gammaCorrection(),
+        model->enableDithering(),
+        model->contrastFactor(),
+        model->enableHighBoost(),
+        model->highBoostAlpha(),
+        model->enableHighPassFilter(),
+        model->highPassCutoffFreq(),
+        model->highPassFilterOrder(),
+        model->pageFormat(),
+        model->bottomMarginMM(),
+        model->spectroHeightMM(),
+        model->writingSpeed(),
+        model->enableNormalization(),
+        model->enableVerticalScale(),
+        model->enableBottomReferenceLine(),
+        model->bottomReferenceLineOffset(),
+        model->enableTopReferenceLine(),
+        model->topReferenceLineOffset(),
+        model->displayParameters(),
+        model->textScaleFactor(),
+        model->lineThicknessFactor(),
+        model->binsPerSecond(),      // Use the current (possibly derived) value from model
+        model->overlapPreset(),
+        model->printerDpi()
+    );
+    // Ensure resolutionSliderValue is also set, as it's used in calculations
+    setResolutionSliderValue(model->resolutionSliderValue());
+    // Note: fftSize is calculated within initFromQmlParameters or later by generator logic
+    // m_isResolutionLimited is also determined during calculations
 }
 
 SpectrogramSettingsCpp SpectrogramSettingsCpp::defaultSettings()
@@ -112,6 +161,7 @@ SpectrogramSettings SpectrogramSettingsCpp::toCStruct() const
     cSettings.binsPerSecond = m_binsPerSecond;
     cSettings.overlapPreset = m_overlapPreset;
     cSettings.fftSize = m_fftSize; // Transfert de la taille FFT calculée
+    cSettings.printerDpi = m_printerDpi; // Transfert de la résolution d'impression
     return cSettings;
 }
 
@@ -148,6 +198,7 @@ SpectrogramSettingsCpp SpectrogramSettingsCpp::fromCStruct(const SpectrogramSett
     settings.m_binsPerSecond = cSettings.binsPerSecond;
     settings.m_overlapPreset = cSettings.overlapPreset;
     settings.m_fftSize = cSettings.fftSize; // Récupération de la taille FFT
+    settings.m_printerDpi = cSettings.printerDpi; // Récupération de la résolution d'impression
     return settings;
 }
 
@@ -179,7 +230,8 @@ void SpectrogramSettingsCpp::initFromQmlParameters(
     double textScaleFactor,
     double lineThicknessFactor,
     double binsPerSecond,
-    int overlapPreset)
+    int overlapPreset,
+    double printerDpi)
 {
     // Log des valeurs avant mise à jour
     qDebug() << "DEBUG - initFromQmlParameters - Avant mise à jour:";
@@ -220,6 +272,10 @@ void SpectrogramSettingsCpp::initFromQmlParameters(
     m_lineThicknessFactor = lineThicknessFactor;
     m_binsPerSecond = binsPerSecond;
     m_overlapPreset = overlapPreset;
+    m_printerDpi = printerDpi;
+    
+    // Log détaillé pour le débogage du paramètre DPI
+    qDebug() << "DEBUG - initFromQmlParameters - Résolution d'impression (DPI) définie à:" << m_printerDpi;
     
     // Log des valeurs après mise à jour
     qDebug() << "DEBUG - initFromQmlParameters - Après mise à jour:";
@@ -291,8 +347,8 @@ int SpectrogramSettingsCpp::calculateFftSize(int sampleRate) const
  */
 double SpectrogramSettingsCpp::calculateMaxBps(double writingSpeed) const
 {
-    // maxBps = ⌊(800/2.54) × writeSpeed⌋
-    return floor((PRINTER_DPI / INCH_TO_CM) * writingSpeed);
+    // maxBps = ⌊(DPI/2.54) × writeSpeed⌋
+    return floor((m_printerDpi / INCH_TO_CM) * writingSpeed);
 }
 
 /**
@@ -336,9 +392,9 @@ double SpectrogramSettingsCpp::calculateAudioDuration() const
  */
 double SpectrogramSettingsCpp::calculateBpsFromSlider(double sliderValue, double writingSpeed) const
 {
-    // Calcul du bins/s optimal basé sur la résolution d'impression (800dpi)
-    // Formula: bins_per_second = (800 dpi / 2.54 cm/inch) * writeSpeed
-    double optimalBps = (PRINTER_DPI / INCH_TO_CM) * writingSpeed;
+    // Calcul du bins/s optimal basé sur la résolution d'impression
+    // Formula: bins_per_second = (DPI / 2.54 cm/inch) * writeSpeed
+    double optimalBps = (m_printerDpi / INCH_TO_CM) * writingSpeed;
     
     // Arrondir à l'entier inférieur pour s'assurer qu'on ne dépasse jamais la résolution physique
     optimalBps = floor(optimalBps);

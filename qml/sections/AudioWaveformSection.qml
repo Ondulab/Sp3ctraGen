@@ -56,11 +56,11 @@ SectionContainer {
             var numericSpeed = parseFloat(writingSpeed)
             console.log("  - Calling _updateSegmentWithNumericSpeed with:", numericSpeed)
             
-            // Forcer une mise à jour du generator avec la nouvelle vitesse d'écriture
-            if (generator) {
-                // Recalculer la durée audio avec la nouvelle vitesse d'écriture
-                var newDuration = generator.calculateAudioDuration();
-                console.log("  - Nouvelle durée audio calculée:", newDuration);
+            // Mettre à jour la vitesse d'écriture dans le modèle
+            if (generator && generator.parameters) {
+                generator.parameters.beginUpdate();
+                generator.parameters.writingSpeed = numericSpeed;
+                generator.parameters.endUpdate();
                 
                 // Laisser un peu de temps au système pour mettre à jour les valeurs
                 updateSegmentTimer.speedValue = numericSpeed;
@@ -76,11 +76,8 @@ SectionContainer {
         console.log("Mise à jour du segment avec vitesse numérique:", speedValue)
         updateSegmentDisplay(audioWaveform.cursorPosition)
         
-        // Explicitement forcer une mise à jour de la durée audio
-        if (generator) {
-            var audioDuration = generator.calculateAudioDuration();
-            console.log("Durée audio après mise à jour WS:", audioDuration);
-        }
+        // La durée audio sera mise à jour via le signal calculatedParametersUpdated
+        // et accessible via generator.parameters.audioDuration
     }
     
     // Observer les changements de résolution pour mettre à jour le segment
@@ -90,11 +87,11 @@ SectionContainer {
         
         // Recalculer le segment lorsque la résolution change
         if (waveformProvider && waveformProvider.getTotalDuration() > 0 && audioWaveform) {
-            // Forcer une mise à jour du generator avec la nouvelle résolution
-            if (generator) {
-                // Recalculer la durée audio avec la nouvelle résolution
-                var newDuration = generator.calculateAudioDuration();
-                console.log("  - Nouvelle durée audio calculée:", newDuration);
+            // Mettre à jour la valeur du curseur de résolution dans le modèle
+            if (generator && generator.parameters) {
+                generator.parameters.beginUpdate();
+                generator.parameters.resolutionSliderValue = resolutionValue;
+                generator.parameters.endUpdate();
                 
                 // Utiliser le timer pour retarder légèrement la mise à jour
                 updateSegmentTimer.speedValue = writingSpeed; // Utiliser la vitesse d'écriture actuelle

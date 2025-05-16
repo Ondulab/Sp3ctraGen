@@ -2,6 +2,32 @@
 #include "spectral_wav_processing.h"
 #include "spectral_fft.h"
 
+// Fonctions utilitaires pour remplacer les macros supprimées
+double get_mm_to_pixels(double dpi) {
+    return dpi / 25.4;
+}
+
+double get_pixels_to_cm(double dpi) {
+    return 2.54 / dpi;
+}
+
+// Calcul des dimensions de page en pixels (en fonction du DPI configuré)
+double get_a4_width(double dpi) {
+    return A4_WIDTH_MM * get_mm_to_pixels(dpi);
+}
+
+double get_a4_height(double dpi) {
+    return A4_HEIGHT_MM * get_mm_to_pixels(dpi);
+}
+
+double get_a3_width(double dpi) {
+    return A3_WIDTH_MM * get_mm_to_pixels(dpi);
+}
+
+double get_a3_height(double dpi) {
+    return A3_HEIGHT_MM * get_mm_to_pixels(dpi);
+}
+
 /*---------------------------------------------------------------------
  * draw_vertical_scale()
  *
@@ -133,17 +159,20 @@ void draw_vertical_scale(cairo_t *cr, double spectro_left, double spectro_top,
  *  - topOffset: Offset of the top reference line in mm (positive = upward)
  *---------------------------------------------------------------------*/
 void draw_reference_lines(cairo_t *cr, double spectro_left, double spectro_width,
-                          double spectro_bottom, double spectro_top,
-                          int enableBottom, double bottomOffset,
-                          int enableTop, double topOffset,
-                          double lineThicknessFactor) {
+                           double spectro_bottom, double spectro_top,
+                           int enableBottom, double bottomOffset,
+                           int enableTop, double topOffset,
+                           double lineThicknessFactor, double dpi) {
     cairo_set_source_rgb(cr, 0.0, 0.0, 0.0);
     cairo_set_line_width(cr, lineThicknessFactor);
+    
+    // DPI value is now passed as a parameter to the function
     
     // Bottom reference line
     if (enableBottom) {
         // Use positive offset value but apply it downward from the bottom
-        double y = spectro_bottom + bottomOffset * MM_TO_PIXELS;
+        double mm_to_pixels = get_mm_to_pixels(dpi);
+        double y = spectro_bottom + bottomOffset * mm_to_pixels;
         cairo_move_to(cr, spectro_left, y);
         cairo_line_to(cr, spectro_left + spectro_width, y);
         cairo_stroke(cr);
@@ -151,7 +180,8 @@ void draw_reference_lines(cairo_t *cr, double spectro_left, double spectro_width
     
     // Top reference line
     if (enableTop) {
-        double y = spectro_top - topOffset * MM_TO_PIXELS;
+        double mm_to_pixels = get_mm_to_pixels(dpi);
+        double y = spectro_top - topOffset * mm_to_pixels;
         cairo_move_to(cr, spectro_left, y);
         cairo_line_to(cr, spectro_left + spectro_width, y);
         cairo_stroke(cr);
@@ -316,10 +346,19 @@ int spectral_generator_impl(const SpectrogramSettings *cfg,
     double  highBoostAlpha  = DEFAULT_DBL(s.highBoostAlpha, HIGH_BOOST_ALPHA);
     double  binsPerSecond;
     
-    // Calcul du bins/s optimal basé sur la résolution d'impression
+    // Calcul du bins/s optimal basé sur la résolution d'impression configurée
     if (writingSpeed > 0.0) {
-        // Formula: bins_per_second = (800 dpi / 2.54 cm/inch) * writeSpeed
-        double optimalBps = (PRINTER_DPI / INCH_TO_CM) * writingSpeed;
+        // CORRECTION: Utiliser la valeur DPI configurée dans les paramètres, avec un minimum raisonnable
+        // au lieu d'une valeur par défaut codée en dur
+        double dpi = s.printerDpi >= 72.0 ? s.printerDpi : DEFAULT_PRINTER_DPI; // Minimum 72 DPI (standard écran)
+        
+        // Afficher la valeur DPI effectivement utilisée
+        printf("spectral_generator_impl - DPI value used for calculations: %.1f\n", dpi);
+        
+        // Formula: bins_per_second = (dpi / 2.54 cm/inch) * writeSpeed
+        // IMPORTANT: Afficher la valeur DPI exacte utilisée pour les calculs ici
+        printf("spectral_generator_impl - DPI reçue: %.1f, utilisée pour le calcul: %.1f\n", s.printerDpi, dpi);
+        double optimalBps = (dpi / INCH_TO_CM) * writingSpeed;
         
         // Arrondir à l'entier inférieur pour s'assurer qu'on ne dépasse jamais la résolution physique
         optimalBps = floor(optimalBps);
@@ -395,11 +434,14 @@ int spectral_generator_impl(const SpectrogramSettings *cfg,
     double original_duration = duration;
     
     if (writingSpeed > 0.0 && s.duration <= 0.0) {
+        // Récupérer la valeur DPI configurée
+        double dpi = s.printerDpi > 0 ? s.printerDpi : DEFAULT_PRINTER_DPI; // Valeur par défaut si non configurée
+        
         // Sélection du format de page pour calculer la largeur
-        double pageWidth = (s.pageFormat == 1) ? A3_WIDTH : A4_WIDTH;
+        double pageWidth = (s.pageFormat == 1) ? get_a3_width(dpi) : get_a4_width(dpi);
         
         // Convertir la largeur de pixels à cm - en utilisant la valeur exacte
-        double pageWidthCM = pageWidth / (PRINTER_DPI / 2.54); // 800 pixels par pouce, 2.54 cm par pouce
+        double pageWidthCM = pageWidth / (dpi / 2.54); // pixels par pouce, 2.54 cm par pouce
         
         // Calculer la durée: durée (s) = largeur (cm) / vitesse (cm/s)
         duration = pageWidthCM / writingSpeed;
@@ -514,32 +556,39 @@ int spectral_generator_impl(const SpectrogramSettings *cfg,
     /* ------------------------------ */
     /* 3. Generate the PNG Spectrogram*/
     /* ------------------------------ */
-    // Determine page dimensions based on format for 800 DPI
+    // Récupérer la valeur DPI configurée
+    double dpi = s.printerDpi >= 72.0 ? s.printerDpi : DEFAULT_PRINTER_DPI; // Minimum 72 DPI (standard écran)
+    
+    // Afficher la valeur DPI effectivement utilisée pour le dessin
+    printf(" - Using DPI value for rendering: %.1f (original value from parameters: %.1f)\n", dpi, s.printerDpi);
+    
+    // Determine page dimensions based on format and DPI
     double page_width, page_height;
     if (s.pageFormat == 1) { // A3 landscape
-        page_width = A3_WIDTH;
-        page_height = A3_HEIGHT;
+        page_width = get_a3_width(dpi);
+        page_height = get_a3_height(dpi);
         printf(" - Page format: A3 landscape (%.2f x %.2f mm)\n", A3_WIDTH_MM, A3_HEIGHT_MM);
     } else { // A4 portrait (default)
-        page_width = A4_WIDTH;
-        page_height = A4_HEIGHT;
+        page_width = get_a4_width(dpi);
+        page_height = get_a4_height(dpi);
         printf(" - Page format: A4 portrait (%.2f x %.2f mm)\n", A4_WIDTH_MM, A4_HEIGHT_MM);
     }
     
-    // Réduit la taille de la marge pour le texte (étiquettes de fréquence)
-    double label_margin = 150.0; // Espace pour les étiquettes
-    double bottom_margin_px = DEFAULT_DBL(s.bottomMarginMM * MM_TO_PIXELS, DEFAULT_BOTTOM_MARGIN);
-    double spectro_height_px = DEFAULT_DBL(s.spectroHeightMM * MM_TO_PIXELS, DEFAULT_SPECTRO_HEIGHT);
+    // Calculation for label margin based on DPI (was hardcoded to 150)
+    double label_margin = 150.0 * (dpi / 400.0); // Scale margin proportionally to DPI
+    double mm_to_pixels = get_mm_to_pixels(dpi);
+    double bottom_margin_px = DEFAULT_DBL(s.bottomMarginMM * mm_to_pixels, DEFAULT_BOTTOM_MARGIN_MM * mm_to_pixels);
+    double spectro_height_px = DEFAULT_DBL(s.spectroHeightMM * mm_to_pixels, DEFAULT_SPECTRO_HEIGHT_MM * mm_to_pixels);
     
-    printf(" - Label margin: %.2f pixels at %.0f DPI\n", label_margin, PRINTER_DPI);
-    printf(" - Bottom margin: %.2f mm (%.2f pixels at %.0f DPI)\n", s.bottomMarginMM, bottom_margin_px, PRINTER_DPI);
-    printf(" - Spectrogram height: %.2f mm (%.2f pixels at %.0f DPI)\n", s.spectroHeightMM, spectro_height_px, PRINTER_DPI);
+    printf(" - Label margin: %.2f pixels at %.0f DPI\n", label_margin, dpi);
+    printf(" - Bottom margin: %.2f mm (%.2f pixels at %.0f DPI)\n", s.bottomMarginMM, bottom_margin_px, dpi);
+    printf(" - Spectrogram height: %.2f mm (%.2f pixels at %.0f DPI)\n", s.spectroHeightMM, spectro_height_px, dpi);
     
     // Create surface and context for 800 DPI
     int image_width = (int)(page_width);
     int image_height = (int)(page_height);
     
-    printf(" - Creating canvas: %d x %d pixels at %.0f DPI\n", image_width, image_height, PRINTER_DPI);
+    printf(" - Creating canvas: %d x %d pixels at %.0f DPI\n", image_width, image_height, dpi);
     
     cairo_surface_t *surface = cairo_image_surface_create(CAIRO_FORMAT_ARGB32, image_width, image_height);
     cairo_t *cr = cairo_create(surface);
@@ -607,7 +656,7 @@ int spectral_generator_impl(const SpectrogramSettings *cfg,
         
         // Convertir la page en cm
         /* La variable page_width_cm n'est pas utilisée dans cette fonction */
-        double spectro_width_cm = spectro_width / (PRINTER_DPI / 2.54);
+        double spectro_width_cm = spectro_width / (dpi / 2.54);
         
         // Calculer la largeur du spectrogramme en cm pour la durée spécifiée
         double required_width_cm = fft_duration * writingSpeed;
@@ -650,11 +699,11 @@ int spectral_generator_impl(const SpectrogramSettings *cfg,
     // indépendante du bins/s (seule la vitesse d'écriture influence la largeur)
     double seconds_per_window = 1.0 / binsPerSecond;
     double cm_per_window = seconds_per_window * writingSpeed;
-    double pixels_per_window = cm_per_window / PIXELS_TO_CM;
+    double pixels_per_window = cm_per_window / get_pixels_to_cm(dpi);
     double window_width = pixels_per_window;
     
-    printf(" - Window width: %.3f pixels at %.0f DPI\n", window_width, PRINTER_DPI);
-    printf(" - Adaptive spacing: %.3f pixels per bin (%.3f cm per bin)\n", 
+    printf(" - Window width: %.3f pixels at %.0f DPI\n", window_width, dpi);
+    printf(" - Adaptive spacing: %.3f pixels per bin (%.3f cm per bin)\n",
            window_width, cm_per_window);
     
     // Pré-calcul des fréquences réelles pour chaque bin FFT
@@ -741,10 +790,13 @@ int spectral_generator_impl(const SpectrogramSettings *cfg,
     
     // Draw reference lines if enabled
     if (s.enableBottomReferenceLine || s.enableTopReferenceLine) {
+        // Passer la valeur DPI configurée dans les paramètres
+        double dpi = s.printerDpi > 0 ? s.printerDpi : DEFAULT_PRINTER_DPI; // Valeur par défaut si non configurée
+        printf("draw_reference_lines - using DPI value: %.1f\n", dpi);
         draw_reference_lines(cr, spectro_left, spectro_width, spectro_bottom, spectro_top,
-                             s.enableBottomReferenceLine, s.bottomReferenceLineOffset,
-                             s.enableTopReferenceLine, s.topReferenceLineOffset,
-                             s.lineThicknessFactor);
+                              s.enableBottomReferenceLine, s.bottomReferenceLineOffset,
+                              s.enableTopReferenceLine, s.topReferenceLineOffset,
+                              s.lineThicknessFactor, dpi);
     }
     
     // Display parameters if enabled
@@ -778,7 +830,7 @@ int spectral_generator_impl(const SpectrogramSettings *cfg,
     free(spectro_data.data);
     free(bin_frequencies);
     
-    printf("Spectrogram generated successfully at %.0f DPI: %s\n", PRINTER_DPI, outputFilePath);
+    printf("Spectrogram generated successfully at %.0f DPI: %s\n", dpi, outputFilePath);
     
     return EXIT_SUCCESS;
 }
@@ -800,14 +852,17 @@ int spectral_generator_impl(const SpectrogramSettings *cfg,
  *  - EXIT_SUCCESS on success, EXIT_FAILURE on error.
  *---------------------------------------------------------------------*/
 int spectral_generator_with_metadata(const SpectrogramSettings *cfg,
-                                    const char *inputFile,
-                                    const char *outputFile,
-                                    const char *audioFileName,
-                                    double startTime,
-                                     double segmentDuration __attribute__((unused)))
+                                     const char *inputFile,
+                                     const char *outputFile,
+                                     const char *audioFileName,
+                                     double startTime,
+                                      double segmentDuration __attribute__((unused)))
 {
     // Create a copy of the settings
     SpectrogramSettings settings = *cfg;
+    
+    // Vérifier que la valeur DPI est correctement passée à la fonction
+    printf("spectral_generator_with_metadata - DPI value from user: %.1f\n", settings.printerDpi);
     
     // Store the metadata for later use in draw_parameters_text
     // This is a workaround since we can't modify the existing API

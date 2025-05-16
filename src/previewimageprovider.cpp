@@ -7,9 +7,10 @@
 #include <QtPrintSupport/QPrinter>
 #include <QtPrintSupport/QPrintDialog>
 #include "SharedConstants.h"
+#include "../include/SpectrogramSettingsCpp.h"
 
 PreviewImageProvider::PreviewImageProvider()
-    : QQuickImageProvider(QQuickImageProvider::Image)
+    : QObject(nullptr), QQuickImageProvider(QQuickImageProvider::Image)
 {
     // Créer une image vide par défaut
     m_displayImage = QImage(800, 600, QImage::Format_ARGB32);
@@ -155,13 +156,13 @@ bool PreviewImageProvider::printImage() const
     // Créer une imprimante avec résolution élevée
     QPrinter printer(QPrinter::HighResolution);
     
-    // Configurer la résolution à 800 DPI
-    printer.setResolution(PRINTER_DPI);
+    // Configurer la résolution avec la valeur DPI
+    printer.setResolution(m_dpi);
     
     // Calculer les dimensions physiques de l'image en millimètres
-    // Convertir les pixels en millimètres (à 800 DPI)
-    double widthMM = m_originalImage.width() / (PRINTER_DPI / 25.4);
-    double heightMM = m_originalImage.height() / (PRINTER_DPI / 25.4);
+    // Convertir les pixels en millimètres
+    double widthMM = m_originalImage.width() / (m_dpi / 25.4);
+    double heightMM = m_originalImage.height() / (m_dpi / 25.4);
     
     qDebug() << "Image physical dimensions: " << widthMM << "mm x " << heightMM << "mm";
     
@@ -205,7 +206,7 @@ bool PreviewImageProvider::printImage() const
     // Dessiner l'image sans mise à l'échelle
     painter.drawImage(targetRect, m_originalImage);
     
-    qDebug() << "Printing image at " << PRINTER_DPI << " DPI, size:" << m_originalImage.width() << "x" << m_originalImage.height();
+    qDebug() << "Printing image at " << m_dpi << " DPI, size:" << m_originalImage.width() << "x" << m_originalImage.height();
     qDebug() << "Physical dimensions:" << widthMM << "mm x " << heightMM << "mm";
     
     return true;

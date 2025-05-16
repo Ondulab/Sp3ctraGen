@@ -10,8 +10,11 @@
 #define SPECTROGRAMSETTINGSCPP_H
 
 #include <QString>
-#include "spectral_generator.h"
+#include "spectral_generator.h" // Contains SpectrogramSettings (C struct)
 #include "SharedConstants.h"
+
+// Forward declaration
+class SpectrogramParametersModel;
 
 /**
  * @brief Unified C++ class for spectrogram settings
@@ -23,6 +26,9 @@ class SpectrogramSettingsCpp {
 public:
     // Constructeur par défaut
     SpectrogramSettingsCpp();
+
+    // Constructeur à partir de SpectrogramParametersModel
+    explicit SpectrogramSettingsCpp(const SpectrogramParametersModel* model);
     
     // Factory methods for common presets
     static SpectrogramSettingsCpp defaultSettings();
@@ -130,6 +136,10 @@ public:
     double getResolutionSliderValue() const { return m_resolutionSliderValue; }
     void setResolutionSliderValue(double value) { m_resolutionSliderValue = value; }
     
+    // Méthodes pour la résolution d'impression
+    double getPrinterDpi() const { return m_printerDpi; }
+    void setPrinterDpi(double value) { m_printerDpi = value; }
+    
     // Méthodes de calcul pour le mode Resolution
     double calculateMaxBps(double writingSpeed) const;
     double calculateBpsFromSlider(double sliderValue, double writingSpeed) const;
@@ -175,7 +185,8 @@ public:
         double textScaleFactor = 2.0,
         double lineThicknessFactor = 2.0,
         double binsPerSecond = DEFAULT_BINS_PER_SECOND,
-        int overlapPreset = DEFAULT_OVERLAP_PRESET
+        int overlapPreset = DEFAULT_OVERLAP_PRESET,
+        double printerDpi = 400.0
     );
     
 private:
@@ -210,6 +221,7 @@ private:
     double m_resolutionSliderValue;  // Position du curseur resolution (0=Temporal, 0.5=Balanced, 1=Spectral)
     mutable bool m_isResolutionLimited; // Indique si la limitation de résolution est atteinte
     int m_fftSize;                   // Taille FFT calculée par le curseur de résolution (0=auto)
+    double m_printerDpi;             // Résolution d'impression en DPI
 };
 
 #endif // SPECTROGRAMSETTINGSCPP_H

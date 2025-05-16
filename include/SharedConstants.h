@@ -27,8 +27,8 @@ extern "C" {
 #define MAX_BINS_PER_SECOND     1200  // Maximum absolu pour la densité temporelle
 
 // Constantes pour la résolution d'impression
-#define PRINTER_DPI             100.0
 #define INCH_TO_CM              2.54
+#define DEFAULT_PRINTER_DPI     400.0  // Valeur par défaut pour la résolution d'impression
 
 // Paramètres du système de résolution adaptative
 // ---------------------------------------------
@@ -70,10 +70,10 @@ extern "C" {
 #define A3_LANDSCAPE_WIDTH_CM   42.0
 
 // Facteurs de conversion
-#define MM_TO_PIXELS           (PRINTER_DPI/25.4)
+// Note: MM_TO_PIXELS et PIXELS_TO_CM doivent être calculés dynamiquement
+// en utilisant la valeur DPI configurée dans SpectrogramSettings
 #define MM_TO_POINTS            2.83    // 72 DPI / 25.4 mm/inch
 #define POINTS_PER_INCH         72.0
-#define PIXELS_TO_CM            (2.54/PRINTER_DPI)
 
 // Marges par défaut
 #define DEFAULT_BOTTOM_MARGIN_MM 50.8

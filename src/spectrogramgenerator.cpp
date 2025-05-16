@@ -19,7 +19,7 @@ PreviewImageProvider* SpectrogramGenerator::s_previewProvider = nullptr;
 
 SpectrogramGenerator::SpectrogramGenerator(QObject *parent)
     : QObject(parent)
-    , m_settings() // Initialisation de la structure des paramètres
+    , m_settings()
 {
     // Connecter les signaux du TaskManager pour relayer les mises à jour de progression
     connect(TaskManager::getInstance(), &TaskManager::taskProgressUpdated,
@@ -38,50 +38,19 @@ SpectrogramGenerator::~SpectrogramGenerator()
 }
 
 void SpectrogramGenerator::generateSpectrogram(
-    double minFreq,
-    double maxFreq,
-    double duration,
-    int sampleRate,
-    double dynamicRangeDB,
-    double gammaCorrection,
-    bool enableDithering,
-    double contrastFactor,
-    bool enableHighBoost,
-    double highBoostAlpha,
-    bool enableHighPassFilter,
-    double highPassCutoffFreq,
-    int highPassFilterOrder,
-    int pageFormat,
-    double bottomMarginMM,
-    double spectroHeightMM,
-    double writingSpeed,
+    const SpectrogramSettingsCpp& settings,
     const QString &inputFile,
     const QString &outputFolder,
-    const QString &visualizationType,
-    bool enableNormalization,
-    double binsPerSecond,
-    int overlapPreset)
+    const QString &visualizationType)
 {
-    // Créer les paramètres
-    SpectrogramSettingsCpp settings = createSettings(
-        minFreq, maxFreq, duration, sampleRate,
-        dynamicRangeDB, gammaCorrection, enableDithering, contrastFactor,
-        enableHighBoost, highBoostAlpha, enableHighPassFilter,
-        highPassCutoffFreq, highPassFilterOrder, pageFormat,
-        bottomMarginMM, spectroHeightMM, writingSpeed,
-        enableNormalization,
-        true, // enableVerticalScale (valeur par défaut)
-        false, // enableBottomReferenceLine (valeur par défaut)
-        -34.75, // bottomReferenceLineOffset (valeur par défaut)
-        false, // enableTopReferenceLine (valeur par défaut)
-        12.55, // topReferenceLineOffset (valeur par défaut)
-        false, // displayParameters (valeur par défaut)
-        2.0, // textScaleFactor (valeur par défaut)
-        2.0, // lineThicknessFactor (valeur par défaut)
-        binsPerSecond,
-        overlapPreset
-    );
-    
+    // The settings object is now passed directly.
+    // The createSettings method is primarily for internal use or when converting from individual QML params.
+    // For direct calls like this, we assume 'settings' is already correctly populated.
+    // We might still want to update m_settings if this generator instance is long-lived and m_settings is used elsewhere.
+    // For now, let's assume the passed 'settings' is what we should use for this specific generation.
+    // The settings object is now passed directly.
+    // The VisualizationStrategy::generate method expects SpectrogramSettingsCpp.
+
     // Valider le fichier d'entrée
     if (!FileManager::validateInputFile(inputFile)) {
         emit spectrogramGenerated(false, "", "Le fichier d'entrée n'existe pas ou n'est pas lisible");
@@ -116,39 +85,16 @@ void SpectrogramGenerator::generateSpectrogram(
     connect(strategy, &VisualizationStrategy::generationCompleted,
             this, &SpectrogramGenerator::spectrogramGenerated, Qt::UniqueConnection);
     
-    // Exécuter la génération
+    // Exécuter la génération - En supposant que strategy->generate attend SpectrogramSettingsCpp&
+    // Si ce n'est pas le cas, il faudra ajuster la signature de VisualizationStrategy::generate
+    // ou convertir 'settings' en structure C ici si la stratégie l'attend.
+    // Pour l'instant, on suppose que l'erreur indique que la stratégie attend SpectrogramSettingsCpp.
     strategy->generate(settings, inputFile, outputFile);
 }
 
 void SpectrogramGenerator::generatePreview(
-    double minFreq,
-    double maxFreq,
-    double duration,
-    int sampleRate,
-    double dynamicRangeDB,
-    double gammaCorrection,
-    bool enableDithering,
-    double contrastFactor,
-    bool enableHighBoost,
-    double highBoostAlpha,
-    bool enableHighPassFilter,
-    double highPassCutoffFreq,
-    int highPassFilterOrder,
-    int pageFormat,
-    double bottomMarginMM,
-    double spectroHeightMM,
-    double writingSpeed,
-    const QString &inputFile,
-    bool enableVerticalScale,
-    bool enableBottomReferenceLine,
-    double bottomReferenceLineOffset,
-    bool enableTopReferenceLine,
-    double topReferenceLineOffset,
-    bool displayParameters,
-    double textScaleFactor,
-    double lineThicknessFactor,
-    double binsPerSecond,
-    int overlapPreset)
+    const SpectrogramSettingsCpp& settings,
+    const QString &inputFile)
 {
     // Vérifier que le fichier d'entrée existe si spécifié
     if (!inputFile.isEmpty() && !QFileInfo::exists(inputFile)) {
@@ -156,32 +102,12 @@ void SpectrogramGenerator::generatePreview(
         return;
     }
     
-    // Créer la structure de paramètres en utilisant la méthode createSettings
-    SpectrogramSettingsCpp settingsCpp = createSettings(
-        minFreq, maxFreq, duration, sampleRate,
-        dynamicRangeDB, gammaCorrection, enableDithering, contrastFactor,
-        enableHighBoost, highBoostAlpha, enableHighPassFilter,
-        highPassCutoffFreq, highPassFilterOrder, pageFormat,
-        bottomMarginMM, spectroHeightMM, writingSpeed,
-        true, // enableNormalization
-        enableVerticalScale,
-        enableBottomReferenceLine,
-        bottomReferenceLineOffset,
-        enableTopReferenceLine,
-        topReferenceLineOffset,
-        displayParameters,
-        textScaleFactor,
-        lineThicknessFactor,
-        binsPerSecond,
-        overlapPreset
-    );
-    
-    // Convertir en structure C
-    SpectrogramSettings settings = settingsCpp.toCStruct();
+    // The settings object is now passed directly.
+    SpectrogramSettings cStructSettings = settings.toCStruct();
     
     // Exécuter la génération de prévisualisation dans un thread séparé via TaskManager
     QUuid taskId = TaskManager::getInstance()->runTask(
-        [this, settings, inputFile](TaskManager::ProgressCallback progressCallback) {
+        [this, cStructSettings, inputFile](TaskManager::ProgressCallback progressCallback) { // Use cStructSettings
             // Créer un fichier temporaire pour la prévisualisation
             QTemporaryFile tempFile;
             tempFile.setAutoRemove(false); // Ne pas supprimer automatiquement pour pouvoir le charger
@@ -210,8 +136,8 @@ void SpectrogramGenerator::generatePreview(
             
             // Call the C function to generate the spectrogram in the temporary file
             // Pass the audio filename, start time (0.0 for preview) and duration for parameters display
-            int result = spectral_generator_with_metadata(&settings, inputFileCStr, tempFileCStr,
-                                                         audioFileName.toUtf8().constData(), 0.0, settings.duration);
+            int result = spectral_generator_with_metadata(&cStructSettings, inputFileCStr, tempFileCStr, // Use cStructSettings
+                                                         audioFileName.toUtf8().constData(), 0.0, cStructSettings.duration); // Use cStructSettings
             
             progressCallback(80, "Traitement de l'image...");
             
@@ -262,36 +188,10 @@ void SpectrogramGenerator::generatePreview(
 }
 
 void SpectrogramGenerator::generateSpectrogramFromSegment(
-    double minFreq,
-    double maxFreq,
-    double segmentDuration,
-    int sampleRate,
-    double dynamicRangeDB,
-    double gammaCorrection,
-    bool enableDithering,
-    double contrastFactor,
-    bool enableHighBoost,
-    double highBoostAlpha,
-    bool enableHighPassFilter,
-    double highPassCutoffFreq,
-    int highPassFilterOrder,
-    int pageFormat,
-    double bottomMarginMM,
-    double spectroHeightMM,
-    double writingSpeed,
-    bool enableVerticalScale,
-    bool enableBottomReferenceLine,
-    double bottomReferenceLineOffset,
-    bool enableTopReferenceLine,
-    double topReferenceLineOffset,
-    bool displayParameters,
-    double textScaleFactor,
-    double lineThicknessFactor,
+    const SpectrogramSettingsCpp& settings,
     const QByteArray &audioSegment,
     const QString &originalAudioFileName,
-    double startTime,
-    double binsPerSecond,
-    int overlapPreset)
+    double startTime)
 {
     // Vérifier que le segment audio n'est pas vide
     if (audioSegment.isEmpty()) {
@@ -299,52 +199,27 @@ void SpectrogramGenerator::generateSpectrogramFromSegment(
         return;
     }
     
+    // The settings object is now passed directly.
     // Log des valeurs d'entrée
-    qDebug() << "DEBUG - generateSpectrogramFromSegment - Valeurs d'entrée:";
-    qDebug() << "DEBUG -   minFreq = " << minFreq;
-    qDebug() << "DEBUG -   maxFreq = " << maxFreq;
-    qDebug() << "DEBUG -   sampleRate = " << sampleRate;
+    qDebug() << "DEBUG - generateSpectrogramFromSegment - Valeurs d'entrée (from settings object):";
+    qDebug() << "DEBUG -   minFreq = " << settings.getMinFreq();
+    qDebug() << "DEBUG -   maxFreq = " << settings.getMaxFreq();
+    qDebug() << "DEBUG -   sampleRate = " << settings.getSampleRate();
     
-    // Créer la structure de paramètres en utilisant la méthode createSettings
-    SpectrogramSettingsCpp settingsCpp = createSettings(
-        minFreq, maxFreq, segmentDuration, sampleRate,
-        dynamicRangeDB, gammaCorrection, enableDithering, contrastFactor,
-        enableHighBoost, highBoostAlpha, enableHighPassFilter,
-        highPassCutoffFreq, highPassFilterOrder, pageFormat,
-        bottomMarginMM, spectroHeightMM, writingSpeed,
-        true, // enableNormalization
-        enableVerticalScale,
-        enableBottomReferenceLine,
-        bottomReferenceLineOffset,
-        enableTopReferenceLine,
-        topReferenceLineOffset,
-        displayParameters,
-        textScaleFactor,
-        lineThicknessFactor,
-        binsPerSecond,
-        overlapPreset
-    );
-    
-    // Log après createSettings
-    qDebug() << "DEBUG - Après createSettings:";
-    qDebug() << "DEBUG -   settingsCpp.m_minFreq = " << settingsCpp.getMinFreq();
-    qDebug() << "DEBUG -   settingsCpp.m_maxFreq = " << settingsCpp.getMaxFreq();
-    
-    // Convertir en structure C
-    SpectrogramSettings settings = settingsCpp.toCStruct();
+    SpectrogramSettings cStructSettings = settings.toCStruct();
     
     // Log après conversion en structure C
     qDebug() << "DEBUG - Après conversion en structure C:";
-    qDebug() << "DEBUG -   settings.minFreq = " << settings.minFreq;
-    qDebug() << "DEBUG -   settings.maxFreq = " << settings.maxFreq;
+    qDebug() << "DEBUG -   cStructSettings.minFreq = " << cStructSettings.minFreq;
+    qDebug() << "DEBUG -   cStructSettings.maxFreq = " << cStructSettings.maxFreq;
     
     // Exécuter la génération de prévisualisation dans un thread séparé via TaskManager
     QUuid taskId = TaskManager::getInstance()->runTask(
-        [this, settings, audioSegment, originalAudioFileName, startTime](TaskManager::ProgressCallback progressCallback) {
+        [this, cStructSettings, audioSegment, originalAudioFileName, startTime](TaskManager::ProgressCallback progressCallback) { // Use cStructSettings
             // Indiquer le début du traitement
             progressCallback(10, "Préparation du segment audio...");
             
-            this->runSegmentPreviewGeneration(settings, audioSegment, originalAudioFileName, startTime);
+            this->runSegmentPreviewGeneration(cStructSettings, audioSegment, originalAudioFileName, startTime); // Use cStructSettings
             
             // Indiquer la fin du traitement
             progressCallback(100, "Traitement du segment terminé");
@@ -407,67 +282,37 @@ QStringList SpectrogramGenerator::getSupportedFileExtensions() const
     return VisualizationFactory::getInstance()->getSupportedExtensions();
 }
 
-double SpectrogramGenerator::calculateBpsFromSlider(double sliderValue, double writingSpeed)
-{
-    // Mettre à jour la propriété interne
-    m_settings.setWritingSpeed(writingSpeed);
-    m_settings.setResolutionSliderValue(sliderValue);
-    
-    // Déterminer le préréglage d'overlap en fonction de la position du curseur
-    int overlapPreset = m_settings.getOverlapPresetFromSlider(sliderValue);
-    m_settings.setOverlapPreset(overlapPreset);
-    
-    // Calculer les bins/s optimaux en fonction de la vitesse d'écriture et de la résolution d'impression
-    double bps = m_settings.calculateBpsFromSlider(sliderValue, writingSpeed);
-    
-    // IMPORTANT: Mettre à jour la valeur de bins/s dans les paramètres
-    m_settings.setBinsPerSecond(bps);
-    
-    // Debug logs
-    qDebug() << "Resolution processing - slider:" << sliderValue
-             << "-> overlap preset:" << overlapPreset
-             << "-> optimal bins/s:" << bps
-             << "(writing speed:" << writingSpeed << "cm/s)";
-    
-    // Calculer également la FFT size et l'overlap effectif pour l'affichage
-    int calculatedFftSize = m_settings.calculateFftSize(m_settings.getSampleRate());
-    double hopSize = static_cast<double>(m_settings.getSampleRate()) / bps;
-    double effectiveOverlap = 1.0 - (hopSize / calculatedFftSize);
-    
-    // Émettre le signal avec les paramètres calculés
-    emit fftParametersCalculated(calculatedFftSize, effectiveOverlap, bps);
-    
-    return bps;
-}
+// Removed Q_INVOKABLE calculateBpsFromSlider
+// Removed Q_INVOKABLE calculateOverlapFromSlider
+// Removed Q_INVOKABLE isResolutionLimited
+// Removed Q_INVOKABLE calculateAudioDuration
+// Removed Q_INVOKABLE calculateMaxBps
 
-double SpectrogramGenerator::calculateOverlapFromSlider(double sliderValue)
+void SpectrogramGenerator::updateInputParameters(const SpectrogramSettingsCpp& newSettings)
 {
-    // Calculer l'overlap en fonction de la position du curseur
-    double overlap = m_settings.calculateOverlapFromSlider(sliderValue);
-    
-    // Debug logs
-    qDebug() << "Calculated overlap from slider:" << overlap
-             << "(slider value:" << sliderValue << ")";
-    
-    return overlap;
-}
+    qDebug() << "SpectrogramGenerator::updateInputParameters - Received new settings.";
 
-bool SpectrogramGenerator::isResolutionLimited()
-{
-    // Vérifier si la limitation est atteinte
-    return m_settings.isResolutionLimited();
-}
+    bool criticalChanged = false;
+    if (m_settings.getResolutionSliderValue() != newSettings.getResolutionSliderValue()) criticalChanged = true;
+    if (m_settings.getWritingSpeed() != newSettings.getWritingSpeed()) criticalChanged = true;
+    if (m_settings.getSampleRate() != newSettings.getSampleRate()) criticalChanged = true;
+    if (m_settings.getPageFormat() != newSettings.getPageFormat()) criticalChanged = true;
+    if (m_settings.getPrinterDpi() != newSettings.getPrinterDpi()) criticalChanged = true;
+    if (m_settings.getOverlapPreset() != newSettings.getOverlapPreset()) criticalChanged = true;
+    // Add other parameters here if they become critical for performCalculationsAndNotify
 
-double SpectrogramGenerator::calculateAudioDuration()
-{
-    // Calculer la durée audio
-    return m_settings.calculateAudioDuration();
-}
+    m_settings = newSettings; // Update the internal settings object
 
-double SpectrogramGenerator::calculateMaxBps(double writingSpeed)
-{
-    // Calculer le plafond physique maxBps
-    return m_settings.calculateMaxBps(writingSpeed);
+    if (criticalChanged) {
+        qDebug() << "SpectrogramGenerator::updateInputParameters - Critical parameter changed, performing calculations.";
+        performCalculationsAndNotify(); // Recalculate derived values and notify
+    } else {
+        qDebug() << "SpectrogramGenerator::updateInputParameters - No critical parameters changed, skipping full recalculation.";
+        // Potentially, we could emit calculatedParametersUpdated with the current m_calculated... values
+        // if QML needs to be re-notified even if values haven't changed, but this is usually not necessary.
+        // Or, if some non-critical parameters affect a subset of derived values not handled by performCalculationsAndNotify,
+        // that logic would go here. For now, assume non-critical changes don't require new derived values.
+    }
 }
 
 double SpectrogramGenerator::updatePageFormat(
@@ -477,80 +322,92 @@ double SpectrogramGenerator::updatePageFormat(
     double writingSpeed,
     double minFreq,
     double maxFreq,
-    int sampleRate)
+    int sampleRate,
+    double printerDpi)
 {
     qDebug() << "SpectrogramGenerator::updatePageFormat - Mise à jour du format de page:" << pageFormat;
-    
-    // Si le sample rate n'est pas fourni, utiliser la valeur actuelle
-    if (sampleRate <= 0) {
-        sampleRate = m_settings.getSampleRate();
+    qDebug() << "SpectrogramGenerator::updatePageFormat - DPI reçu de l'interface:" << printerDpi;
+
+    // Update relevant settings
+    m_settings.setPageFormat(pageFormat);
+    m_settings.setBottomMarginMM(bottomMarginMM);
+    m_settings.setSpectroHeightMM(spectroHeightMM);
+    m_settings.setWritingSpeed(writingSpeed);
+    m_settings.setMinFreq(minFreq);
+    m_settings.setMaxFreq(maxFreq);
+    m_settings.setPrinterDpi(printerDpi);
+
+    // If sample rate is provided, update it
+    if (sampleRate > 0) {
+        m_settings.setSampleRate(sampleRate);
     }
-    
-    // Récupérer les paramètres actuels de la structure
-    double dynamicRangeDB = m_settings.getDynamicRangeDB();
-    double gammaCorrection = m_settings.getGammaCorrection();
-    bool enableDithering = m_settings.getEnableDithering();
-    double contrastFactor = m_settings.getContrastFactor();
-    bool enableHighBoost = m_settings.getEnableHighBoost();
-    double highBoostAlpha = m_settings.getHighBoostAlpha();
-    bool enableHighPassFilter = m_settings.getEnableHighPassFilter();
-    double highPassCutoffFreq = m_settings.getHighPassCutoffFreq();
-    int highPassFilterOrder = m_settings.getHighPassFilterOrder();
-    
-    // Valeurs pour l'affichage (par défaut)
-    bool enableVerticalScale = m_settings.getEnableVerticalScale();
-    bool enableBottomReferenceLine = m_settings.getEnableBottomReferenceLine();
-    double bottomReferenceLineOffset = m_settings.getBottomReferenceLineOffset();
-    bool enableTopReferenceLine = m_settings.getEnableTopReferenceLine();
-    double topReferenceLineOffset = m_settings.getTopReferenceLineOffset();
-    bool displayParameters = m_settings.getDisplayParameters();
-    double textScaleFactor = m_settings.getTextScaleFactor();
-    double lineThicknessFactor = m_settings.getLineThicknessFactor();
-    
-    // Valeurs pour la résolution
-    double binsPerSecond = m_settings.getBinsPerSecond();
-    int overlapPreset = m_settings.getOverlapPreset();
-    
-    // Mettre à jour les paramètres avec createSettings
-    m_settings = createSettings(
-        minFreq,
-        maxFreq,
-        0.0, // Durée recalculée après
-        sampleRate,
-        dynamicRangeDB,
-        gammaCorrection,
-        enableDithering,
-        contrastFactor,
-        enableHighBoost,
-        highBoostAlpha,
-        enableHighPassFilter,
-        highPassCutoffFreq,
-        highPassFilterOrder,
-        pageFormat,
-        bottomMarginMM,
-        spectroHeightMM,
-        writingSpeed,
-        true, // enableNormalization
-        enableVerticalScale,
-        enableBottomReferenceLine,
-        bottomReferenceLineOffset,
-        enableTopReferenceLine,
-        topReferenceLineOffset,
-        displayParameters,
-        textScaleFactor,
-        lineThicknessFactor,
-        binsPerSecond,
-        overlapPreset
+
+    // Perform calculations and notify QML
+    performCalculationsAndNotify();
+
+    // This method no longer needs to return audio duration,
+    // as it's now part of the calculatedParametersUpdated signal.
+    // Returning 0.0 as a placeholder, QML should use the signal.
+    return 0.0;
+}
+
+void SpectrogramGenerator::performCalculationsAndNotify()
+{
+    qDebug() << "SpectrogramGenerator::performCalculationsAndNotify - Performing calculations";
+
+    // Use the current settings to perform calculations
+    double sliderValue = m_settings.getResolutionSliderValue();
+    double writingSpeed = m_settings.getWritingSpeed();
+    int sampleRate = m_settings.getSampleRate();
+    // int pageFormat = m_settings.getPageFormat(); // Unused directly here, m_settings methods use it
+    // double printerDpi = m_settings.getPrinterDpi(); // Unused directly here
+    // double minFreq = m_settings.getMinFreq(); // Unused directly here
+    // double maxFreq = m_settings.getMaxFreq(); // Unused directly here
+
+    // 1. Calculate Bins/s
+    // The calculateBpsFromSlider method within m_settings will use the writingSpeed from m_settings.
+    // It also needs the sliderValue.
+    m_calculatedBinsPerSecond = m_settings.calculateBpsFromSlider(sliderValue, writingSpeed);
+    m_settings.setBinsPerSecond(m_calculatedBinsPerSecond); // Update settings with calculated Bps
+
+    // 2. Calculate Overlap Preset and Effective Overlap
+    // The getOverlapPresetFromSlider method within m_settings will use the sliderValue from m_settings.
+    int overlapPreset = m_settings.getOverlapPresetFromSlider(sliderValue);
+    m_settings.setOverlapPreset(overlapPreset); // Update settings with calculated preset
+
+    // Calculate FFT Size based on the calculated Bins/s and Sample Rate
+    // The calculateFftSize method within m_settings will use the sampleRate from m_settings.
+    m_calculatedFftSize = m_settings.calculateFftSize(sampleRate);
+    m_settings.setFftSize(m_calculatedFftSize); // Update settings with calculated FFT Size
+
+    double hopSize = static_cast<double>(sampleRate) / m_calculatedBinsPerSecond;
+    m_calculatedOverlap = 1.0 - (hopSize / m_calculatedFftSize);
+
+    // 3. Calculate Audio Duration
+    m_calculatedAudioDuration = m_settings.calculateAudioDuration();
+
+    // 4. Check Resolution Limitation
+    m_isResolutionLimited = m_settings.isResolutionLimited();
+
+    qDebug() << "Calculations complete:";
+    qDebug() << "  - Bins/s:" << m_calculatedBinsPerSecond;
+    qDebug() << "  - FFT Size:" << m_calculatedFftSize;
+    qDebug() << "  - Overlap:" << m_calculatedOverlap;
+    qDebug() << "  - Audio Duration:" << m_calculatedAudioDuration;
+    qDebug() << "  - Resolution Limited:" << m_isResolutionLimited;
+
+    // Emit the signal with all calculated parameters
+    emit calculatedParametersUpdated(
+        m_calculatedBinsPerSecond,
+        m_calculatedFftSize,
+        m_calculatedOverlap,
+        m_calculatedAudioDuration,
+        m_isResolutionLimited
     );
-    
-    // Calculer la nouvelle durée audio
-    double audioDuration = calculateAudioDuration();
-    
-    qDebug() << "Format de page changé:" << pageFormat 
-             << ", nouvelle durée audio:" << audioDuration << "s"
-             << ", writingSpeed:" << writingSpeed << "cm/s";
-             
-    return audioDuration;
+
+    // The existing fftParametersCalculated signal is still emitted by createSettings,
+    // which is called during generate* methods. We keep it for now.
+    // emit fftParametersCalculated(m_calculatedFftSize, m_calculatedOverlap, m_calculatedBinsPerSecond);
 }
 
 SpectrogramSettingsCpp SpectrogramGenerator::createSettings(
@@ -581,13 +438,16 @@ SpectrogramSettingsCpp SpectrogramGenerator::createSettings(
     double textScaleFactor,
     double lineThicknessFactor,
     double binsPerSecond,
-    int overlapPreset)
+    int overlapPreset,
+    double printerDpi)
 {
     // Log des paramètres d'entrée
     qDebug() << "DEBUG - createSettings - Paramètres d'entrée:";
     qDebug() << "DEBUG -   minFreq = " << minFreq;
     qDebug() << "DEBUG -   maxFreq = " << maxFreq;
     qDebug() << "DEBUG -   binsPerSecond = " << binsPerSecond;
+    qDebug() << "DEBUG -   printerDpi (entrée) = " << printerDpi;
+    qDebug() << "DEBUG -   m_settings.getPrinterDpi() = " << m_settings.getPrinterDpi();
     
     SpectrogramSettingsCpp settings;
     
@@ -627,7 +487,8 @@ SpectrogramSettingsCpp SpectrogramGenerator::createSettings(
         textScaleFactor,
         lineThicknessFactor,
         binsPerSecond,
-        overlapPreset
+        overlapPreset,
+        printerDpi
     );
     
     // La taille FFT peut être fournie directement par le modèle de résolution adaptative
@@ -656,7 +517,7 @@ SpectrogramSettingsCpp SpectrogramGenerator::createSettings(
     m_settings = settings;
     
     // Émettre le signal avec les paramètres calculés
-    emit fftParametersCalculated(calculatedFftSize, effectiveOverlap, binsPerSecond);
+    // emit fftParametersCalculated(calculatedFftSize, effectiveOverlap, binsPerSecond); // Signal to be removed
     
     // Vérification de la structure après initialisation
     qDebug() << "DEBUG - Après initFromQmlParameters:";
@@ -766,6 +627,7 @@ void SpectrogramGenerator::runSegmentPreviewGeneration(
     
     // Call the C function to generate the spectrogram in the temporary file
     // Pass the original audio filename, start time and segment duration for parameters display
+    qDebug() << "Using DPI value: " << settings.printerDpi << " (from user interface)";
     int result = spectral_generator_with_metadata(&settings, audioFileCStr, imageFileCStr,
                                                  audioFileName.toUtf8().constData(), startTime, settings.duration);
     
@@ -962,7 +824,7 @@ double SpectrogramGenerator::getPreviewImageDPI() const
 {
     if (!s_previewProvider) {
         qWarning() << "Fournisseur d'images non disponible!";
-        return PRINTER_DPI; // Valeur par défaut
+        return m_settings.getPrinterDpi(); // Utiliser la valeur des paramètres
     }
     return s_previewProvider->getImageDPI();
 }
@@ -984,3 +846,5 @@ double SpectrogramGenerator::getPreviewImageHeightCM() const
     }
     return s_previewProvider->getImageHeightCM();
 }
+
+#include "moc_spectrogramgenerator.cpp"

@@ -84,11 +84,14 @@ signals:
     
     // Progress signals
     void progressUpdated(int progress, const QString &message);
-    
+
+    // New signal to forward calculated parameters from generator
+    void calculatedParametersUpdated(double binsPerSecond, int calculatedFftSize, double effectiveOverlap, double audioDuration, bool isResolutionLimited);
+
 private:
     // Helper methods
     void connectSignals();
-    
+
 private slots:
     // Handle signals from the generator
     void onSpectrogramGenerated(bool success, const QString &outputPath, const QString &errorMessage);
@@ -96,21 +99,29 @@ private slots:
     void onSegmentPreviewGenerated(bool success, const QImage &previewImage, const QString &errorMessage);
     void onPreviewSaved(bool success, const QString &outputPath, const QString &format, const QString &errorMessage);
     void onTaskProgressUpdated(const QUuid &taskId, int progress, const QString &message);
-    void onFftParametersCalculated(int calculatedFftSize, double effectiveOverlap, double binsPerSecond);
-    
+    // void onFftParametersCalculated(int calculatedFftSize, double effectiveOverlap, double binsPerSecond); // To be removed
+
+    // New slot to handle the calculatedParametersUpdated signal from SpectrogramGenerator
+    void onCalculatedParametersUpdated(double binsPerSecond, int calculatedFftSize, double effectiveOverlap, double audioDuration, bool isResolutionLimited);
+
+    // Slot to handle changes in the parameters model
+    void onModelParametersChanged();
+
 private:
     // Models
     SpectrogramParametersModel* m_parametersModel;
     SpectrogramGenerator* m_generator;
-    
+
     // Status tracking
     bool m_isGenerating;
     QString m_statusMessage;
     bool m_hasPreview;
-    
+
     // Ownership flags
     bool m_ownsParametersModel;
     bool m_ownsGenerator;
+
+    // double m_calculatedAudioDuration; // This member is no longer needed, audioDuration is read from the model
 };
 
 #endif // SPECTROGRAMVIEWMODEL_H

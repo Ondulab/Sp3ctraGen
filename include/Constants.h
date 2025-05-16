@@ -41,11 +41,18 @@ namespace Constants {
     constexpr double A3_WIDTH = A3_WIDTH_MM;
     constexpr double A3_HEIGHT = A3_HEIGHT_MM;
     
-    // Conversion factors
-    constexpr double MM_TO_PX = MM_TO_PIXELS;
+    // Conversion factors - définies comme fonctions pour prendre en compte le DPI configurable
     constexpr double MM_TO_PT = MM_TO_POINTS;
     constexpr double POINTS_PER_IN = POINTS_PER_INCH;
-    constexpr double PX_TO_CM = PIXELS_TO_CM;
+    
+    // Fonctions de conversion qui dépendent du DPI
+    static inline double mmToPixels(double mm, double dpi = 400.0) {
+        return mm * dpi / 25.4;
+    }
+    
+    static inline double pixelsToCm(double pixels, double dpi = 400.0) {
+        return pixels * 2.54 / dpi;
+    }
     
     // Default margins
     constexpr double BOTTOM_MARGIN = DEFAULT_BOTTOM_MARGIN_MM;

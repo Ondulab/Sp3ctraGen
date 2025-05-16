@@ -1,0 +1,1 @@
+feat(preview): enhance preview resolution and display output dimensions

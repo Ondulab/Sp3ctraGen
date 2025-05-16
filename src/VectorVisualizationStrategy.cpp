@@ -11,7 +11,7 @@ extern "C" {
 
 VectorVisualizationStrategy::VectorVisualizationStrategy(QObject *parent)
     : VisualizationStrategy(parent)
-    , m_dpi(PRINTER_DPI) // Résolution par défaut
+    , m_dpi(400) // Résolution par défaut (400 DPI)
 {
 }
 

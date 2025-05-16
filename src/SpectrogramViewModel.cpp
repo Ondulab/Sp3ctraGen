@@ -71,10 +71,8 @@ double SpectrogramViewModel::audioDuration() const
     if (!m_parametersModel) {
         return 0.0;
     }
-    
-    // Utiliser la méthode du modèle de paramètres pour calculer la durée audio
-    // à partir du format papier et de la vitesse d'écriture
-    return m_parametersModel->calculateAudioDuration();
+    // Return the audioDuration property from the model, which is now set by onCalculatedParametersUpdated
+    return m_parametersModel->audioDuration();
 }
 
 void SpectrogramViewModel::connectSignals()
@@ -97,21 +95,23 @@ void SpectrogramViewModel::connectSignals()
     connect(m_generator, &SpectrogramGenerator::taskProgressUpdated,
             this, &SpectrogramViewModel::onTaskProgressUpdated);
     
-    connect(m_generator, &SpectrogramGenerator::fftParametersCalculated,
-            this, &SpectrogramViewModel::onFftParametersCalculated);
+    // connect(m_generator, &SpectrogramGenerator::fftParametersCalculated, // Signal to be removed
+    //         this, &SpectrogramViewModel::onFftParametersCalculated);
     
+    // Connect the generator's calculatedParametersUpdated signal to the ViewModel's slot
+    connect(m_generator, &SpectrogramGenerator::calculatedParametersUpdated,
+            this, &SpectrogramViewModel::onCalculatedParametersUpdated);
+
     if (!m_parametersModel) return;
     
-    // Connecter les signaux du modèle de paramètres qui affectent la durée audio
-    connect(m_parametersModel, &SpectrogramParametersModel::pageFormatChanged,
-            this, &SpectrogramViewModel::audioDurationChanged);
-    
-    connect(m_parametersModel, &SpectrogramParametersModel::writingSpeedChanged,
-            this, &SpectrogramViewModel::audioDurationChanged);
-    
-    // Connexion générale pour tout changement de paramètres
+    // Connect the model's parametersChanged signal to the ViewModel's slot
+    // This slot will then call the generator to update its internal state and recalculate.
     connect(m_parametersModel, &SpectrogramParametersModel::parametersChanged,
-            this, &SpectrogramViewModel::audioDurationChanged);
+            this, &SpectrogramViewModel::onModelParametersChanged);
+
+    // Individual signals like pageFormatChanged or writingSpeedChanged no longer need
+    // to be directly connected to audioDurationChanged here, as onModelParametersChanged
+    // will trigger a full recalculation via the generator, which then updates the model's audioDuration.
 }
 
 void SpectrogramViewModel::generateSpectrogram(const QString &inputFile, const QString &outputFolder)
@@ -127,38 +127,14 @@ void SpectrogramViewModel::generateSpectrogram(const QString &inputFile, const Q
     emit isGeneratingChanged();
     emit statusMessageChanged();
     
-    // Convert model's parameters to C++ values (used by generator internally)
-    m_parametersModel->toCStruct();
+    // Create SpectrogramSettingsCpp from the model
+    SpectrogramSettingsCpp settings(m_parametersModel);
     
     // Get visualization type
     QString visualizationType = "Raster (PNG)"; // Default
     
-    // Call the generator with consolidated parameters
-    m_generator->generateSpectrogram(
-        m_parametersModel->minFreq(),
-        m_parametersModel->maxFreq(),
-        m_parametersModel->duration(),
-        m_parametersModel->sampleRate(),
-        m_parametersModel->dynamicRangeDB(),
-        m_parametersModel->gammaCorrection(),
-        m_parametersModel->enableDithering(),
-        m_parametersModel->contrastFactor(),
-        m_parametersModel->enableHighBoost(),
-        m_parametersModel->highBoostAlpha(),
-        m_parametersModel->enableHighPassFilter(),
-        m_parametersModel->highPassCutoffFreq(),
-        m_parametersModel->highPassFilterOrder(),
-        m_parametersModel->pageFormat(),
-        m_parametersModel->bottomMarginMM(),
-        m_parametersModel->spectroHeightMM(),
-        m_parametersModel->writingSpeed(),
-        inputFile,
-        outputFolder,
-        visualizationType,
-        m_parametersModel->enableNormalization(),
-        m_parametersModel->binsPerSecond(),
-        m_parametersModel->overlapPreset()
-    );
+    // Call the generator with the settings object
+    m_generator->generateSpectrogram(settings, inputFile, outputFolder, visualizationType);
 }
 
 void SpectrogramViewModel::generatePreview(const QString &inputFile)
@@ -174,37 +150,11 @@ void SpectrogramViewModel::generatePreview(const QString &inputFile)
     emit isGeneratingChanged();
     emit statusMessageChanged();
     
-    // Call the generator with consolidated parameters
-    m_generator->generatePreview(
-        m_parametersModel->minFreq(),
-        m_parametersModel->maxFreq(),
-        m_parametersModel->duration(),
-        m_parametersModel->sampleRate(),
-        m_parametersModel->dynamicRangeDB(),
-        m_parametersModel->gammaCorrection(),
-        m_parametersModel->enableDithering(),
-        m_parametersModel->contrastFactor(),
-        m_parametersModel->enableHighBoost(),
-        m_parametersModel->highBoostAlpha(),
-        m_parametersModel->enableHighPassFilter(),
-        m_parametersModel->highPassCutoffFreq(),
-        m_parametersModel->highPassFilterOrder(),
-        m_parametersModel->pageFormat(),
-        m_parametersModel->bottomMarginMM(),
-        m_parametersModel->spectroHeightMM(),
-        m_parametersModel->writingSpeed(),
-        inputFile,
-        m_parametersModel->enableVerticalScale(),
-        m_parametersModel->enableBottomReferenceLine(),
-        m_parametersModel->bottomReferenceLineOffset(),
-        m_parametersModel->enableTopReferenceLine(),
-        m_parametersModel->topReferenceLineOffset(),
-        m_parametersModel->displayParameters(),
-        m_parametersModel->textScaleFactor(),
-        m_parametersModel->lineThicknessFactor(),
-        m_parametersModel->binsPerSecond(),
-        m_parametersModel->overlapPreset()
-    );
+    // Create SpectrogramSettingsCpp from the model
+    SpectrogramSettingsCpp settings(m_parametersModel);
+    
+    // Call the generator with the settings object
+    m_generator->generatePreview(settings, inputFile);
 }
 
 void SpectrogramViewModel::generateSpectrogramFromSegment(
@@ -228,43 +178,20 @@ void SpectrogramViewModel::generateSpectrogramFromSegment(
     emit isGeneratingChanged();
     emit statusMessageChanged();
     
-    // Calculate segment duration from size and sample rate
-    double segmentDuration = audioSegment.size() / 
-                           (sizeof(float) * m_parametersModel->sampleRate());
+    // Create SpectrogramSettingsCpp from the model
+    SpectrogramSettingsCpp settings(m_parametersModel);
+
+    // Calculate segment duration from size and sample rate and update settings
+    // Note: The original generateSpectrogramFromSegment in generator took segmentDuration as a direct param.
+    // Now that it takes SpectrogramSettingsCpp, we need to ensure the duration in settings is the segment's duration.
+    // The SpectrogramSettingsCpp constructor from model will take model->duration().
+    // We need to override it for this specific case.
+    double segmentDuration = static_cast<double>(audioSegment.size()) / 
+                           (sizeof(float) * settings.getSampleRate()); // Use sampleRate from settings
+    settings.setDuration(segmentDuration); // Override duration for this segment generation
     
-    // Call the generator with consolidated parameters
-    m_generator->generateSpectrogramFromSegment(
-        m_parametersModel->minFreq(),
-        m_parametersModel->maxFreq(),
-        segmentDuration,
-        m_parametersModel->sampleRate(),
-        m_parametersModel->dynamicRangeDB(),
-        m_parametersModel->gammaCorrection(),
-        m_parametersModel->enableDithering(),
-        m_parametersModel->contrastFactor(),
-        m_parametersModel->enableHighBoost(),
-        m_parametersModel->highBoostAlpha(),
-        m_parametersModel->enableHighPassFilter(),
-        m_parametersModel->highPassCutoffFreq(),
-        m_parametersModel->highPassFilterOrder(),
-        m_parametersModel->pageFormat(),
-        m_parametersModel->bottomMarginMM(),
-        m_parametersModel->spectroHeightMM(),
-        m_parametersModel->writingSpeed(),
-        m_parametersModel->enableVerticalScale(),
-        m_parametersModel->enableBottomReferenceLine(),
-        m_parametersModel->bottomReferenceLineOffset(),
-        m_parametersModel->enableTopReferenceLine(),
-        m_parametersModel->topReferenceLineOffset(),
-        m_parametersModel->displayParameters(),
-        m_parametersModel->textScaleFactor(),
-        m_parametersModel->lineThicknessFactor(),
-        audioSegment,
-        originalFileName,
-        startTime,
-        m_parametersModel->binsPerSecond(),
-        m_parametersModel->overlapPreset()
-    );
+    // Call the generator with the settings object
+    m_generator->generateSpectrogramFromSegment(settings, audioSegment, originalFileName, startTime);
 }
 
 void SpectrogramViewModel::saveCurrentPreview(const QString &outputFilePath, const QString &format)
@@ -415,11 +342,42 @@ void SpectrogramViewModel::onTaskProgressUpdated(const QUuid &taskId, int progre
     emit progressUpdated(progress, message);
 }
 
-void SpectrogramViewModel::onFftParametersCalculated(int calculatedFftSize, double effectiveOverlap, double binsPerSecond)
+// Removed SpectrogramViewModel::onFftParametersCalculated as the slot is removed from .h
+
+void SpectrogramViewModel::onCalculatedParametersUpdated(double binsPerSecond, int calculatedFftSize, double effectiveOverlap, double audioDuration, bool isResolutionLimited)
 {
-    // No action needed, parameters model is updated directly
-    // Could add special logic here if needed
-    qDebug() << "FFT parameters calculated: size=" << calculatedFftSize 
-             << ", overlap=" << effectiveOverlap 
-             << ", bps=" << binsPerSecond;
+    qDebug() << "SpectrogramViewModel::onCalculatedParametersUpdated - Received calculated parameters from Generator";
+    qDebug() << "  - Bins/s:" << binsPerSecond;
+    qDebug() << "  - FFT Size:" << calculatedFftSize;
+    qDebug() << "  - Overlap:" << effectiveOverlap;
+    qDebug() << "  - Audio Duration:" << audioDuration;
+    qDebug() << "  - Resolution Limited:" << isResolutionLimited;
+
+    if (m_parametersModel) {
+        m_parametersModel->setBinsPerSecond(binsPerSecond);
+        m_parametersModel->setFftSize(calculatedFftSize);
+        m_parametersModel->setEffectiveOverlap(effectiveOverlap);
+        m_parametersModel->setAudioDuration(audioDuration); // This will emit audioDurationChanged from the model
+        m_parametersModel->setIsResolutionLimited(isResolutionLimited);
+    }
+
+    // Forward the signal to QML (if QML needs these values directly, otherwise it gets them from the model)
+    // For now, we assume QML primarily reacts to model changes.
+    // If direct forwarding is still needed for some QML components, this can be kept.
+    // emit calculatedParametersUpdated(binsPerSecond, calculatedFftSize, effectiveOverlap, audioDuration, isResolutionLimited);
+}
+
+void SpectrogramViewModel::onModelParametersChanged()
+{
+    qDebug() << "SpectrogramViewModel::onModelParametersChanged - Model parameters have changed, updating generator.";
+    if (!m_parametersModel || !m_generator) {
+        qWarning() << "SpectrogramViewModel::onModelParametersChanged - Model or Generator not initialized!";
+        return;
+    }
+
+    // Create SpectrogramSettingsCpp from the current state of m_parametersModel
+    // using the new constructor.
+    SpectrogramSettingsCpp settings(m_parametersModel);
+
+    m_generator->updateInputParameters(settings);
 }

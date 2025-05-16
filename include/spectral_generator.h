@@ -45,6 +45,7 @@ typedef struct SpectrogramSettings
     double  lineThicknessFactor;          // Scale factor for line thickness (default = 1.0)
     double  binsPerSecond;                // Bins per second (default = 150.0)
     int     overlapPreset;                // Overlap preset (0 = Low, 1 = Medium, 2 = High)
+    double  printerDpi;                   // Printer resolution in DPI (default = 400.0)
 } SpectrogramSettings;
 
 // C function we want to call from C++

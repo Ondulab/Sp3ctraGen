@@ -5,20 +5,18 @@ import "../components"
 import "../styles" as AppStyles
 
 /**
- * Section des paramètres de format de sortie
+ * Section des options de mise en page d'impression
  * 
  * Cette section contient tous les contrôles pour configurer
- * le format de sortie du spectrogramme (dimensions, échelles, etc).
+ * la mise en page du spectrogramme imprimé (marges, annotations, etc).
  */
 SectionContainer {
-    id: outputFormatSection
-    title: "Output Format"
+    id: printLayoutSection
+    title: "Print Layout Options"
     
     property bool isSmall: false
     
     // Propriétés exposées
-    property alias pageFormat: pageFormatCombo.currentIndex
-    property alias pageFormatText: pageFormatCombo.currentText
     property alias bottomMargin: bottomMarginField.value
     property alias spectroHeight: spectroHeightField.value
     property alias verticalScaleEnabled: verticalScaleToggle.checked
@@ -27,30 +25,16 @@ SectionContainer {
     property alias topReferenceLineEnabled: topReferenceLineToggle.checked
     property alias topReferenceLineOffset: topReferenceLineOffsetField.value
     property alias displayParametersEnabled: displayParametersToggle.checked
-    property alias printerDpi: printerDpiField.value
     
-    // Signal émis lorsque le format change
-    signal formatChanged()
+    // Signal émis lorsque la mise en page change
+    signal layoutChanged()
     
     GridLayout {
-        id: formatGrid
+        id: layoutGrid
         columns: 2
         Layout.fillWidth: true
         columnSpacing: AppStyles.Theme.spacing
         rowSpacing: AppStyles.Theme.spacing
-        
-        // Format de page
-        ThemedLabel {
-            text: "Page Format:"
-        }
-        FilterComboBox {
-            id:             pageFormatCombo
-            model:          ["A4 Portrait", "A3 Landscape"]
-            currentIndex:   0
-            Layout.preferredWidth: AppStyles.Theme.rightColumnWidth
-            Layout.alignment: Qt.AlignLeft
-            onCurrentIndexChanged: formatChanged()
-        }
         
         // Marge inférieure
         ParameterField {
@@ -61,8 +45,8 @@ SectionContainer {
             allowDecimals: true
             minValue: 0.0
             Layout.fillWidth: true
-            Layout.columnSpan: formatGrid.columns
-            onValueEdited: formatChanged()
+            Layout.columnSpan: layoutGrid.columns
+            onValueEdited: layoutChanged()
         }
         
         // Hauteur du spectrogramme
@@ -74,8 +58,8 @@ SectionContainer {
             allowDecimals: true
             minValue: 0.0
             Layout.fillWidth: true
-            Layout.columnSpan: formatGrid.columns
-            onValueEdited: formatChanged()
+            Layout.columnSpan: layoutGrid.columns
+            onValueEdited: layoutChanged()
         }
         
         // Échelle verticale
@@ -89,7 +73,7 @@ SectionContainer {
             Layout.preferredHeight: AppStyles.Theme.controlHeight
             Layout.alignment: Qt.AlignLeft
             checked: true
-            onToggled: formatChanged()
+            onToggled: layoutChanged()
         }
         
         // Ligne de référence inférieure
@@ -103,7 +87,7 @@ SectionContainer {
             Layout.preferredHeight: AppStyles.Theme.controlHeight
             Layout.alignment: Qt.AlignLeft
             checked: false
-            onToggled: formatChanged()
+            onToggled: layoutChanged()
         }
         
         // Décalage de la ligne de référence inférieure
@@ -116,9 +100,9 @@ SectionContainer {
             minValue: 0.0
             maxValue: 100.0
             Layout.fillWidth: true
-            Layout.columnSpan: formatGrid.columns
+            Layout.columnSpan: layoutGrid.columns
             enabled: bottomReferenceLineToggle.checked
-            onValueEdited: formatChanged()
+            onValueEdited: layoutChanged()
         }
         
         // Ligne de référence supérieure
@@ -132,7 +116,7 @@ SectionContainer {
             Layout.preferredHeight: AppStyles.Theme.controlHeight
             Layout.alignment: Qt.AlignLeft
             checked: false
-            onToggled: formatChanged()
+            onToggled: layoutChanged()
         }
         
         // Décalage de la ligne de référence supérieure
@@ -144,9 +128,9 @@ SectionContainer {
             allowDecimals: true
             minValue: 0.0
             Layout.fillWidth: true
-            Layout.columnSpan: formatGrid.columns
+            Layout.columnSpan: layoutGrid.columns
             enabled: topReferenceLineToggle.checked
-            onValueEdited: formatChanged()
+            onValueEdited: layoutChanged()
         }
         
         // Affichage des paramètres
@@ -160,21 +144,7 @@ SectionContainer {
             Layout.preferredHeight: AppStyles.Theme.controlHeight
             Layout.alignment: Qt.AlignLeft
             checked: false
-            onToggled: formatChanged()
-        }
-        
-        // Résolution d'impression (DPI)
-        ParameterField {
-            id: printerDpiField
-            label: "Resolution (DPI):"
-            value: "400.0"
-            isNumeric: true
-            allowDecimals: true
-            minValue: 72.0
-            maxValue: 1200.0
-            Layout.fillWidth: true
-            Layout.columnSpan: formatGrid.columns
-            onValueEdited: formatChanged()
+            onToggled: layoutChanged()
         }
     }
 }

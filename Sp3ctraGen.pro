@@ -79,7 +79,7 @@ HEADERS += \
     include/MacOSBridge.h
 
 # Chemins d'inclusion
-INCLUDEPATH += $$PWD/include
+INCLUDEPATH += $$PWD/include $$MOC_DIR
 
 # Ressources
 RESOURCES += qml/qml.qrc

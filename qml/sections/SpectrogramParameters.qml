@@ -28,6 +28,8 @@ SectionContainer {
     property alias minFreqField: minFreqField
     property alias maxFreqField: maxFreqField
     property alias writingSpeedField: writingSpeedField
+    property alias pageFormatCombo: pageFormatCombo
+    property alias printerDpiField: printerDpiField
     
     // Propriétés exposées qui peuvent être liées au modèle
     // Propriété pour le curseur de résolution
@@ -41,6 +43,12 @@ SectionContainer {
     
     property alias writingSpeed: writingSpeedField.value
     property alias writingSpeedNumeric: writingSpeedField.numericValue
+    
+    // Nouvelles propriétés pour le format de page et DPI (déplacées depuis OutputFormat)
+    property alias pageFormat: pageFormatCombo.currentIndex
+    property alias pageFormatText: pageFormatCombo.currentText
+    property alias printerDpi: printerDpiField.value
+    property alias printerDpiNumeric: printerDpiField.numericValue
     
     // Valeurs calculées directement à partir du curseur
     
@@ -61,6 +69,7 @@ SectionContainer {
     
     // Signaux émis lorsque les paramètres changent
     signal parametersChanged()
+    signal formatChanged() // Signal pour les changements de format (déplacé depuis OutputFormat)
     
     // Configuration du layout de l'interface utilisateur
     
@@ -70,6 +79,33 @@ SectionContainer {
         Layout.fillWidth: true
         columnSpacing: AppStyles.Theme.spacing
         rowSpacing: AppStyles.Theme.spacing
+
+        // Format de page (ajouté depuis OutputFormat)
+        ThemedLabel {
+            text: "Page Format:"
+        }
+        FilterComboBox {
+            id: pageFormatCombo
+            model: ["A4 Portrait", "A3 Landscape"]
+            currentIndex: 0
+            Layout.preferredWidth: AppStyles.Theme.rightColumnWidth
+            Layout.alignment: Qt.AlignLeft
+            onCurrentIndexChanged: formatChanged()
+        }
+        
+        // Résolution d'impression (DPI) (ajouté depuis OutputFormat)
+        ParameterField {
+            id: printerDpiField
+            label: "Resolution (DPI):"
+            value: "400.0"
+            isNumeric: true
+            allowDecimals: true
+            minValue: 72.0
+            maxValue: 1200.0
+            Layout.fillWidth: true
+            Layout.columnSpan: parametersGrid.columns
+            onValueEdited: formatChanged()
+        }
 
         // Writing Speed - Déplacé en haut
         ParameterField {
@@ -82,25 +118,19 @@ SectionContainer {
             Layout.fillWidth: true
             Layout.columnSpan: parametersGrid.columns
             onValueEdited: {
-                // Mettre à jour les paramètres calculés lorsque la vitesse d'écriture change
+                console.log("Valeur numérique changée: " + writingSpeedNumeric);
                 
-                if (generator) {
-                    // Recalculer les bins/s car maxBps dépend de la vitesse d'écriture
-                    binsPerSecondValue = generator.calculateBpsFromSlider(resolutionSlider.value, writingSpeedNumeric);
+                if (generator && generator.parameters) {
+                    // Utiliser le modèle de paramètres directement
+                    generator.parameters.beginUpdate();
+                    generator.parameters.writingSpeed = writingSpeedNumeric;
+                    generator.parameters.endUpdate();
                     
-                    // Vérifier si la limitation est atteinte
-                    isResolutionLimited = generator.isResolutionLimited();
-                    
-                    // IMPORTANT: Recalculer la durée audio lorsque la vitesse d'écriture change
-                    audioDuration = generator.calculateAudioDuration();
-                    console.log("Vitesse d'écriture changée: " + writingSpeedNumeric + 
-                              " cm/s, nouvelle durée audio: " + audioDuration.toFixed(2) + "s");
+                    // Note: Les valeurs binsPerSecond, audioDuration et isResolutionLimited 
+                    // seront mises à jour par le signal calculatedParametersUpdated dans main.qml
                 } else {
-                    console.error("Generator not available for calculations");
+                    console.error("Generator or parameters not available");
                 }
-                
-                // Mettre à jour les autres paramètres calculés
-                updateCalculatedParameters();
                 
                 parametersChanged();
             }
@@ -230,33 +260,27 @@ SectionContainer {
                     
                     // Mettre à jour les valeurs calculées lorsque le slider change
                     onValueChanged: {
-                        if (generator) {
-                            // Calculer le bps en fonction de la position du curseur
-                            binsPerSecondValue = generator.calculateBpsFromSlider(value, writingSpeedNumeric);
+                        console.log("*** onResolutionValueChanged triggered ***");
+                        console.log("  - resolutionValue:", value);
+                        
+                        if (generator && generator.parameters) {
+                            // Utiliser le modèle de paramètres directement
+                            generator.parameters.beginUpdate();
+                            generator.parameters.resolutionSliderValue = value;
+                            generator.parameters.endUpdate();
                             
-                            // Vérifier si la limitation est atteinte
-                            isResolutionLimited = generator.isResolutionLimited();
-                            
-                        // Calculer la durée audio et forcer sa mise à jour dans l'interface
-                        audioDuration = generator.calculateAudioDuration();
-                        console.log("Slider de résolution changé: valeur=" + value +
-                                  ", nouvelle durée audio: " + audioDuration.toFixed(2) + "s");
-                        forceUpdateDisplay();
-                            
-                            // Calculer l'overlap en fonction de la position du curseur
-                            var newOverlap = generator.calculateOverlapFromSlider(value);
+                            // Note: Les valeurs binsPerSecond, audioDuration, isResolutionLimited 
+                            // et effectiveOverlap seront mises à jour par le signal 
+                            // calculatedParametersUpdated dans main.qml
                         } else {
-                            console.error("Generator not available for calculations");
+                            console.error("Generator or parameters not available");
                         }
-                        
-                        // Recalculer la FFT size et l'overlap effectif
-                        updateCalculatedParameters();
-                        
+
                         parametersChanged();
                     }
                 }
             }
-            
+
             // Affichage des valeurs dérivées
             GridLayout {
                 columns: 2
@@ -345,7 +369,17 @@ SectionContainer {
             minValue: 0.0
             Layout.fillWidth: true
             Layout.columnSpan: parametersGrid.columns
-            onValueEdited: parametersChanged()
+            onValueEdited: {
+                // Mettre à jour les paramètres directement via le modèle parameters
+                if (generator && generator.parameters) {
+                    generator.parameters.beginUpdate();
+                    generator.parameters.minFreq = minFreqNumeric;
+                    generator.parameters.endUpdate();
+                } else {
+                    console.error("Generator or parameters not available");
+                }
+                parametersChanged(); // Signal that parameters have changed (for other components)
+            }
         }
 
         // Max Frequency
@@ -358,98 +392,127 @@ SectionContainer {
             minValue: 0.0
             Layout.fillWidth: true
             Layout.columnSpan: parametersGrid.columns
-            onValueEdited: parametersChanged()
+            onValueEdited: {
+                // Mettre à jour les paramètres directement via le modèle parameters
+                if (generator && generator.parameters) {
+                    generator.parameters.beginUpdate();
+                    generator.parameters.maxFreq = maxFreqNumeric;
+                    generator.parameters.endUpdate();
+                } else {
+                    console.error("Generator or parameters not available");
+                }
+                parametersChanged(); // Signal that parameters have changed (for other components)
+            }
         }
 
         // Les paramètres de filtre ont été déplacés vers une section séparée FilterParameters.qml
     }
-    
-    // Item pour contenir le Timer (nécessaire pour la structure QML)
-    Item {
-        id: timerContainer
-        width: 0
-        height: 0
-        visible: false
-        
-        // Timer pour forcer le rafraîchissement de l'interface
-        Timer {
-            id: refreshTimer
-            interval: 100
-            repeat: false
-            onTriggered: {
-                // Force un rafraîchissement complet des valeurs
-                audioDurationLabel.text = "";
-                audioDurationLabel.text = audioDuration.toFixed(2);
-                
-                binsPerSecondValueLabel.text = "";
-                binsPerSecondValueLabel.text = binsPerSecondValue.toFixed(1);
-                
-                fftSizeLabel.text = "";
-                fftSizeLabel.text = calculatedFftSize.toString();
-                
-                overlapLabel.text = "";
-                overlapLabel.text = calculatedOverlap.toFixed(3);
-            }
-        }
-    }
 
-    // Méthode pour mettre à jour les valeurs affichées
-    function updateCalculatedParameters() {
-        console.log("SpectrogramParameters: updateCalculatedParameters() appelé avec audioDuration=" + audioDuration);
-        
-        // Mettre à jour l'affichage de la durée audio
-        audioDurationLabel.text = audioDuration.toFixed(2);
-        
-        // Mettre à jour l'affichage des bins/s
+    // Méthode pour mettre à jour toutes les valeurs calculées reçues du backend
+    function updateAllCalculatedParameters(binsPerSecond, calculatedFftSize, effectiveOverlap, audioDuration, isResolutionLimited) {
+        console.log("SpectrogramParameters: updateAllCalculatedParameters() called");
+        // Update QML properties with values from backend
+        spectrogramParametersSection.binsPerSecondValue = binsPerSecond;
+        spectrogramParametersSection.calculatedFftSize = calculatedFftSize;
+        spectrogramParametersSection.calculatedOverlap = effectiveOverlap;
+        spectrogramParametersSection.audioDuration = audioDuration;
+        spectrogramParametersSection.isResolutionLimited = isResolutionLimited;
+
+        // Update labels (they are bound to the properties, but explicit update can ensure)
         binsPerSecondValueLabel.text = binsPerSecondValue.toFixed(1);
-        
-        // Mettre à jour l'affichage de la taille FFT et de l'overlap
         fftSizeLabel.text = calculatedFftSize.toString();
         overlapLabel.text = calculatedOverlap.toFixed(3);
+        audioDurationLabel.text = audioDuration.toFixed(2);
+
+        console.log("SpectrogramParameters: UI updated with calculated values.");
     }
-    
-    // Fonction publique pour forcer une mise à jour externe
-    function forceUpdateDisplay() {
-        updateCalculatedParameters();
-        // Déclencher le timer pour forcer un rafraîchissement complet
-        refreshTimer.restart();
-    }
-    
-    // Surveiller les changements de audioDuration pour mettre à jour l'affichage
-    onAudioDurationChanged: {
-        console.log("SpectrogramParameters: onAudioDurationChanged: nouvelle valeur=" + audioDuration);
-        updateCalculatedParameters();
-    }
-    
-    // Méthode pour mettre à jour les paramètres FFT calculés depuis le backend
-    function updateCalculatedFftParameters(calculatedFftSize, effectiveOverlap) {
-        // Mettre à jour les propriétés
-        this.calculatedFftSize = calculatedFftSize;
-        this.calculatedOverlap = effectiveOverlap;
+
+    // Timer pour réessayer l'initialisation des paramètres si generator.parameters n'est pas disponible immédiatement
+    Timer {
+        id: initializationTimer
+        interval: 100 // 100ms entre les tentatives
+        repeat: true
+        running: false
+        property int attemptCount: 0
+        property int maxAttempts: 30 // Max 3 secondes (30 * 100ms)
         
-        // Forcer une mise à jour des labels
-        updateCalculatedParameters();
-        
-        console.log("FFT parameters updated: FFT Size = " + calculatedFftSize +
-                    ", Overlap = " + effectiveOverlap.toFixed(3));
+        onTriggered: {
+            attemptCount++;
+            console.log("SpectrogramParameters - Tentative d'initialisation #" + attemptCount);
+            
+            if (generator) {
+                console.log("  - parameters disponible:", generator.parameters ? "oui" : "non");
+                
+                if (generator.parameters) {
+                    console.log("  - generator.parameters est maintenant disponible");
+                    // Arrêter le timer
+                    running = false;
+                    
+                    // Initialiser les paramètres
+                    try {
+                        generator.parameters.beginUpdate();
+                        generator.parameters.minFreq = minFreqNumeric;
+                        generator.parameters.maxFreq = maxFreqNumeric;
+                        generator.parameters.resolutionSliderValue = resolutionSlider.value;
+                        generator.parameters.writingSpeed = writingSpeedNumeric;
+                        generator.parameters.pageFormat = pageFormatCombo.currentIndex;
+                        generator.parameters.printerDpi = printerDpiField.numericValue;
+                        generator.parameters.endUpdate();
+                        console.log("  - initialisation terminée avec succès");
+                    } catch (e) {
+                        console.error("Exception lors de l'initialisation des paramètres:", e);
+                    }
+                } else if (attemptCount >= maxAttempts) {
+                    console.error("Impossible d'initialiser les paramètres après " + maxAttempts + " tentatives");
+                    running = false;
+                }
+            } else {
+                console.warn("Generator toujours non disponible, tentative " + attemptCount);
+                if (attemptCount >= maxAttempts) {
+                    console.error("Impossible d'initialiser les paramètres après " + maxAttempts + " tentatives");
+                    running = false;
+                }
+            }
+        }
     }
     
     // Initialisation
     Component.onCompleted: {
-        // Calculer les valeurs initiales
+        console.log("SpectrogramParameters - Component.onCompleted");
+        console.log("  - generator disponible:", generator ? "oui" : "non");
+        
         if (generator) {
-            binsPerSecondValue = generator.calculateBpsFromSlider(resolutionSlider.value, writingSpeedNumeric);
-            audioDuration = generator.calculateAudioDuration();
-            isResolutionLimited = generator.isResolutionLimited();
-            updateCalculatedParameters();
+            console.log("  - parameters disponible:", generator.parameters ? "oui" : "non");
+        }
+        
+        // Initialiser les valeurs par défaut de toute façon
+        binsPerSecondValue = 150.0;
+        audioDuration = 2.625; // 21cm / 8cm/s (example based on default values)
+        calculatedFftSize = 4096;
+        calculatedOverlap = 0.85;
+        isResolutionLimited = false;
+        
+        // Initialiser les paramètres du modèle si possible immédiatement
+        if (generator && generator.parameters) {
+            console.log("  - début initialisation avec generator.parameters");
+            try {
+                generator.parameters.beginUpdate();
+                generator.parameters.minFreq = minFreqNumeric;
+                generator.parameters.maxFreq = maxFreqNumeric;
+                generator.parameters.resolutionSliderValue = resolutionSlider.value;
+                generator.parameters.writingSpeed = writingSpeedNumeric;
+                generator.parameters.pageFormat = pageFormatCombo.currentIndex;
+                generator.parameters.printerDpi = printerDpiField.numericValue;
+                generator.parameters.endUpdate();
+                console.log("  - initialisation terminée avec succès");
+            } catch (e) {
+                console.error("Exception lors de l'initialisation des paramètres:", e);
+            }
         } else {
-            console.warn("Generator not available during initialization");
-            // Valeurs par défaut
-            binsPerSecondValue = 150.0;
-            audioDuration = 2.625; // 21cm / 8cm/s
-            calculatedFftSize = 4096;
-            calculatedOverlap = 0.85;
-            isResolutionLimited = false;
+            console.warn("Generator ou parameters non disponible lors de l'initialisation");
+            console.log("  - démarrage du timer pour réessayer plus tard");
+            // Démarrer le timer pour réessayer plus tard
+            initializationTimer.running = true;
         }
     }
 }

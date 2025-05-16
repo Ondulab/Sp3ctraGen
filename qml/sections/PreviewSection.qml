@@ -292,65 +292,93 @@ Rectangle {
                 }
             }
             
-            // L'image de prévisualisation
+            // L'image de prévisualisation - Complètement redéfinie pour éviter les erreurs
             Image {
                 id: previewImage
+                
+                // Définir des propriétés de base
+                x: 0
+                y: 0
+                
+                // Propriétés standard avant toute personnalisation
                 smooth: true
                 mipmap: true
                 cache: false
                 asynchronous: true
                 fillMode: Image.PreserveAspectFit
-                // Position à la 0,0 par défaut, sera centrée au chargement
-                x: 0
-                y: 0
                 
-                // Propriétés pour le zoom
+                // Source simplifiée pour réduire les problèmes potentiels
+                source: generator && generator.previewCounter > 0 ? 
+                        "image://preview/" + generator.previewCounter : 
+                        "image://preview/init"
+                
+                // Définir des propriétés explicitement numériques
                 property real zoomLevel: 1.0
-                property real minZoom: 0.5 // Minimum pour toujours remplir une bonne partie de l'écran
-                property real maxZoom: 5.0 // Maximum pour éviter les performances dégradées
+                property real minZoom: 0.1
+                property real maxZoom: 5.0
                 
-                // Dimensions - toujours au moins aussi grandes que le viewport
-                width: sourceSize.width > 0 ? Math.max(sourceSize.width * zoomLevel, viewportContainer.width * minZoom) : viewportContainer.width
-                height: sourceSize.height > 0 ? Math.max(sourceSize.height * zoomLevel, viewportContainer.height * minZoom) : viewportContainer.height
+                // Dimensions simplifiées
+                width: viewportContainer.width
+                height: viewportContainer.height
                 
-                // Source de l'image
-                source: {
-                    if (generator && generator.previewCounter > 0) {
-                        return "image://preview/" + generator.previewCounter
-                    } else {
-                        return "image://preview/init"
-                    }
+                // Log des problèmes potentiels
+                Component.onCompleted: {
+                    console.log("PreviewImage: reconstruction complète");
+                    console.log("  - dimensions initiales:", width, "x", height);
+                    console.log("  - minZoom initial:", minZoom);
                 }
                 
                 // Gérer les erreurs et le chargement
                 onStatusChanged: {
+                    console.log("PreviewImage: onStatusChanged:", status);
+                    console.log("  - generator disponible:", generator ? "oui" : "non");
+                    console.log("  - sourceSize:", sourceSize.width, "x", sourceSize.height);
+                    console.log("  - minZoom:", minZoom);
+                    
                     if (status === Image.Error) {
                         statusText.showError("Error loading preview image")
+                        console.error("PreviewImage: Error loading image");
                     } else if (status === Image.Ready) {
-                        // Calculer le niveau de zoom minimum pour adapter l'image à la fenêtre
-                        calculateMinZoom()
-                        // Centrer l'image au chargement
-                        viewportMouseArea.centerImage()
-                        
-                        // Mettre à jour l'affichage des informations de résolution
-                        if (generator) {
-                            var width = generator.getPreviewImageWidth();
-                            var height = generator.getPreviewImageHeight();
-                            var dpi = generator.getPreviewImageDPI();
-                            var widthCM = generator.getPreviewImageWidthCM().toFixed(1);
-                            var heightCM = generator.getPreviewImageHeightCM().toFixed(1);
+                        console.log("PreviewImage: Image is ready, calculating minZoom...");
+                        try {
+                            // Calculer le niveau de zoom minimum pour adapter l'image à la fenêtre
+                            calculateMinZoom()
+                            // Centrer l'image au chargement
+                            viewportMouseArea.centerImage()
                             
-                            resolutionText.text = width + "×" + height + " px (" + 
-                                                widthCM + "×" + heightCM + " cm) @ " + 
-                                                dpi + " DPI";
+                            console.log("PreviewImage: minZoom calculated:", minZoom);
+                            console.log("PreviewImage: zoomLevel set to:", zoomLevel);
+                            
+                            // Mettre à jour l'affichage des informations de résolution en utilisant notre fonction robuste
+                            updateResolutionText()
+                        } catch (e) {
+                            console.error("PreviewImage: Error in onStatusChanged when Image.Ready:", e);
                         }
                     }
                 }
                 
                 // Recalculer le zoom minimum lorsque les dimensions changent
                 onSourceSizeChanged: {
+                    console.log("PreviewImage: onSourceSizeChanged:", sourceSize.width, "x", sourceSize.height);
                     if (sourceSize.width > 0 && sourceSize.height > 0) {
-                        calculateMinZoom()
+                        try {
+                            // Calculer les ratios pour adapter l'image à la fenêtre
+                            var widthRatio = viewportContainer.width / sourceSize.width;
+                            var heightRatio = viewportContainer.height / sourceSize.height;
+                            
+                            // Calculer le zoom minimum et l'appliquer
+                            minZoom = Math.min(widthRatio, heightRatio);
+                            zoomLevel = minZoom;
+                            
+                            // Mettre à jour les dimensions APRÈS avoir calculé les ratios
+                            width = sourceSize.width * zoomLevel;
+                            height = sourceSize.height * zoomLevel;
+                            
+                            console.log("PreviewImage: dimensions mises à jour:", width, "x", height);
+                            console.log("PreviewImage: minZoom recalculé:", minZoom);
+                        } catch (e) {
+                            console.error("PreviewImage: Erreur dans onSourceSizeChanged:", e);
+                        }
                     }
                 }
                 
@@ -364,8 +392,12 @@ Rectangle {
                     // Le zoom minimum permet d'adapter l'image à la fenêtre (fit)
                     minZoom = Math.min(widthRatio, heightRatio)
                     
-                // Toujours utiliser le zoom minimum (fit) comme valeur initiale
-                zoomLevel = minZoom
+                    // Toujours utiliser le zoom minimum (fit) comme valeur initiale
+                    zoomLevel = minZoom
+                    
+                    // Mettre à jour les dimensions pour qu'elles correspondent au niveau de zoom
+                    width = sourceSize.width * zoomLevel
+                    height = sourceSize.height * zoomLevel
                 }
             }
             
@@ -519,7 +551,64 @@ Rectangle {
             generator.saveCurrentPreview(outputFolder, format)
         }
     }
-    
+
+    // Fonction pour mettre à jour le texte de résolution
+    function updateResolutionText() {
+        // Ensure generator is available and preview image is ready before accessing its properties
+        if (generator && previewImage && previewImage.status === Image.Ready) {
+            try {
+                // Utiliser une approche purement textuelle pour éviter tout problème d'assignation
+                var displayText = "";
+                
+                try {
+                    // Récupérer et vérifier les valeurs directement dans des conditions, sans assignation intermédiaire
+                    if (typeof generator.getPreviewImageWidth === "function" && 
+                        typeof generator.getPreviewImageHeight === "function" && 
+                        typeof generator.getPreviewImageDPI === "function" &&
+                        typeof generator.getPreviewImageWidthCM === "function" &&
+                        typeof generator.getPreviewImageHeightCM === "function") {
+                        
+                        // Tenter d'appeler ces fonctions mais capturer immédiatement dans des variables locales
+                        var w = generator.getPreviewImageWidth() || 0;
+                        var h = generator.getPreviewImageHeight() || 0;
+                        var d = generator.getPreviewImageDPI() || 0;
+                        var wcm = generator.getPreviewImageWidthCM() || 0;
+                        var hcm = generator.getPreviewImageHeightCM() || 0;
+                        
+                        // Vérifier que toutes les valeurs sont valides
+                        if (w > 0 && h > 0 && d > 0) {
+                            displayText = w + "×" + h + " px";
+                            
+                            if (wcm > 0 && hcm > 0) {
+                                displayText += " (" + wcm.toFixed(1) + "×" + hcm.toFixed(1) + " cm)";
+                            }
+                            
+                            if (d > 0) {
+                                displayText += " @ " + d + " DPI";
+                            }
+                        }
+                    }
+                } catch (innerError) {
+                    console.warn("Erreur lors de l'accès aux méthodes de générator:", innerError);
+                }
+                
+                // Définir un texte par défaut si aucune information n'a été récupérée
+                if (!displayText) {
+                    displayText = "Resolution: information non disponible";
+                }
+                
+                // Assigner le texte final
+                resolutionText.text = displayText;
+            } catch (e) {
+                console.warn("Erreur dans updateResolutionText:", e);
+                resolutionText.text = "Resolution: N/A";
+            }
+        } else {
+            // Clear the text if the image is not ready or generator is not available
+            resolutionText.text = "";
+        }
+    }
+
     // Méthodes publiques pour le zoom (pour maintenir la compatibilité)
     function zoomToFit() {
         if (previewImage && previewImage.status === Image.Ready) {

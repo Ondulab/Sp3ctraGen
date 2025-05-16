@@ -14,7 +14,7 @@
         
         <!-- Sections modulaires -->
         <file>sections/SpectrogramParameters.qml</file>
-        <file>sections/OutputFormat.qml</file>
+        <file>sections/PrintLayoutOptions.qml</file>
         <file>sections/FileSettings.qml</file>
         <file>sections/AudioWaveformSection.qml</file>
         <file>sections/PreviewSection.qml</file>

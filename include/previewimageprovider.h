@@ -12,12 +12,29 @@
 #include <QQuickImageProvider>
 #include <QImage>
 #include <QDebug>
+#include <QObject>
 #include "SharedConstants.h"
 
-class PreviewImageProvider : public QQuickImageProvider
+class PreviewImageProvider : public QObject, public QQuickImageProvider
 {
+    Q_OBJECT
+    Q_PROPERTY(double dpi READ getDpi WRITE setDpi NOTIFY dpiChanged)
+
 public:
     PreviewImageProvider();
+    
+    // Valeur par défaut pour la résolution
+    static constexpr double DEFAULT_DPI = 400.0;
+    
+    // Méthodes pour obtenir et définir le DPI
+    double getDpi() const { return m_dpi; }
+    void setDpi(double dpi) {
+        if (m_dpi != dpi) {
+            m_dpi = dpi;
+            emit dpiChanged(dpi);
+        }
+    }
+    
     QImage requestImage(const QString &id, QSize *size, const QSize &requestedSize) override;
     void updateImage(const QImage &image);
     
@@ -33,14 +50,14 @@ public:
     // Methods to get image dimensions and resolution information
     Q_INVOKABLE int getImageWidth() const { return m_originalImage.width(); }
     Q_INVOKABLE int getImageHeight() const { return m_originalImage.height(); }
-    Q_INVOKABLE double getImageDPI() const { return PRINTER_DPI; }
+    Q_INVOKABLE double getImageDPI() const { return m_dpi; }
     
     // Get physical dimensions in millimeters
-    Q_INVOKABLE double getImageWidthMM() const { 
-        return m_originalImage.width() / (PRINTER_DPI / 25.4); 
+    Q_INVOKABLE double getImageWidthMM() const {
+        return m_originalImage.width() / (m_dpi / 25.4);
     }
-    Q_INVOKABLE double getImageHeightMM() const { 
-        return m_originalImage.height() / (PRINTER_DPI / 25.4); 
+    Q_INVOKABLE double getImageHeightMM() const {
+        return m_originalImage.height() / (m_dpi / 25.4);
     }
     
     // Get physical dimensions in centimeters
@@ -61,9 +78,13 @@ public:
         qDebug() << "Original image is null: " << m_originalImage.isNull();
     }
 
+signals:
+    void dpiChanged(double dpi);
+
 private:
     QImage m_displayImage;  // Resized version for display
     QImage m_originalImage; // Original high-resolution image
+    double m_dpi = DEFAULT_DPI; // DPI value
 };
 
 #endif // PREVIEWIMAGEPROVIDER_H

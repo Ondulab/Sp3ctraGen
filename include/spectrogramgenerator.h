@@ -76,82 +76,21 @@ public:
      * @param overlapPreset Overlap preset (0=Low, 1=Medium, 2=High)
      */
     Q_INVOKABLE void generateSpectrogram(
-        double minFreq,
-        double maxFreq,
-        double duration,
-        int sampleRate,
-        double dynamicRangeDB,
-        double gammaCorrection,
-        bool enableDithering,
-        double contrastFactor,
-        bool enableHighBoost,
-        double highBoostAlpha,
-        bool enableHighPassFilter,
-        double highPassCutoffFreq,
-        int highPassFilterOrder,
-        int pageFormat,
-        double bottomMarginMM,
-        double spectroHeightMM,
-        double writingSpeed,
+        const SpectrogramSettingsCpp& settings,
         const QString &inputFile,
         const QString &outputFolder,
-        const QString &visualizationType = "Raster (PNG)",
-        bool enableNormalization = true,
-        double binsPerSecond = 150.0,
-        int overlapPreset = 1
+        const QString &visualizationType = "Raster (PNG)"
     );
     
     /**
      * @brief Generates a spectrogram preview
      *
-     * @param minFreq Minimum frequency (Hz)
-     * @param maxFreq Maximum frequency (Hz)
-     * @param duration Duration (seconds)
-     * @param sampleRate Sample rate
-     * @param dynamicRangeDB Dynamic range (dB)
-     * @param gammaCorrection Gamma correction
-     * @param enableDithering Enable dithering
-     * @param contrastFactor Contrast factor
-     * @param enableHighBoost Enable high frequency boost
-     * @param highBoostAlpha Alpha for high frequency boost
-     * @param enableHighPassFilter Enable high-pass filter
-     * @param highPassCutoffFreq High-pass filter cutoff frequency
-     * @param highPassFilterOrder High-pass filter order
-     * @param pageFormat Page format (0=A4 portrait, 1=A3 landscape)
-     * @param bottomMarginMM Bottom margin in millimeters
-     * @param spectroHeightMM Spectrogram height in millimeters
-     * @param writingSpeed Writing speed in cm/s
+     * @param settings Spectrogram settings
      * @param inputFile Input audio file
      */
     Q_INVOKABLE void generatePreview(
-        double minFreq,
-        double maxFreq,
-        double duration,
-        int sampleRate,
-        double dynamicRangeDB,
-        double gammaCorrection,
-        bool enableDithering,
-        double contrastFactor,
-        bool enableHighBoost,
-        double highBoostAlpha,
-        bool enableHighPassFilter,
-        double highPassCutoffFreq,
-        int highPassFilterOrder,
-        int pageFormat,
-        double bottomMarginMM,
-        double spectroHeightMM,
-        double writingSpeed,
-        const QString &inputFile,
-        bool enableVerticalScale = true,
-        bool enableBottomReferenceLine = false,
-        double bottomReferenceLineOffset = -34.75,
-        bool enableTopReferenceLine = false,
-        double topReferenceLineOffset = 12.55,
-        bool displayParameters = false,
-        double textScaleFactor = 2.0,
-        double lineThicknessFactor = 2.0,
-        double binsPerSecond = 150.0,
-        int overlapPreset = 1
+        const SpectrogramSettingsCpp& settings,
+        const QString &inputFile
     );
     
     /**
@@ -177,36 +116,10 @@ public:
      * @param audioSegment Audio segment (QByteArray)
      */
     Q_INVOKABLE void generateSpectrogramFromSegment(
-        double minFreq,
-        double maxFreq,
-        double segmentDuration,
-        int sampleRate,
-        double dynamicRangeDB,
-        double gammaCorrection,
-        bool enableDithering,
-        double contrastFactor,
-        bool enableHighBoost,
-        double highBoostAlpha,
-        bool enableHighPassFilter,
-        double highPassCutoffFreq,
-        int highPassFilterOrder,
-        int pageFormat,
-        double bottomMarginMM,
-        double spectroHeightMM,
-        double writingSpeed,
-        bool enableVerticalScale,
-        bool enableBottomReferenceLine,
-        double bottomReferenceLineOffset,
-        bool enableTopReferenceLine,
-        double topReferenceLineOffset,
-        bool displayParameters,
-        double textScaleFactor,
-        double lineThicknessFactor,
+        const SpectrogramSettingsCpp& settings,
         const QByteArray &audioSegment,
         const QString &originalAudioFileName = "",
-        double startTime = 0.0,
-        double binsPerSecond = 150.0,
-        int overlapPreset = 1
+        double startTime = 0.0
     );
     
     /**
@@ -250,7 +163,7 @@ public:
      * @param writingSpeed Vitesse d'écriture en cm/s
      * @return Valeur de bins/s calculée et limitée
      */
-    Q_INVOKABLE double calculateBpsFromSlider(double sliderValue, double writingSpeed);
+    // Q_INVOKABLE double calculateBpsFromSlider(double sliderValue, double writingSpeed); // To be removed
     
     /**
      * @brief Calcule l'overlap en fonction de la position du curseur de résolution
@@ -258,14 +171,14 @@ public:
      * @param sliderValue Position du curseur (0.0 à 1.0)
      * @return Valeur d'overlap calculée
      */
-    Q_INVOKABLE double calculateOverlapFromSlider(double sliderValue);
+    // Q_INVOKABLE double calculateOverlapFromSlider(double sliderValue); // To be removed
     
     /**
      * @brief Checks if resolution limitation is reached
      *
      * @return true if bins/s value has been limited (min or max), false otherwise
      */
-    Q_INVOKABLE bool isResolutionLimited();
+    // Q_INVOKABLE bool isResolutionLimited(); // To be removed
     
     /**
      * @brief Calculates audio duration based on paper format and writing speed
@@ -274,7 +187,7 @@ public:
      *
      * @return Audio duration in seconds
      */
-    Q_INVOKABLE double calculateAudioDuration();
+    // Q_INVOKABLE double calculateAudioDuration(); // To be removed
     
     /**
      * @brief Updates parameters when page format changes
@@ -290,6 +203,7 @@ public:
      * @param minFreq Minimum frequency (Hz)
      * @param maxFreq Maximum frequency (Hz)
      * @param sampleRate Sample rate (optional, will use current value if 0)
+     * @param printerDpi DPI value
      * @return Calculated audio duration in seconds after format change
      */
     Q_INVOKABLE double updatePageFormat(
@@ -299,7 +213,8 @@ public:
         double writingSpeed,
         double minFreq,
         double maxFreq,
-        int sampleRate = 0
+        int sampleRate = 0,
+        double printerDpi = 400.0
     );
     
     /**
@@ -310,8 +225,15 @@ public:
      * @param writingSpeed Vitesse d'écriture en cm/s
      * @return Nombre maximum de bins par seconde possible
      */
-    Q_INVOKABLE double calculateMaxBps(double writingSpeed);
+    // Q_INVOKABLE double calculateMaxBps(double writingSpeed); // To be removed
     
+    /**
+     * @brief Updates the generator's internal settings with new input parameters
+     * and triggers recalculation of derived values.
+     * @param newSettings The new input parameters.
+     */
+    void updateInputParameters(const SpectrogramSettingsCpp& newSettings);
+
    /**
     * @brief Normalizes an audio file and saves the result to a temporary file
     *
@@ -366,13 +288,17 @@ public:
 
 signals:
     /**
-     * @brief Signal emitted when auto FFT parameters are calculated
+     * @brief Signal emitted when all calculated parameters are updated
      *
+     * @param binsPerSecond The calculated bins per second value
      * @param calculatedFftSize The calculated FFT size
      * @param effectiveOverlap The effective overlap value
-     * @param binsPerSecond The bins per second value used for calculation
+     * @param audioDuration The calculated audio duration
+     * @param isResolutionLimited True if resolution is limited, false otherwise
      */
-    void fftParametersCalculated(int calculatedFftSize, double effectiveOverlap, double binsPerSecond);
+    void calculatedParametersUpdated(double binsPerSecond, int calculatedFftSize, double effectiveOverlap, double audioDuration, bool isResolutionLimited);
+
+    // void fftParametersCalculated(int calculatedFftSize, double effectiveOverlap, double binsPerSecond); // To be removed
 
     /**
      * @brief Signal emitted when a spectrogram is generated
@@ -382,7 +308,7 @@ signals:
      * @param errorMessage Error message in case of failure
      */
     void spectrogramGenerated(bool success, const QString &outputPath, const QString &errorMessage = "");
-    
+
     /**
      * @brief Signal emitted when a preview is generated
      *
@@ -391,7 +317,7 @@ signals:
      * @param errorMessage Error message in case of failure
      */
     void previewGenerated(bool success, const QImage &previewImage, const QString &errorMessage = "");
-    
+
     /**
      * @brief Signal emitted when a segment preview is generated
      *
@@ -400,7 +326,7 @@ signals:
      * @param errorMessage Error message in case of failure
      */
     void segmentPreviewGenerated(bool success, const QImage &previewImage, const QString &errorMessage = "");
-    
+
     /**
      * @brief Signal emitted when a preview is saved
      *
@@ -410,7 +336,7 @@ signals:
      * @param errorMessage Error message in case of failure
      */
     void previewSaved(bool success, const QString &outputPath, const QString &format, const QString &errorMessage = "");
-    
+
     /**
      * @brief Signal emitted when task progress is updated
      *
@@ -478,7 +404,8 @@ private:
         double textScaleFactor = 2.0,
         double lineThicknessFactor = 2.0,
         double binsPerSecond = 150.0,
-        int overlapPreset = 1
+        int overlapPreset = 1,
+        double printerDpi = 400.0
     );
     
     /**
@@ -506,18 +433,31 @@ private:
         const QString &originalAudioFileName = "",
         double startTime = 0.0
     );
-    
+
+    /**
+     * @brief Performs all necessary calculations based on current settings
+     * and emits the calculatedParametersUpdated signal.
+     */
+    void performCalculationsAndNotify();
+
     // Preview image
     QImage m_previewImage;
-    
+
     // Preview image provider (static)
     static PreviewImageProvider *s_previewProvider;
-    
+
     // Map of running tasks
     QMap<QUuid, QString> m_runningTasks;
-    
+
     // List of temporary files to be cleaned up
     QStringList m_tempFiles;
+
+    // --- Calculated Parameters (stored internally) ---
+    double m_calculatedBinsPerSecond;
+    int m_calculatedFftSize;
+    double m_calculatedOverlap;
+    double m_calculatedAudioDuration;
+    bool m_isResolutionLimited;
 };
 
 #endif // SPECTROGRAMGENERATOR_H
